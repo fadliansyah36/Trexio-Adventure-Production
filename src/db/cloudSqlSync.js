@@ -7,7 +7,7 @@ function getResolvedDatabaseUrl() {
   if (envUrl && !envUrl.includes('<project-ref>') && !envUrl.includes('<db-password>') && !envUrl.includes('<region>')) {
     return envUrl;
   }
-  return 'postgresql://postgres:BgUnkVDxmD83yA2B@db.fndxxiqojmhiepidrxio.supabase.co:5432/postgres';
+  return '';
 }
 
 function getPool() {

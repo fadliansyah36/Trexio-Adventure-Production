@@ -10,7 +10,7 @@ declare global {
 // Supabase-ready pool. Prefer DATABASE_URL (with SSL); fallback to discrete SQL_* vars.
 export const createPool = () => {
   if (!global._postgresPool) {
-    const databaseUrl = process.env.DATABASE_URL || 'postgresql://postgres:BgUnkVDxmD83yA2B@db.fndxxiqojmhiepidrxio.supabase.co:5432/postgres';
+    const databaseUrl = process.env.DATABASE_URL || '';
     const useSSL =
       !!databaseUrl ||
       process.env.SQL_SSL === 'true' ||

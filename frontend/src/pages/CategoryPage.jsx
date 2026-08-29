@@ -783,7 +783,7 @@ export default function CategoryPage() {
             <div className="p-3 bg-muted/60 border border-border rounded-xl flex items-center gap-3">
               <img
                 src={selectedItem?.image}
-                alt=""
+                alt={selectedItem?.title || "Foto Produk"}
                 loading="lazy"
                 className="h-14 w-14 object-cover rounded-lg shrink-0 border border-border/50"
               />

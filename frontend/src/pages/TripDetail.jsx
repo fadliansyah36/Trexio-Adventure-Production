@@ -210,7 +210,7 @@ export default function TripDetail() {
         <div className="relative aspect-[16/10] overflow-hidden rounded-md bg-muted">
           <img
             src={trip.gallery?.[activeImg] || trip.cover_image}
-            alt=""
+            alt={trip.title ? `${trip.title} - Foto Utama` : "Foto Trip"}
             loading="lazy"
             className="h-full w-full object-cover"
             data-testid="trip-main-image"
@@ -235,7 +235,7 @@ export default function TripDetail() {
                   : "border-transparent"
               }`}
             >
-              <img src={g} className="h-full w-full object-cover" alt="" />
+              <img src={g} className="h-full w-full object-cover" alt={`${trip.title || "Trip"} Galeri ${i + 1}`} />
             </button>
           ))}
         </div>

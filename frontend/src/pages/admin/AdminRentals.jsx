@@ -146,7 +146,7 @@ export default function AdminRentals() {
                 <tr key={r.id} className="border-t border-border">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <img src={r.cover_image} className="h-10 w-14 object-cover rounded-sm" alt="" />
+                      <img src={r.cover_image} className="h-10 w-14 object-cover rounded-sm" alt={r.name || "Foto Alat Rental"} />
                       <div className="font-medium">{r.name}</div>
                     </div>
                   </td>

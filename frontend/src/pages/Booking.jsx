@@ -512,7 +512,7 @@ export default function Booking() {
                 <img
                   src={trip.cover_image}
                   className="h-16 w-20 object-cover rounded-sm"
-                  alt=""
+                  alt={trip.title || "Foto Trip"}
                 />
                 <div className="text-sm">
                   <div className="font-bold line-clamp-2">{trip.title}</div>

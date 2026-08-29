@@ -458,7 +458,7 @@ export default function PaymentConfirmation() {
               <div className="flex gap-3">
                 <img
                   src={booking.trip_cover || "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=200"}
-                  alt=""
+                  alt={booking.trip_title || "Foto Trip"}
                   className="h-16 w-20 object-cover rounded-xl border border-border shrink-0"
                 />
                 <div>

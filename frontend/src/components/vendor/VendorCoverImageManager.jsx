@@ -229,7 +229,7 @@ export default function VendorCoverImageManager({ vendor = {}, onRefresh }) {
             <div className="flex items-center gap-3.5">
               <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-background border-2 border-white/20 shadow-md overflow-hidden flex items-center justify-center shrink-0">
                 {vendor.logo ? (
-                  <img src={vendor.logo} alt="" className="w-full h-full object-cover" />
+                  <img src={vendor.logo} alt={vendor.brand_name || "Logo Brand Mitra"} className="w-full h-full object-cover" />
                 ) : (
                   <Compass size={28} className="text-emerald-500" />
                 )}

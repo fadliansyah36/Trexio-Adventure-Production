@@ -421,7 +421,7 @@ export default function AdminTrips() {
                         <div className="flex items-center gap-3">
                           <img
                             src={t.cover_image || "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=150"}
-                            alt=""
+                            alt={t.title || "Foto Trip"}
                             className="h-12 w-16 object-cover rounded-lg border border-border bg-muted shrink-0"
                           />
                           <div>

@@ -130,7 +130,7 @@ export default function CommunityDetail() {
       {/* Hero */}
       <section className="relative">
         <div className="h-64 md:h-80 overflow-hidden">
-          <img src={community.cover_image} loading="lazy" className="h-full w-full object-cover" alt="" />
+          <img src={community.cover_image} loading="lazy" className="h-full w-full object-cover" alt={community.name || "Foto Komunitas"} />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
         </div>
         <div className="trx-container -mt-24 relative">
@@ -239,7 +239,7 @@ export default function CommunityDetail() {
                     </div>
                     <p className="mt-3 text-sm whitespace-pre-wrap">{p.content}</p>
                     {p.image && (
-                      <img src={p.image} loading="lazy" className="mt-3 rounded-md w-full max-h-96 object-cover" alt="" />
+                      <img src={p.image} loading="lazy" className="mt-3 rounded-md w-full max-h-96 object-cover" alt={`Foto postingan oleh ${p.user_name || "anggota"}`} />
                     )}
                     <button
                       onClick={() => likePost(p.id)}
@@ -337,7 +337,7 @@ export default function CommunityDetail() {
                   return (
                     <div key={e.id} className="bg-white border border-border rounded-md overflow-hidden">
                       {e.cover_image && (
-                        <img src={e.cover_image} loading="lazy" className="w-full h-40 object-cover" alt="" />
+                        <img src={e.cover_image} loading="lazy" className="w-full h-40 object-cover" alt={e.title || "Foto Event"} />
                       )}
                       <div className="p-5">
                         <div className="trx-overline text-muted-foreground inline-flex items-center gap-1">

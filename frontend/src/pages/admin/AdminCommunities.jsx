@@ -91,7 +91,7 @@ export default function AdminCommunities() {
               <tr key={c.id} className="border-t border-border">
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
-                    <img src={c.cover_image} className="h-10 w-14 object-cover rounded-sm" alt="" />
+                    <img src={c.cover_image} className="h-10 w-14 object-cover rounded-sm" alt={c.name || "Cover Komunitas"} />
                     <div className="font-medium">{c.name}</div>
                   </div>
                 </td>

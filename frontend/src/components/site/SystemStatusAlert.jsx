@@ -11,6 +11,7 @@ import {
   XCircle,
   WifiOff
 } from 'lucide-react';
+import { apiClient } from '../../lib/apiClient';
 
 export default function SystemStatusAlert() {
   const [status, setStatus] = useState(null);
@@ -18,33 +19,52 @@ export default function SystemStatusAlert() {
   const [lastCheck, setLastCheck] = useState(null);
   const [errorCount, setErrorCount] = useState(0);
 
-  const checkStatus = useCallback(async () => {
+  const checkStatus = useCallback(async (retryCount = 0) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/system/status');
-      const data = await res.json();
-      setStatus(data);
-      setLastCheck(new Date());
-      if (data && data.database && data.database.connected) {
-        setErrorCount(0);
-      } else {
-        setErrorCount(prev => prev + 1);
+      let data = null;
+      try {
+        const res = await apiClient.get('/system/status', { timeout: 8000 });
+        data = res.data;
+      } catch (clientErr) {
+        // Direct fetch fallback
+        const res = await fetch('/api/system/status');
+        data = await res.json();
+      }
+
+      if (data) {
+        setStatus(data);
+        setLastCheck(new Date());
+        if (data.database && data.database.connected) {
+          setErrorCount(0);
+        } else {
+          setErrorCount(prev => prev + 1);
+        }
       }
     } catch (err) {
-      console.error('[SystemStatus] Failed to check system status:', err);
-      setStatus(prev => ({
-        ok: false,
-        status: 'unhealthy',
-        database: {
-          connected: false,
-          provider: 'Supabase PostgreSQL',
-          error: 'Tidak dapat menghubungi server backend / database terputus.'
-        },
-        payment: { configured: true, provider: 'Midtrans', mode: 'Sandbox' },
-        llm: { configured: true, provider: 'Google Gemini' },
-        auth: { provider: 'Supabase Auth', configured: true }
-      }));
-      setErrorCount(prev => prev + 1);
+      if (retryCount < 2) {
+        setTimeout(() => checkStatus(retryCount + 1), 1500);
+        return;
+      }
+      console.warn('[SystemStatus] Notice: Unable to verify system status after retries:', err?.message || err);
+      setErrorCount(prev => {
+        const next = prev + 1;
+        if (next >= 2) {
+          setStatus({
+            ok: false,
+            status: 'unhealthy',
+            database: {
+              connected: false,
+              provider: 'Supabase PostgreSQL',
+              error: 'Tidak dapat menghubungi server backend / database terputus.'
+            },
+            payment: { configured: true, provider: 'Midtrans', mode: 'Sandbox' },
+            llm: { configured: true, provider: 'Google Gemini' },
+            auth: { provider: 'Supabase Auth', configured: true }
+          });
+        }
+        return next;
+      });
       setLastCheck(new Date());
     } finally {
       setLoading(false);
@@ -53,8 +73,8 @@ export default function SystemStatusAlert() {
 
   useEffect(() => {
     checkStatus();
-    // Poll every 12 seconds
-    const interval = setInterval(checkStatus, 12000);
+    // Poll every 15 seconds
+    const interval = setInterval(() => checkStatus(0), 15000);
     return () => clearInterval(interval);
   }, [checkStatus]);
 

@@ -1626,7 +1626,7 @@ api.get('/', (req, res) => {
 });
 
 // Central Live System Status & Health (Supabase PostgreSQL, Midtrans, LLM, Auth)
-api.get('/system/status', async (req, res) => {
+const handleSystemStatus = async (req, res) => {
   await performDbHealthCheck();
   const isHealthy = systemHealth.database.connected;
   res.status(isHealthy ? 200 : 503).json({
@@ -1639,9 +1639,9 @@ api.get('/system/status', async (req, res) => {
     api: systemHealth.api,
     timestamp: nowISO(),
   });
-});
+};
 
-api.get('/health', async (req, res) => {
+const handleHealthCheck = async (req, res) => {
   await performDbHealthCheck();
   const isHealthy = systemHealth.database.connected;
   res.status(isHealthy ? 200 : 503).json({
@@ -1653,7 +1653,12 @@ api.get('/health', async (req, res) => {
     uptime: process.uptime(),
     timestamp: nowISO(),
   });
-});
+};
+
+api.get('/system/status', handleSystemStatus);
+api.get('/health', handleHealthCheck);
+app.get('/system/status', handleSystemStatus);
+app.get('/health', handleHealthCheck);
 
 // Strict connection guard: Intercept all data and mutation requests if Database is disconnected
 api.use((req, res, next) => {
@@ -2593,6 +2598,27 @@ api.get('/auth/me', (req, res) => {
     });
   }
   res.json({ ...cleanUser(user), impersonation: { active: false } });
+});
+
+api.post(['/auth/refresh', '/auth/refresh-token'], requireAuth, (req, res) => {
+  const user = getCurrentUser(req);
+  if (!user) {
+    return res.status(401).json({ detail: 'Sesi tidak valid untuk perpanjangan token.' });
+  }
+  const newToken = signAuthToken(user);
+  res.cookie('access_token', newToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: '/',
+  });
+  res.json({
+    ok: true,
+    token: newToken,
+    access_token: newToken,
+    user: cleanUser(user)
+  });
 });
 
 // --- OAuth Social Login & Supabase Auth Session ---
@@ -6185,6 +6211,31 @@ function normalizeCategory(cat) {
   return c;
 }
 
+// Database-Level Row Lock Mutex Engine for Bookings & Products (Concurrency & Race Condition Guard)
+const bookingRowLocks = new Map();
+
+async function executeWithBookingRowLock(bookingId, taskFn) {
+  if (!bookingId) return await taskFn();
+
+  const lockKey = String(bookingId);
+  while (bookingRowLocks.has(lockKey)) {
+    await bookingRowLocks.get(lockKey);
+  }
+
+  let releaseLock;
+  const lockPromise = new Promise((resolve) => {
+    releaseLock = resolve;
+  });
+  bookingRowLocks.set(lockKey, lockPromise);
+
+  try {
+    return await taskFn();
+  } finally {
+    bookingRowLocks.delete(lockKey);
+    releaseLock();
+  }
+}
+
 // --- Bookings ---
 const handleBooking = async (req, res) => {
   const requestId = `req_${uuidv4().substring(0, 8)}`;
@@ -6240,241 +6291,251 @@ const handleBooking = async (req, res) => {
     client_booking_key
   } = req.body;
 
-  // Idempotency Guard (Requirement 14)
-  const ik = idempotency_key || client_booking_key;
-  if (ik) {
-    const existingBooking = bookings.find(b => b.idempotency_key === ik && b.user_id === req.user.id);
-    if (existingBooking) {
-      console.log(`[BOOKING_TRACE][${requestId}] ✓ Idempotent Replay Hit: ${existingBooking.id}`);
-      return res.json(formatBookingWithChecklist(existingBooking));
-    }
-  }
-
   const targetId = trip_id || item_id || bodyId || (Array.isArray(checkout_items) && checkout_items[0] ? (checkout_items[0].item_id || checkout_items[0].id) : null);
-  const product = findProduct(targetId);
 
-  let calculatedSubtotal = 0;
-  let mainTitle = trip_title || product?.title || 'Pesanan Trexio Outdoor';
-  let mainCover = trip_cover || product?.cover_image || '';
-  let mainDestination = trip_destination || product?.location || product?.destination || 'Indonesia';
-  let mainCategory = normalizeCategory(req.body.category || product?.category || 'open-trip');
-  let vendorId = product?.vendor_id || 'vendor_official';
-  let vendorName = product?.vendor_name || product?.provider || 'TREXIO Official';
-
-  const priceUnit = String(product?.price_unit || req.body.price_unit || 'orang').toLowerCase();
-  const isPackagePricing = ['paket', 'grup', 'unit', 'kamar', 'trip'].includes(priceUnit);
-
-  // Category Strategy Resolver & Duration Math
-  let qty = 1;
-  let durationDays = 1;
-
-  // Calculate duration based on dates provided
-  const startDateStr = req.body.rental_start || req.body.check_in || req.body.pickup_date || departure_date;
-  const endDateStr = req.body.rental_end || req.body.check_out || req.body.return_date;
-
-  if (startDateStr && endDateStr) {
-    const d1 = new Date(startDateStr);
-    const d2 = new Date(endDateStr);
-    if (!isNaN(d1) && !isNaN(d2) && d2 > d1) {
-      durationDays = Math.max(1, Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)));
-    }
-  } else if (req.body.duration_days) {
-    durationDays = Math.max(1, Number(req.body.duration_days) || 1);
-  }
-
-  if (Array.isArray(checkout_items) && checkout_items.length > 0) {
-    qty = checkout_items.reduce((acc, i) => acc + Math.max(1, Number(i.quantity) || 1), 0);
-    calculatedSubtotal = checkout_items.reduce((sum, item) => {
-      const itemProd = findProduct(item.item_id || item.id) || product;
-      const itemPrice = itemProd ? Number(itemProd.price || 0) : (Number(item.price) || 0);
-      const itemQty = Math.max(1, Number(item.quantity) || 1);
-      return sum + (itemPrice * itemQty);
-    }, 0);
-
-    if (checkout_items.length > 1) {
-      const firstTitle = checkout_items[0].title || product?.title || 'Layanan Outdoor';
-      mainTitle = `${firstTitle} (+${checkout_items.length - 1} item lainnya)`;
-    } else if (checkout_items[0]?.title) {
-      mainTitle = checkout_items[0].title;
-    }
-  } else {
-    if (isPackagePricing) {
-      qty = Math.max(1, Number(quantity) || Number(req.body.rooms) || Number(req.body.tickets) || 1);
-    } else {
-      qty = Math.max(
-        Array.isArray(participants) && participants.length > 0 ? participants.length : 1,
-        Number(quantity) || Number(req.body.tickets) || Number(req.body.passengers) || 1
-      );
-    }
-    const unitPrice = product ? Number(product.price || 0) : (Number(req.body.price) || 0);
-
-    if (['hari', 'malam'].includes(priceUnit)) {
-      calculatedSubtotal = unitPrice * qty * durationDays;
-    } else {
-      calculatedSubtotal = unitPrice * qty;
-    }
-  }
-
-  if (calculatedSubtotal <= 0 && Number(req.body.total_amount) > 0) {
-    calculatedSubtotal = Number(req.body.total_amount);
-  }
-
-  if (!product && (!calculatedSubtotal || calculatedSubtotal <= 0)) {
-    console.warn(`[BOOKING_TRACE][${requestId}] ❌ Failure: Product Not Found and Total Price Invalid`);
-    return res.status(404).json({ detail: 'Produk/Trip tidak ditemukan. Silakan periksa kembali pilihan Anda.', code: 'BOOKING_VALIDATION_FAILED' });
-  }
-
-  // Stock & Availability Engine Check (Requirement 10)
-  if (product) {
-    const maxCap = product.max_participants || product.stock || 999;
-    const currentBooked = product.booked_seats || 0;
-    const remaining = maxCap - currentBooked;
-    if (qty > remaining) {
-      console.warn(`[BOOKING_TRACE][${requestId}] ❌ Failure: Stock / Capacity Exceeded (Requested: ${qty}, Remaining: ${remaining})`);
-      return res.status(400).json({ detail: `Sisa kuota/stok/kapasitas yang tersedia hanya ${remaining}`, code: 'AVAILABILITY_FAILED' });
-    }
-    product.booked_seats = (product.booked_seats || 0) + qty;
-  }
-
-  let discount = 0;
-  let couponApplied = null;
-  if (coupon_code) {
-    const c = coupons.find(item => item.code === coupon_code.toUpperCase() && item.active);
-    if (c) {
-      discount = c.type === 'percent' ? Math.floor(calculatedSubtotal * c.value / 100) : c.value;
-      couponApplied = c.code;
-    }
-  }
-  const total = Math.max(0, calculatedSubtotal - discount);
-
-  if (total <= 0 && (!product || Number(product.price || 0) <= 0)) {
-    console.warn(`[BOOKING_TRACE][${requestId}] ❌ Failure: Total Price Invalid (${total})`);
-    return res.status(400).json({ detail: 'Total pembayaran tidak valid atau bernilai nol.', code: 'PRICE_VALIDATION_FAILED' });
-  }
-
-  const bookingCode = `TRX-${new Date().toISOString().slice(2,10).replace(/-/g,'')}-${uuidv4().substring(0,6).toUpperCase()}`;
-  const bookingId = `booking_${uuidv4().substring(0, 8)}`;
-
-  const newBooking = {
-    id: bookingId,
-    booking_code: bookingCode,
-    idempotency_key: ik || null,
-    user_id: req.user.id,
-    user_email: req.user.email,
-    category: mainCategory,
-    price_unit: priceUnit,
-    trip_id: targetId || 'custom_trip',
-    trip_title: mainTitle,
-    trip_cover: mainCover,
-    trip_destination: mainDestination,
-    vendor_id: vendorId,
-    vendor_name: vendorName,
-    partner_name: vendorName,
-
-    // Core schedule fields
-    departure_date: departure_date || req.body.visit_date || req.body.event_date || req.body.rental_start || req.body.check_in || req.body.orderDate || new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0],
-    meeting_point: meeting_point || req.body.pickup_point || req.body.pickup_location || 'Pos / Basecamp Resmi',
-
-    // Canonical Category-Specific Configuration Fields
-    rental_start: req.body.rental_start || req.body.pickup_date || null,
-    rental_end: req.body.rental_end || req.body.return_date || null,
-    check_in: req.body.check_in || req.body.pickup_date || null,
-    check_out: req.body.check_out || req.body.return_date || null,
-    duration_days: durationDays,
-    visit_date: req.body.visit_date || departure_date || null,
-    event_date: req.body.event_date || departure_date || null,
-    ticket_type: req.body.ticket_type || req.body.package_type || null,
-    tickets: Number(req.body.tickets) || null,
-    rooms: Number(req.body.rooms) || null,
-    guests: Number(req.body.guests) || null,
-    site_type: req.body.site_type || null,
-    route: req.body.route || req.body.destination || null,
-    passengers: Number(req.body.passengers) || null,
-    seat_numbers: req.body.seat_numbers || null,
-    vehicle_type: req.body.vehicle_type || null,
-
-    participants: Array.isArray(participants) && participants.length > 0 ? participants : [
-      { name: contact_name || req.user.name || 'Pemesan Utama', gender: 'male', age: 25, id_type: 'KTP', id_number: '3171000000000001' }
-    ],
-    quantity: qty,
-    contact_name: contact_name || req.user.name || '',
-    contact_email: contact_email || req.user.email || '',
-    contact_phone: contact_phone || req.user.phone || '',
-    special_notes: special_notes || notes || '',
-    coupon: couponApplied,
-    subtotal: calculatedSubtotal,
-    discount,
-    total_amount: total,
-    payment_method: payment_method || 'midtrans',
-    payment_status: 'pending',
-    booking_status: 'pending_payment',
-    status: 'AWAITING_PAYMENT',
-    trip_status: 'UPCOMING',
-    checked_in: false,
-    checkout_items: checkout_items || null,
-    payment_proof: null,
-    payment_note: null,
-    created_at: nowISO(),
-  };
-
-  const paymentRecord = {
-    id: `pay_${uuidv4().substring(0, 8)}`,
-    payment_id: `pay_${uuidv4().substring(0, 8)}`,
-    booking_id: bookingId,
-    booking_code: bookingCode,
-    user_id: req.user.id,
-    user_email: req.user.email,
-    amount: total,
-    payment_method: payment_method || 'midtrans',
-    status: 'PENDING',
-    payment_status: 'PENDING',
-    created_at: nowISO(),
-    updated_at: nowISO(),
-  };
-
-  bookings.push(newBooking);
-  payment_transactions.push(paymentRecord);
-
-  // Transactional Cart Item Conversion / State Transition: remove checked-out items from active cart
-  if (Array.isArray(checkout_items) && checkout_items.length > 0) {
-    const itemIdsToRemove = new Set(checkout_items.map(i => String(i.item_id || i.id)));
-    let i = carts.length;
-    while (i--) {
-      if (carts[i].user_id === req.user.id && (itemIdsToRemove.has(String(carts[i].id)) || itemIdsToRemove.has(String(carts[i].item_id)))) {
-        carts.splice(i, 1);
+  return await executeWithBookingRowLock(targetId || 'global_product_lock', async () => {
+    // Idempotency Guard (Requirement 14)
+    const ik = idempotency_key || client_booking_key;
+    if (ik) {
+      const existingBooking = bookings.find(b => b.idempotency_key === ik && b.user_id === req.user.id);
+      if (existingBooking) {
+        console.log(`[BOOKING_TRACE][${requestId}] ✓ Idempotent Replay Hit: ${existingBooking.id}`);
+        return res.json(formatBookingWithChecklist(existingBooking));
       }
     }
-  } else if (req.body.cart_item_id || targetId) {
-    const targetCartId = String(req.body.cart_item_id || targetId);
-    let i = carts.length;
-    while (i--) {
-      if (carts[i].user_id === req.user.id && (String(carts[i].id) === targetCartId || String(carts[i].item_id) === targetCartId)) {
-        carts.splice(i, 1);
+
+    const product = findProduct(targetId);
+
+    let calculatedSubtotal = 0;
+    let mainTitle = trip_title || product?.title || 'Pesanan Trexio Outdoor';
+    let mainCover = trip_cover || product?.cover_image || '';
+    let mainDestination = trip_destination || product?.location || product?.destination || 'Indonesia';
+    let mainCategory = normalizeCategory(req.body.category || product?.category || 'open-trip');
+    let vendorId = product?.vendor_id || 'vendor_official';
+    let vendorName = product?.vendor_name || product?.provider || 'TREXIO Official';
+
+    const priceUnit = String(product?.price_unit || req.body.price_unit || 'orang').toLowerCase();
+    const isPackagePricing = ['paket', 'grup', 'unit', 'kamar', 'trip'].includes(priceUnit);
+
+    // Category Strategy Resolver & Duration Math
+    let qty = 1;
+    let durationDays = 1;
+
+    // Calculate duration based on dates provided
+    const startDateStr = req.body.rental_start || req.body.check_in || req.body.pickup_date || departure_date;
+    const endDateStr = req.body.rental_end || req.body.check_out || req.body.return_date;
+
+    if (startDateStr && endDateStr) {
+      const d1 = new Date(startDateStr);
+      const d2 = new Date(endDateStr);
+      if (!isNaN(d1) && !isNaN(d2) && d2 > d1) {
+        durationDays = Math.max(1, Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)));
+      }
+    } else if (req.body.duration_days) {
+      durationDays = Math.max(1, Number(req.body.duration_days) || 1);
+    }
+
+    if (Array.isArray(checkout_items) && checkout_items.length > 0) {
+      qty = checkout_items.reduce((acc, i) => acc + Math.max(1, Number(i.quantity) || 1), 0);
+      calculatedSubtotal = checkout_items.reduce((sum, item) => {
+        const itemProd = findProduct(item.item_id || item.id) || product;
+        const itemPrice = itemProd ? Number(itemProd.price || 0) : (Number(item.price) || 0);
+        const itemQty = Math.max(1, Number(item.quantity) || 1);
+        return sum + (itemPrice * itemQty);
+      }, 0);
+
+      if (checkout_items.length > 1) {
+        const firstTitle = checkout_items[0].title || product?.title || 'Layanan Outdoor';
+        mainTitle = `${firstTitle} (+${checkout_items.length - 1} item lainnya)`;
+      } else if (checkout_items[0]?.title) {
+        mainTitle = checkout_items[0].title;
+      }
+    } else {
+      if (isPackagePricing) {
+        qty = Math.max(1, Number(quantity) || Number(req.body.rooms) || Number(req.body.tickets) || 1);
+      } else {
+        qty = Math.max(
+          Array.isArray(participants) && participants.length > 0 ? participants.length : 1,
+          Number(quantity) || Number(req.body.tickets) || Number(req.body.passengers) || 1
+        );
+      }
+      const unitPrice = product ? Number(product.price || 0) : (Number(req.body.price) || 0);
+
+      if (['hari', 'malam'].includes(priceUnit)) {
+        calculatedSubtotal = unitPrice * qty * durationDays;
+      } else {
+        calculatedSubtotal = unitPrice * qty;
       }
     }
-  }
 
-  saveBookingsToDisk();
-  savePaymentsDataToDisk();
+    if (calculatedSubtotal <= 0 && Number(req.body.total_amount) > 0) {
+      calculatedSubtotal = Number(req.body.total_amount);
+    }
 
-  recordBookingEvent(newBooking.id, 'BOOKING_CREATED', null, 'AWAITING_PAYMENT', 'user', req.user.id, 'USER_CHECKOUT', { amount: total });
+    if (!product && (!calculatedSubtotal || calculatedSubtotal <= 0)) {
+      console.warn(`[BOOKING_TRACE][${requestId}] ❌ Failure: Product Not Found and Total Price Invalid`);
+      return res.status(404).json({ detail: 'Produk/Trip tidak ditemukan. Silakan periksa kembali pilihan Anda.', code: 'BOOKING_VALIDATION_FAILED' });
+    }
 
-  createNotification(
-    req.user.id,
-    'Reservasi Berhasil Dibuat! 🎉',
-    `Kode Pemesanan ${bookingCode} untuk ${mainTitle} sebesar Rp${total.toLocaleString('id-ID')}. Silakan selesaikan pembayaran.`,
-    'booking',
-    `/payment/${newBooking.id}`
-  );
+    // Stock & Availability Engine Check (Requirement 10)
+    const targetKey = String(targetId || '').trim().toLowerCase();
+    const underlyingProduct = trips.find(x => String(x.id).toLowerCase() === targetKey || (x.slug && String(x.slug).toLowerCase() === targetKey))
+      || rentals.find(x => String(x.id).toLowerCase() === targetKey || (x.slug && String(x.slug).toLowerCase() === targetKey))
+      || null;
 
-  console.log(`[BOOKING_TRACE][${requestId}] ✓ Booking Successfully Created`, {
-    bookingId: newBooking.id,
-    bookingCode: newBooking.booking_code,
-    category: newBooking.category,
-    totalAmount: newBooking.total_amount
+    if (product || underlyingProduct) {
+      const p = underlyingProduct || product;
+      const maxCap = p.max_participants || p.stock || 999;
+      const currentBooked = p.booked_seats || 0;
+      const remaining = maxCap - currentBooked;
+      if (qty > remaining) {
+        console.warn(`[BOOKING_TRACE][${requestId}] ❌ Failure: Stock / Capacity Exceeded (Requested: ${qty}, Remaining: ${remaining})`);
+        return res.status(400).json({ detail: `Sisa kuota/stok/kapasitas yang tersedia hanya ${remaining}`, code: 'AVAILABILITY_FAILED' });
+      }
+      p.booked_seats = (p.booked_seats || 0) + qty;
+      if (product) product.booked_seats = p.booked_seats;
+    }
+
+    let discount = 0;
+    let couponApplied = null;
+    if (coupon_code) {
+      const c = coupons.find(item => item.code === coupon_code.toUpperCase() && item.active);
+      if (c) {
+        discount = c.type === 'percent' ? Math.floor(calculatedSubtotal * c.value / 100) : c.value;
+        couponApplied = c.code;
+      }
+    }
+    const total = Math.max(0, calculatedSubtotal - discount);
+
+    if (total <= 0 && (!product || Number(product.price || 0) <= 0)) {
+      console.warn(`[BOOKING_TRACE][${requestId}] ❌ Failure: Total Price Invalid (${total})`);
+      return res.status(400).json({ detail: 'Total pembayaran tidak valid atau bernilai nol.', code: 'PRICE_VALIDATION_FAILED' });
+    }
+
+    const bookingCode = `TRX-${new Date().toISOString().slice(2,10).replace(/-/g,'')}-${uuidv4().substring(0,6).toUpperCase()}`;
+    const bookingId = `booking_${uuidv4().substring(0, 8)}`;
+
+    const newBooking = {
+      id: bookingId,
+      booking_code: bookingCode,
+      idempotency_key: ik || null,
+      user_id: req.user.id,
+      user_email: req.user.email,
+      category: mainCategory,
+      price_unit: priceUnit,
+      trip_id: targetId || 'custom_trip',
+      trip_title: mainTitle,
+      trip_cover: mainCover,
+      trip_destination: mainDestination,
+      vendor_id: vendorId,
+      vendor_name: vendorName,
+      partner_name: vendorName,
+
+      // Core schedule fields
+      departure_date: departure_date || req.body.visit_date || req.body.event_date || req.body.rental_start || req.body.check_in || req.body.orderDate || new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0],
+      meeting_point: meeting_point || req.body.pickup_point || req.body.pickup_location || 'Pos / Basecamp Resmi',
+
+      // Canonical Category-Specific Configuration Fields
+      rental_start: req.body.rental_start || req.body.pickup_date || null,
+      rental_end: req.body.rental_end || req.body.return_date || null,
+      check_in: req.body.check_in || req.body.pickup_date || null,
+      check_out: req.body.check_out || req.body.return_date || null,
+      duration_days: durationDays,
+      visit_date: req.body.visit_date || departure_date || null,
+      event_date: req.body.event_date || departure_date || null,
+      ticket_type: req.body.ticket_type || req.body.package_type || null,
+      tickets: Number(req.body.tickets) || null,
+      rooms: Number(req.body.rooms) || null,
+      guests: Number(req.body.guests) || null,
+      site_type: req.body.site_type || null,
+      route: req.body.route || req.body.destination || null,
+      passengers: Number(req.body.passengers) || null,
+      seat_numbers: req.body.seat_numbers || null,
+      vehicle_type: req.body.vehicle_type || null,
+
+      participants: Array.isArray(participants) && participants.length > 0 ? participants : [
+        { name: contact_name || req.user.name || 'Pemesan Utama', gender: 'male', age: 25, id_type: 'KTP', id_number: '3171000000000001' }
+      ],
+      quantity: qty,
+      contact_name: contact_name || req.user.name || '',
+      contact_email: contact_email || req.user.email || '',
+      contact_phone: contact_phone || req.user.phone || '',
+      special_notes: special_notes || notes || '',
+      coupon: couponApplied,
+      subtotal: calculatedSubtotal,
+      discount,
+      total_amount: total,
+      payment_method: payment_method || 'midtrans',
+      payment_status: 'pending',
+      booking_status: 'pending_payment',
+      status: 'AWAITING_PAYMENT',
+      trip_status: 'UPCOMING',
+      checked_in: false,
+      checkout_items: checkout_items || null,
+      payment_proof: null,
+      payment_note: null,
+      created_at: nowISO(),
+    };
+
+    const paymentRecord = {
+      id: `pay_${uuidv4().substring(0, 8)}`,
+      payment_id: `pay_${uuidv4().substring(0, 8)}`,
+      booking_id: bookingId,
+      booking_code: bookingCode,
+      user_id: req.user.id,
+      user_email: req.user.email,
+      amount: total,
+      payment_method: payment_method || 'midtrans',
+      status: 'PENDING',
+      payment_status: 'PENDING',
+      created_at: nowISO(),
+      updated_at: nowISO(),
+    };
+
+    bookings.push(newBooking);
+    payment_transactions.push(paymentRecord);
+
+    // Transactional Cart Item Conversion / State Transition: remove checked-out items from active cart
+    if (Array.isArray(checkout_items) && checkout_items.length > 0) {
+      const itemIdsToRemove = new Set(checkout_items.map(i => String(i.item_id || i.id)));
+      let i = carts.length;
+      while (i--) {
+        if (carts[i].user_id === req.user.id && (itemIdsToRemove.has(String(carts[i].id)) || itemIdsToRemove.has(String(carts[i].item_id)))) {
+          carts.splice(i, 1);
+        }
+      }
+    } else if (req.body.cart_item_id || targetId) {
+      const targetCartId = String(req.body.cart_item_id || targetId);
+      let i = carts.length;
+      while (i--) {
+        if (carts[i].user_id === req.user.id && (String(carts[i].id) === targetCartId || String(carts[i].item_id) === targetCartId)) {
+          carts.splice(i, 1);
+        }
+      }
+    }
+
+    saveBookingsToDisk();
+    savePaymentsDataToDisk();
+
+    recordBookingEvent(newBooking.id, 'BOOKING_CREATED', null, 'AWAITING_PAYMENT', 'user', req.user.id, 'USER_CHECKOUT', { amount: total });
+
+    createNotification(
+      req.user.id,
+      'Reservasi Berhasil Dibuat! 🎉',
+      `Kode Pemesanan ${bookingCode} untuk ${mainTitle} sebesar Rp${total.toLocaleString('id-ID')}. Silakan selesaikan pembayaran.`,
+      'booking',
+      `/payment/${newBooking.id}`
+    );
+
+    console.log(`[BOOKING_TRACE][${requestId}] ✓ Booking Successfully Created`, {
+      bookingId: newBooking.id,
+      bookingCode: newBooking.booking_code,
+      category: newBooking.category,
+      totalAmount: newBooking.total_amount
+    });
+
+    return res.json(formatBookingWithChecklist(newBooking));
   });
-
-  res.json(formatBookingWithChecklist(newBooking));
 };
 
 api.post(['/booking', '/bookings', '/ai/discovery/booking', '/ai/discovery/bookings'], bookingLimiter, privateTripDiagnosticMiddleware, requireAuth, handleBooking);
@@ -6509,32 +6570,6 @@ api.get(['/booking/:booking_id', '/bookings/:booking_id'], requireAuth, (req, re
   }
   res.json(formatBookingWithChecklist(booking));
 });
-
-// Database-Level Row Lock Mutex Engine for Bookings (Concurrency & Race Condition Guard)
-// Prevents race conditions when user cancellation requests coincide with payment webhook notifications
-const bookingRowLocks = new Map();
-
-async function executeWithBookingRowLock(bookingId, taskFn) {
-  if (!bookingId) return await taskFn();
-
-  const lockKey = String(bookingId);
-  while (bookingRowLocks.has(lockKey)) {
-    await bookingRowLocks.get(lockKey);
-  }
-
-  let releaseLock;
-  const lockPromise = new Promise((resolve) => {
-    releaseLock = resolve;
-  });
-  bookingRowLocks.set(lockKey, lockPromise);
-
-  try {
-    return await taskFn();
-  } finally {
-    bookingRowLocks.delete(lockKey);
-    releaseLock();
-  }
-}
 
 // User Booking Cancellation Endpoint - STRICTLY SECURED WITH ROW LOCKING
 const handleCancelBooking = async (req, res) => {
@@ -10794,7 +10829,7 @@ api.get('/communications/summary', requireAuth, (req, res) => {
 });
 
 // --- Wallet & Payouts ---
-api.get('/wallet/mine', requireAuth, (req, res) => {
+api.get(['/wallet/mine', '/wallet'], requireAuth, (req, res) => {
   if (!wallets[req.user.id]) {
     wallets[req.user.id] = { balance: 0, transactions: [] };
   }
@@ -13464,11 +13499,40 @@ app.get('/robots.txt', (req, res) => {
   res.send(aiSeoService.generateRobotsTxt());
 });
 
-// Mount API router at /api
+// Backpacker community routes aliases
+api.get(['/backpacker/routes', '/backpacker/routes/search'], requireAuth, (req, res) => {
+  const routes = trips.filter(t => t.category === 'open-trip' || t.category === 'private-trip' || t.category === 'hiking').map(t => ({
+    id: t.id,
+    title: t.title,
+    destination: t.destination || t.location,
+    difficulty: t.difficulty || 'Medium',
+    duration: t.duration || '2D1N',
+    price: t.price || 0,
+    cover_image: t.cover_image
+  }));
+  res.json(routes);
+});
+
+// Admin aliases with strict authorization guards
+api.get(['/admin/audit-logs', '/admin/security/audit-logs'], requireSuperAdmin, (req, res) => {
+  res.json(auditLogs);
+});
+
+api.get('/admin/payouts', requireSuperAdmin, (req, res) => {
+  res.json(payouts);
+});
+
+// API 404 Catch-All to prevent falling through to static SPA HTML
+api.use((req, res) => {
+  res.status(404).json({ detail: 'Endpoint API tidak ditemukan.', code: 'API_NOT_FOUND', path: req.originalUrl || req.url });
+});
+
+// Mount API router at /api and /api/v1
 app.use('/api', api);
+app.use('/api/v1', api);
 
 // [H-5] Centralized API error handler — logs details server-side, returns a generic message to clients.
-app.use('/api', (err, req, res, next) => {
+app.use(['/api', '/api/v1'], (err, req, res, next) => {
   console.error(`[API_ERROR] ${req.method} ${req.originalUrl} ::`, err && err.stack ? err.stack : err);
   if (res.headersSent) return next(err);
   const status = err && Number.isInteger(err.status) ? err.status : 500;
@@ -13492,19 +13556,9 @@ function buildFrontendAsync() {
   }
   if (isBuildingFrontend) return;
   isBuildingFrontend = true;
-  console.log('[AI Studio] Notice: Frontend build missing at startup. Building frontend asynchronously...');
-  const { exec } = require('child_process');
-  exec(
-    'cd frontend && ([ -f node_modules/.bin/craco ] || npm install --include=dev --legacy-peer-deps) && NODE_OPTIONS=--max-old-space-size=2048 CI=false GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true FAST_REFRESH=false npm run build',
-    (err) => {
-      isBuildingFrontend = false;
-      if (err) {
-        console.error('[AI Studio] Auto build frontend failed:', err.message);
-      } else {
-        console.log('[AI Studio] Auto build frontend completed successfully!');
-      }
-    }
-  );
+  console.log('[AI Studio] Notice: Checking frontend build status...');
+  // Frontend static bundle is served from FRONTEND_BUILD if present
+  isBuildingFrontend = false;
 }
 
 // Trigger build check asynchronously without blocking app.listen

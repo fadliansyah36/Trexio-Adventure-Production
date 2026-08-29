@@ -8,10 +8,10 @@ const SUPABASE_URL = (
   process.env.SUPABASE_URL ||
   process.env.NEXT_PUBLIC_SUPABASE_URL ||
   process.env.REACT_APP_SUPABASE_URL ||
-  'https://fndxxiqojmhiepidrxio.supabase.co'
+  ''
 ).replace(/\/+$/, '');
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZuZHh4aXFvam1oaWVwaWRyeGlvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NzY3NjYzNCwiZXhwIjoyMTAzMjUyNjM0fQ.Ab-a4xfbg2Jg2jf0B8gk2e6Xf12576CCor4pLr9CFq0';
-const ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZuZHh4aXFvam1oaWVwaWRyeGlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NzY2MzQsImV4cCI6MjEwMzI1MjYzNH0.GTz71A-aoCObbj5IgUqWC9pu6wo5jDbr82cQYrggHeo';
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 
 const supabaseAuthEnabled = Boolean(SUPABASE_URL && SERVICE_KEY && ANON_KEY);
 

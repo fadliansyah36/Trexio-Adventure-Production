@@ -71,7 +71,7 @@
   },
   "scripts": {
     "start": "craco start",
-    "build": "craco build",
+    "build": "CI=false GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true FAST_REFRESH=false craco build",
     "test": "craco test"
   },
   "browserslist": {
