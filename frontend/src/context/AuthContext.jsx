@@ -23,34 +23,61 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     (async () => {
-      // 1. Process Supabase OAuth redirect result if any
-      try {
-        if (supabase) {
-          const { data: sessionData } = await supabase.auth.getSession();
-          if (sessionData?.session?.user) {
-            localStorage.removeItem("trexio-has-logged-out");
-            const sbUser = sessionData.session.user;
-            const { data } = await api.post("/auth/supabase-session", {
-              access_token: sessionData.session.access_token,
-              supabase_uid: sbUser.id,
-              email: sbUser.email,
-              name: sbUser.user_metadata?.full_name || sbUser.user_metadata?.name || sbUser.email?.split("@")[0],
-            });
-            const token = data?.access_token || data?.token;
-            if (token) {
-              localStorage.setItem("trexio-token", token);
-            }
-            setUser(data?.user || data);
-            toast.success("Berhasil masuk dengan Akun Google / Supabase!", {
-              description: `Akun: ${sbUser.email}`,
-            });
+      const isExplicitLoggedOut = localStorage.getItem("trexio-has-logged-out") === "true";
+      const hasOAuthHash = window.location.hash && (window.location.hash.includes("access_token") || window.location.hash.includes("code="));
+      const hasOAuthQuery = window.location.search && (window.location.search.includes("code=") || window.location.search.includes("access_token"));
+      const isReturningFromOAuth = hasOAuthHash || hasOAuthQuery;
+
+      // 1. If user previously explicitly logged out and is not returning from a fresh OAuth click, purge any dormant Supabase sessions
+      if (isExplicitLoggedOut && !isReturningFromOAuth) {
+        try {
+          if (supabase) {
+            await supabase.auth.signOut({ scope: "global" });
           }
-        }
-      } catch (redirectErr) {
-        console.warn("[Auth] Supabase OAuth redirect error:", redirectErr);
+          // Clear any leftover tokens
+          localStorage.removeItem("trexio-token");
+        } catch (_) {}
       }
 
-      await refresh();
+      // 2. Process Supabase OAuth redirect result ONLY when explicitly returning from OAuth
+      if (isReturningFromOAuth) {
+        try {
+          if (supabase) {
+            const { data: sessionData } = await supabase.auth.getSession();
+            if (sessionData?.session?.user) {
+              localStorage.removeItem("trexio-has-logged-out");
+              const sbUser = sessionData.session.user;
+              const { data } = await api.post("/auth/supabase-session", {
+                access_token: sessionData.session.access_token,
+                supabase_uid: sbUser.id,
+                email: sbUser.email,
+                name: sbUser.user_metadata?.full_name || sbUser.user_metadata?.name || sbUser.email?.split("@")[0],
+              });
+              const token = data?.access_token || data?.token;
+              if (token) {
+                localStorage.setItem("trexio-token", token);
+              }
+              setUser(data?.user || data);
+              toast.success("Berhasil masuk dengan Akun Google / Supabase!", {
+                description: `Akun: ${sbUser.email}`,
+              });
+              // Clean up OAuth fragment from URL
+              if (window.history.replaceState) {
+                window.history.replaceState(null, document.title, window.location.pathname);
+              }
+            }
+          }
+        } catch (redirectErr) {
+          console.warn("[Auth] Supabase OAuth redirect error:", redirectErr);
+        }
+      }
+
+      // 3. Verify current authenticated user via backend /auth/me if not explicitly logged out
+      if (!isExplicitLoggedOut) {
+        await refresh();
+      } else {
+        setUser(null);
+      }
 
       // Check for logout session notification
       const logoutMsg = sessionStorage.getItem("trexio-logout-msg");
@@ -141,14 +168,36 @@ export function AuthProvider({ children }) {
     } catch {
       /* ignore */
     }
-    localStorage.removeItem("trexio-token");
-    localStorage.removeItem("trexio-wishlist");
-    localStorage.removeItem("trexio-favorite-partners");
-    localStorage.removeItem("trexio-recently-viewed");
-    sessionStorage.removeItem("trexio-wishlist");
-    sessionStorage.removeItem("trexio-favorite-partners");
-    localStorage.setItem("trexio-has-logged-out", "true");
-    sessionStorage.setItem("trexio-logout-msg", "Sesi telah berakhir, Anda telah keluar dari akun.");
+    try {
+      // Clear all potential auth keys in localStorage & sessionStorage
+      localStorage.removeItem("trexio-token");
+      localStorage.removeItem("trexio-wishlist");
+      localStorage.removeItem("trexio-favorite-partners");
+      localStorage.removeItem("trexio-recently-viewed");
+      sessionStorage.removeItem("trexio-wishlist");
+      sessionStorage.removeItem("trexio-favorite-partners");
+      sessionStorage.removeItem("trexio-token");
+
+      // Purge any Supabase stored sessions
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith("sb-") || key.includes("supabase.auth"))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+
+      // Expire client-side cookies directly
+      document.cookie = "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "imp_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
+      localStorage.setItem("trexio-has-logged-out", "true");
+      sessionStorage.setItem("trexio-logout-msg", "Sesi telah berakhir, Anda telah keluar dari akun.");
+    } catch (e) {
+      console.warn("[Auth] Client cleanup warning:", e);
+    }
     setUser(null);
     window.location.href = "/";
   }

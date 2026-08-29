@@ -57,46 +57,6 @@ import {
   CreditCard,
 } from "@phosphor-icons/react";
 
-// Default Promotional Banners
-const DEFAULT_BANNERS = [
-  {
-    id: "b1",
-    title: "Open Trip Bromo & Madakaripura 3D2N",
-    subtitle: "Nikmati sunrise terbaik Bromo dengan jeep 4x4 terpercaya",
-    tag: "PROMO DISKON 20%",
-    bg: "https://images.pexels.com/photos/38262907/pexels-photo-38262907.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
-    link: "/explore?q=Bromo",
-    badgeBg: "bg-amber-500 text-slate-950",
-  },
-  {
-    id: "b2",
-    title: "Pemandu Gunung APGI & BNSP",
-    subtitle: "Jamin keselamatan pendakianmu dengan guide profesional terlisensi",
-    tag: "SAFETY GUARANTEED",
-    bg: "https://images.pexels.com/photos/1687514/pexels-photo-1687514.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
-    link: "/category/guide",
-    badgeBg: "bg-emerald-500 text-white",
-  },
-  {
-    id: "b3",
-    title: "Sewa Alat Outdoor Steril & Siap Pakai",
-    subtitle: "Tenda dome, carrier, sleeping bag, & cooking set gratis antar basecamp",
-    tag: "OUTDOOR RENTAL",
-    bg: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&w=1200&q=80",
-    link: "/rental",
-    badgeBg: "bg-blue-500 text-white",
-  },
-  {
-    id: "b4",
-    title: "Bergabung Sebagai Mitra Trexio",
-    subtitle: "Jangkau ribuan pendaki & traveler di seluruh Indonesia. Komisi 0%!",
-    tag: "MITRA ORGANIZER",
-    bg: "https://images.unsplash.com/photo-1533240332313-0db49b459ad6?auto=format&fit=crop&w=1200&q=80",
-    link: "/partner/register",
-    badgeBg: "bg-purple-700 text-white",
-  },
-];
-
 // Trexio Marketplace Categories
 const CATEGORIES_12 = [
   { name: "Trexio Backpacker", icon: Compass, link: "/backpacker", desc: "Rute pintar, patungan, & nebeng", slug: "backpacker" },
@@ -320,11 +280,13 @@ export default function Home() {
 
   // Auto-scroll Banners
   useEffect(() => {
+    const bannersCount = homepageConfig?.banners?.length || 0;
+    if (bannersCount <= 1) return;
     const timer = setInterval(() => {
-      setCurrentBannerIndex((prev) => (prev + 1) % DEFAULT_BANNERS.length);
+      setCurrentBannerIndex((prev) => (prev + 1) % bannersCount);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [homepageConfig?.banners]);
 
   // Check PWA Standalone status
   useEffect(() => {
@@ -593,7 +555,8 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-4 space-y-6">
         {/* 2. PROMOTIONAL BANNER CAROUSEL */}
         {(() => {
-          const activeBanners = Array.isArray(homepageConfig?.banners) && homepageConfig.banners.length > 0 ? homepageConfig.banners : DEFAULT_BANNERS;
+          const activeBanners = Array.isArray(homepageConfig?.banners) ? homepageConfig.banners : [];
+          if (activeBanners.length === 0) return null;
           return (
             <section className="relative rounded-2xl md:rounded-3xl overflow-hidden shadow-lg border border-border/80 group">
               <div className="relative aspect-[21/9] sm:aspect-[24/9] md:aspect-[32/10] overflow-hidden bg-slate-900">

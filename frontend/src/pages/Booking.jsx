@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useEffect, useState, useMemo } from "react";
+import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { api, formatRupiah } from "@/lib/api";
+import { resolveTripDates, formatDateIndo } from "@/lib/tripDates";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,7 @@ import {
   ShieldCheck,
   CheckCircle,
   CalendarBlank,
+  Calendar,
   MapPin,
   User,
   Users,
@@ -38,11 +40,13 @@ import {
 
 export default function Booking() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const nav = useNavigate();
   const [trip, setTrip] = useState(null);
   const [step, setStep] = useState(1); // 1: date+qty, 2: data, 3: review
   const [selectedDate, setSelectedDate] = useState("");
+  const [isCustomDate, setIsCustomDate] = useState(false);
   const [meetingPoint, setMeetingPoint] = useState("");
   const [qty, setQty] = useState(1);
   const [contact, setContact] = useState({
@@ -56,19 +60,19 @@ export default function Booking() {
   const [notes, setNotes] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
+  // Resolved list of departure batches
+  const availableBatches = useMemo(() => {
+    return resolveTripDates(trip);
+  }, [trip]);
+
   useEffect(() => {
     api.get(`/trips/${id}`).then((r) => {
       setTrip(r.data);
-      const rawDates = (Array.isArray(r.data.available_dates) && r.data.available_dates.length > 0)
-        ? r.data.available_dates
-        : (Array.isArray(r.data.departure_dates)
-        ? r.data.departure_dates
-        : typeof r.data.departure_dates === "string"
-        ? r.data.departure_dates.split(",").map((s) => s.trim()).filter(Boolean)
-        : []);
-      const firstDateObj = rawDates[0];
-      const firstDateStr = typeof firstDateObj === "object" ? (firstDateObj?.date || "") : String(firstDateObj || "");
-      setSelectedDate(firstDateStr);
+      const batches = resolveTripDates(r.data);
+      const queryDate = searchParams.get("date");
+      const defaultDate = queryDate || batches.find(b => b.status !== "full")?.date || batches[0]?.date || new Date().toISOString().split("T")[0];
+      setSelectedDate(defaultDate);
+
       const rawPoints = Array.isArray(r.data.meeting_points)
         ? r.data.meeting_points
         : typeof r.data.meeting_points === "string"
@@ -85,7 +89,7 @@ export default function Booking() {
         nav("/explore");
       });
     });
-  }, [id]);
+  }, [id, searchParams]);
 
   useEffect(() => {
     setParticipants((prev) => {
@@ -207,22 +211,24 @@ export default function Booking() {
             {step === 1 && (
               <div className="bg-white border border-border rounded-md p-6 md:p-8 space-y-6">
                 <div>
-                  <Label className="trx-overline text-muted-foreground">
-                    Pilih Slot / Batch Tanggal Keberangkatan
-                  </Label>
+                  <div className="flex items-center justify-between">
+                    <Label className="trx-overline text-muted-foreground">
+                      Pilih Slot / Batch Tanggal Keberangkatan
+                    </Label>
+                    {selectedDate && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                        <CheckCircle size={12} weight="fill" className="text-emerald-600" />
+                        <span>{formatDateIndo(selectedDate)}</span>
+                      </span>
+                    )}
+                  </div>
+                  
                   <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-                    {(Array.isArray(trip.available_dates) && trip.available_dates.length > 0
-                      ? trip.available_dates
-                      : Array.isArray(trip.departure_dates)
-                      ? trip.departure_dates
-                      : typeof trip.departure_dates === "string"
-                      ? trip.departure_dates.split(",").map((s) => s.trim()).filter(Boolean)
-                      : []
-                    ).map((d, idx) => {
-                      const dateVal = typeof d === "object" ? (d.date || "") : String(d);
-                      const label = typeof d === "object" && d.label ? d.label : `Batch ${idx + 1}`;
-                      const isFull = typeof d === "object" && d.status === "full";
-                      const seats = typeof d === "object" && d.seats_left !== undefined ? d.seats_left : null;
+                    {availableBatches.map((d, idx) => {
+                      const dateVal = d.date;
+                      const label = d.label;
+                      const isFull = d.status === "full" || d.seats_left === 0;
+                      const seats = d.seats_left !== undefined ? d.seats_left : null;
                       const isSelected = selectedDate === dateVal;
 
                       return (
@@ -231,29 +237,58 @@ export default function Booking() {
                           type="button"
                           disabled={isFull}
                           data-testid={`date-${dateVal}`}
-                          onClick={() => setSelectedDate(dateVal)}
+                          onClick={() => {
+                            setSelectedDate(dateVal);
+                            setIsCustomDate(false);
+                          }}
                           className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
                             isSelected
-                              ? "bg-emerald-600 text-white border-emerald-600 font-bold shadow-xs"
+                              ? "bg-emerald-600 text-white border-emerald-600 font-bold shadow-sm ring-2 ring-emerald-600/30"
                               : isFull
                               ? "bg-slate-100 dark:bg-slate-900 border-border text-muted-foreground opacity-50 cursor-not-allowed"
                               : "border-border bg-card hover:border-emerald-500 hover:bg-emerald-500/5 text-foreground"
                           }`}
                         >
-                          <div className="font-extrabold text-xs truncate">
-                            {label}
+                          <div className="font-extrabold text-xs truncate flex items-center justify-between">
+                            <span>{label}</span>
+                            {isSelected && <CheckCircle size={14} weight="fill" className="text-white shrink-0" />}
                           </div>
-                          <div className="text-[11px] opacity-90 mt-1 flex items-center justify-between">
+                          <div className="text-[11px] opacity-90 mt-1.5 flex items-center justify-between">
                             <span>📅 {dateVal}</span>
                             {isFull ? (
                               <span className="text-red-500 font-extrabold text-[10px]">FULL</span>
                             ) : seats !== null ? (
-                              <span className="font-semibold text-[10px]">{seats} seat</span>
+                              <span className={`text-[10px] font-semibold ${isSelected ? "text-emerald-100" : "text-muted-foreground"}`}>
+                                {seats} seat
+                              </span>
                             ) : null}
                           </div>
                         </button>
                       );
                     })}
+                  </div>
+
+                  {/* Custom Date Picker Fallback / Alternative */}
+                  <div className="mt-3 pt-3 border-t border-border/60">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                        <Calendar size={14} className="text-emerald-600" />
+                        <span>Ingin jadwal keberangkatan lain?</span>
+                      </span>
+                      <div className="inline-flex items-center gap-2">
+                        <Input
+                          type="date"
+                          id="custom-departure-date"
+                          min={new Date().toISOString().split("T")[0]}
+                          value={selectedDate}
+                          onChange={(e) => {
+                            setSelectedDate(e.target.value);
+                            setIsCustomDate(true);
+                          }}
+                          className="h-8 text-xs max-w-[160px] bg-background border-border focus:border-emerald-500"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div>

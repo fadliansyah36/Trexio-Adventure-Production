@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useParams, Link, useSearchParams } from "react-router-dom";
+import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { api, formatRupiah, formatApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -16,18 +16,23 @@ import {
   Sparkle,
   Ticket,
   Storefront,
+  ArrowRight,
+  ArrowSquareOut,
+  Copy,
+  Info,
 } from "@phosphor-icons/react";
 
 export default function PaymentConfirmation() {
   const { id } = useParams();
+  const nav = useNavigate();
   const [searchParams] = useSearchParams();
   const [booking, setBooking] = useState(null);
   const [midtransConfig, setMidtransConfig] = useState(null);
   const [snapLoading, setSnapLoading] = useState(false);
   const [snapReady, setSnapReady] = useState(false);
-  const [simulating, setSimulating] = useState(false);
   const [selectedChannel, setSelectedChannel] = useState("Virtual Account BCA");
   const [pollingActive, setPollingActive] = useState(false);
+  const [redirectCountdown, setRedirectCountdown] = useState(null);
   const pollTimerRef = useRef(null);
 
   const load = useCallback(async () => {
@@ -74,6 +79,31 @@ export default function PaymentConfirmation() {
     }
   }, [id, load, searchParams]);
 
+  // Handle auto redirect if booking is already paid or becomes paid
+  useEffect(() => {
+    const isAlreadyPaid =
+      booking &&
+      (booking.payment_status === "verified" ||
+        booking.payment_status === "paid" ||
+        booking.booking_status === "confirmed");
+
+    if (isAlreadyPaid && redirectCountdown === null) {
+      setRedirectCountdown(3);
+      const interval = setInterval(() => {
+        setRedirectCountdown((prev) => {
+          if (prev === null || prev <= 1) {
+            clearInterval(interval);
+            nav(`/my-bookings?payment_success=true&booking_id=${id}`);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [booking, redirectCountdown, id, nav]);
+
+  // Background polling for payment status updates
   useEffect(() => {
     if (booking && (booking.payment_status === "pending" || booking.payment_status === "challenge" || pollingActive)) {
       pollTimerRef.current = setInterval(async () => {
@@ -81,23 +111,27 @@ export default function PaymentConfirmation() {
           const { data } = await api.get(`/payments/midtrans/status/${id}`);
           if (data && data.payment_status !== booking.payment_status) {
             setBooking(data);
-            if (data.payment_status === "verified") {
-              toast.success("Pembayaran Sukses Terverifikasi! 🎉");
+            if (data.payment_status === "verified" || data.payment_status === "paid") {
+              toast.success("Pembayaran Sukses Terverifikasi! Mengalihkan ke Halaman My Bookings...");
               setPollingActive(false);
-              clearInterval(pollTimerRef.current);
+              if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+              setTimeout(() => {
+                nav(`/my-bookings?payment_success=true&booking_id=${id}`);
+              }, 1200);
             }
           }
         } catch {
           // Silent catch during background polling
         }
-      }, 4000);
+      }, 3500);
     }
 
     return () => {
       if (pollTimerRef.current) clearInterval(pollTimerRef.current);
     };
-  }, [id, booking, pollingActive]);
+  }, [id, booking, pollingActive, nav]);
 
+  // Load Midtrans Snap SDK script dynamically
   useEffect(() => {
     if (!midtransConfig?.enabled) return;
     const src = midtransConfig.is_production
@@ -132,29 +166,32 @@ export default function PaymentConfirmation() {
         payment_channel: selectedChannel,
       });
 
-      if (window.snap && data.token && !data.is_simulated) {
+      if (window.snap && data.token) {
         window.snap.pay(data.token, {
           onSuccess: async () => {
-            toast.success("Pembayaran melalui Trexio Dijamin Aman - Berhasil!");
-            refreshStatus();
+            toast.success("Pembayaran melalui Midtrans Berhasil! Mengalihkan ke E-Tiket...");
+            await refreshStatus();
+            setTimeout(() => {
+              nav(`/my-bookings?payment_success=true&booking_id=${id}`);
+            }, 1000);
           },
           onPending: async () => {
-            toast.info("Pembayaran dikirim, menunggu konfirmasi gateway Midtrans");
-            refreshStatus();
+            toast.info("Pembayaran menunggu verifikasi/penyelesaian di gateway Midtrans");
+            await refreshStatus();
           },
           onError: () => {
             toast.error("Pembayaran gagal atau dibatalkan");
             refreshStatus();
           },
-          onClose: () => {
+          onClose: async () => {
             toast.info("Jendela pembayaran ditutup");
-            refreshStatus();
+            await refreshStatus();
           },
         });
         return;
       }
 
-      await simulatePayment(selectedChannel);
+      toast.error("Gagal membuka jendela pembayaran Midtrans. Coba muat ulang halaman.");
     } catch (e) {
       toast.error(formatApiError(e.response?.data?.detail) || "Gagal memproses token pembayaran");
     } finally {
@@ -162,27 +199,15 @@ export default function PaymentConfirmation() {
     }
   }
 
-  async function simulatePayment(channelName) {
-    setSimulating(true);
-    try {
-      await api.post(`/payments/midtrans/simulate-paid/${id}`, {
-        payment_channel: channelName || selectedChannel,
-      });
-      toast.success("Pembayaran melalui Trexio Dijamin Aman - Berhasil Terkonfirmasi!");
-      await refreshStatus();
-    } catch (e) {
-      toast.error(formatApiError(e.response?.data?.detail) || "Gagal memproses verifikasi pembayaran");
-    } finally {
-      setSimulating(false);
-    }
-  }
-
   async function refreshStatus() {
     try {
       const { data } = await api.get(`/payments/midtrans/status/${id}`);
       setBooking(data);
-      if (data.payment_status === "verified") {
-        toast.success("Status pembayaran: TERVERIFIKASI SUKSES");
+      if (data.payment_status === "verified" || data.payment_status === "paid") {
+        toast.success("Status pembayaran: TERVERIFIKASI SUKSES! Mengalihkan ke My Bookings...");
+        setTimeout(() => {
+          nav(`/my-bookings?payment_success=true&booking_id=${id}`);
+        }, 1000);
       } else if (data.payment_status === "pending") {
         toast.info("Status pembayaran: MENUNGGU PEMBAYARAN");
       } else if (data.payment_status === "expired" || data.payment_status === "cancelled") {
@@ -194,6 +219,11 @@ export default function PaymentConfirmation() {
     }
   }
 
+  const copyToClipboard = (text, label) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`${label} berhasil disalin ke clipboard!`);
+  };
+
   if (!booking) {
     return (
       <div className="trx-container py-24 text-center">
@@ -203,7 +233,10 @@ export default function PaymentConfirmation() {
     );
   }
 
-  const isPaid = booking.payment_status === "verified" || booking.payment_status === "paid" || booking.booking_status === "confirmed";
+  const isPaid =
+    booking.payment_status === "verified" ||
+    booking.payment_status === "paid" ||
+    booking.booking_status === "confirmed";
   const isExpired =
     booking.payment_status === "expired" ||
     booking.payment_status === "cancelled" ||
@@ -211,6 +244,8 @@ export default function PaymentConfirmation() {
     (booking.booking_status || "").toLowerCase() === "cancelled" ||
     (booking.trip_status || "").toUpperCase() === "CANCELLED" ||
     (booking.status || "").toUpperCase() === "CANCELLED";
+
+  const isSandbox = !midtransConfig?.is_production;
 
   const channels = [
     { id: "bca_va", name: "Virtual Account BCA", type: "Bank VA", icon: Bank },
@@ -231,8 +266,13 @@ export default function PaymentConfirmation() {
       <div className="trx-container max-w-5xl">
         <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
           <div>
-            <div className="trx-overline text-emerald-600 font-bold uppercase tracking-wider text-xs">
-              Portal Pembayaran Resmi · Midtrans Gateway
+            <div className="trx-overline text-emerald-600 font-bold uppercase tracking-wider text-xs flex items-center gap-1.5">
+              <ShieldCheck size={16} weight="fill" /> Portal Pembayaran Resmi · Midtrans Gateway
+              {isSandbox && (
+                <span className="bg-amber-500/20 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded text-[10px] font-black uppercase">
+                  Sandbox Mode
+                </span>
+              )}
             </div>
             <h1 className="text-2xl font-black tracking-tight text-foreground">
               Konfirmasi & Pembayaran
@@ -272,6 +312,32 @@ export default function PaymentConfirmation() {
             </Button>
           </div>
         </div>
+
+        {/* Auto redirect banner when paid */}
+        {isPaid && (
+          <div className="mb-6 p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in duration-300">
+            <div className="flex items-center gap-3 text-center sm:text-left">
+              <div className="h-10 w-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
+                <CheckCircle size={24} weight="fill" />
+              </div>
+              <div>
+                <h4 className="font-bold text-emerald-800 dark:text-emerald-300 text-sm">
+                  Pembayaran Sukses Terverifikasi! 🎉
+                </h4>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  E-tiket & kode booking telah diterbitkan. Mengalihkan ke Halaman My Bookings{" "}
+                  {redirectCountdown !== null ? `(${redirectCountdown} detik)...` : "..."}
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={() => nav(`/my-bookings?payment_success=true&booking_id=${id}`)}
+              className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold px-5 h-9 rounded-xl flex items-center gap-1.5 shrink-0"
+            >
+              Buka E-Tiket Saya Sekarang <ArrowRight size={14} weight="bold" />
+            </Button>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
@@ -354,7 +420,7 @@ export default function PaymentConfirmation() {
                   <div className="flex items-center gap-2">
                     <ShieldCheck size={24} className="text-emerald-500" />
                     <div>
-                      <h3 className="font-bold text-base">Pilih Method Pembayaran Midtrans</h3>
+                      <h3 className="font-bold text-base">Pilih Metode Pembayaran Midtrans</h3>
                       <p className="text-xs text-muted-foreground">
                         Saluran pembayaran terkonfirmasi otomatis tanpa upload struk
                       </p>
@@ -425,10 +491,10 @@ export default function PaymentConfirmation() {
                   <Button
                     data-testid="midtrans-pay-btn"
                     onClick={payWithMidtrans}
-                    disabled={snapLoading || simulating}
+                    disabled={snapLoading}
                     className="w-full h-12 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm rounded-xl shadow-md flex items-center justify-center gap-2"
                   >
-                    {snapLoading || simulating ? (
+                    {snapLoading ? (
                       <>
                         <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                         Menghubungkan Midtrans Gateway...
@@ -444,6 +510,67 @@ export default function PaymentConfirmation() {
                     🔒 Transaksi diproses melalui Midtrans Payment Gateway secara real-time. Dikonfirmasi otomatis via server notification callback.
                   </p>
                 </div>
+
+                {/* Sandbox Simulator Helper Panel */}
+                {isSandbox && (
+                  <div className="mt-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-3 text-xs">
+                    <div className="flex items-center gap-2 font-bold text-amber-800 dark:text-amber-300">
+                      <Info size={16} weight="bold" />
+                      <span>Panduan Testing Midtrans Sandbox</span>
+                    </div>
+                    <p className="text-muted-foreground text-[11px] leading-relaxed">
+                      Pada mode <strong>Sandbox</strong>, pembayaran Virtual Account (BCA/Mandiri/BNI/BRI/Permata) disimulasikan melalui Simulator Resmi Midtrans:
+                    </p>
+                    <ol className="list-decimal list-inside space-y-1 text-[11px] text-foreground">
+                      <li>Buka popup <strong>"Bayar Sekarang"</strong> dan salin <strong>Nomor Virtual Account</strong> yang muncul.</li>
+                      <li>Buka tautan <strong>Simulator Midtrans</strong> di bawah ini, tempel nomor VA, lalu klik <strong>Inquire & Pay</strong>.</li>
+                      <li>Halaman Trexio akan mendeteksi status settlement secara real-time dan <strong>otomatis mengalihkan ke My Bookings & E-Tiket</strong>.</li>
+                    </ol>
+
+                    <div className="pt-2 border-t border-amber-500/20 flex flex-wrap gap-2">
+                      <a
+                        href="https://simulator.sandbox.midtrans.com/bca/va/index"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-900 dark:text-amber-200 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-colors"
+                      >
+                        <Bank size={13} /> Simulator BCA VA <ArrowSquareOut size={12} />
+                      </a>
+                      <a
+                        href="https://simulator.sandbox.midtrans.com/mandiri/bill/index"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-900 dark:text-amber-200 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-colors"
+                      >
+                        <Bank size={13} /> Simulator Mandiri <ArrowSquareOut size={12} />
+                      </a>
+                      <a
+                        href="https://simulator.sandbox.midtrans.com/bni/va/index"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-900 dark:text-amber-200 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-colors"
+                      >
+                        <Bank size={13} /> Simulator BNI VA <ArrowSquareOut size={12} />
+                      </a>
+                      <a
+                        href="https://simulator.sandbox.midtrans.com/bri/va/index"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-900 dark:text-amber-200 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-colors"
+                      >
+                        <Bank size={13} /> Simulator BRI VA <ArrowSquareOut size={12} />
+                      </a>
+                      <a
+                        href="https://simulator.sandbox.midtrans.com/qris/index"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-900 dark:text-amber-200 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-colors"
+                      >
+                        <QrCode size={13} /> Simulator QRIS <ArrowSquareOut size={12} />
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

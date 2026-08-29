@@ -294,6 +294,14 @@ function App() {
                 }
               />
               <Route
+                path="/payment-confirmation/:id"
+                element={
+                  <ProtectedRoute>
+                    <PaymentConfirmation />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/wishlist"
                 element={<Wishlist />}
               />

@@ -16,7 +16,7 @@ const supabaseAuth = require('./src/auth/supabaseAuth');
 
 const app = express();
 app.set('trust proxy', 1);
-const PORT = parseInt(process.env.PORT || '3000', 10);
+const PORT = 3000;
 
 // [C-4] JWT secret from environment with safe fallback in dev
 let JWT_SECRET = process.env.JWT_SECRET || 'd8ab311e-c809-45d4-8139-ecddbdc5fa0c';
@@ -709,100 +709,6 @@ function createNotification(user_id, title, message, type = 'info', link = '', c
   };
   notifications.push(notif);
   return notif;
-}
-
-function seedDefaultUserNotifications(userId) {
-  const userNotifs = notifications.filter(n => n.user_id === userId);
-  if (userNotifs.length < 8) {
-    const seedItems = [
-      {
-        title: 'Booking E-Tiket & SIMAKSI Confirmed!',
-        message: 'SIMAKSI & e-Tiket Open Trip Sunrise Bromo & Semeru Anda telah TERVERIFIKASI resmi. Cek e-voucher & QR Code.',
-        type: 'booking',
-        category: 'booking',
-        link: '/my-bookings',
-        created_at: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-      },
-      {
-        title: 'Pembayaran Berhasil Terverifikasi',
-        message: 'Pembayaran Rp750.000 via Midtrans QRIS telah dikonfirmasi oleh sistem. E-Voucher diterbitkan.',
-        type: 'payment',
-        category: 'payment',
-        link: '/transactions',
-        created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-      },
-      {
-        title: 'Matching Terbimbing: Candidate Partner Ditemukan!',
-        message: 'Super Admin & AI Engine telah menyocokkan kandidat pendaki kawan trip untuk perjalanan Gunung Bromo Anda. Tinjau kriteria kandidat sekarang.',
-        type: 'guided_match',
-        category: 'matching',
-        link: '/backpacker?tab=assistance',
-        created_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-      },
-      {
-        title: 'Share Your Ride: Undangan Nebeng Baru',
-        message: 'Pendaki Farhan mengirim permintaan bergabung pada rombongan Tebengan Jip Bromo dari Stasiun Malang.',
-        type: 'shared_ride',
-        category: 'backpacker',
-        link: '/backpacker?tab=ride',
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 1.2).toISOString(),
-      },
-      {
-        title: 'Split Your Cost: Rincian Bagi Biaya Logistik',
-        message: 'Tagihan patungan Tenda & Porter Rinjani sebesar Rp125.000 telah dibuat oleh ketua kelompok.',
-        type: 'split_cost',
-        category: 'backpacker',
-        link: '/backpacker?tab=cost',
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 2.5).toISOString(),
-      },
-      {
-        title: 'Pesan Baru dari Mitra Malang Outdoor Rental',
-        message: 'Giri Outdoor: "Halo Kak! Peralatan Tenda Dome 4P & Carrier 60L siap di-pickup di basecamp jam 08.00."',
-        type: 'partner_chat',
-        category: 'chat',
-        link: '/messages?tab=chat',
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
-      },
-      {
-        title: 'Trexio News: Update Kuota SIMAKSI Gede Pangrango & Rinjani',
-        message: 'Balai Taman Nasional resmi merilis kuota pendakian online musim ini. Simak SOP pendaftaran & syarat kesehatan terbaru.',
-        type: 'news',
-        category: 'news',
-        link: '/messages?tab=news',
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
-      },
-      {
-        title: 'Pengumuman Resmi: Weather Alert BMKG & Zero Waste SOP',
-        message: 'BMKG merilis imbauan cuaca ekstrem Jawa Tengah. Wajib membawa raincoat & trash bag pribadi.',
-        type: 'announcement',
-        category: 'info',
-        link: '/messages?tab=info',
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-      },
-      {
-        title: 'Verifikasi Identitas (KYC) Berhasil',
-        message: 'Profil pendaki Anda telah mendapat lencana "Verified Trekker" dari Super Admin Trexio.',
-        type: 'verification',
-        category: 'security',
-        link: '/profile',
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-      }
-    ];
-
-    seedItems.forEach(item => {
-      notifications.push({
-        id: `notif_${uuidv4().substring(0, 8)}`,
-        user_id: userId,
-        title: item.title,
-        message: item.message,
-        type: item.type,
-        category: item.category,
-        link: item.link,
-        read: false,
-        created_at: item.created_at,
-      });
-    });
-  }
 }
 
 // ==========================================
@@ -2576,10 +2482,23 @@ api.post('/auth/2fa/disable', (req, res) => {
   res.json({ ok: true, message: '2FA berhasil dinonaktifkan.' });
 });
 
-api.post('/auth/logout', (req, res) => {
-  res.clearCookie('access_token', { path: '/' });
-  res.clearCookie('refresh_token', { path: '/' });
-  res.json({ ok: true });
+api.all('/auth/logout', (req, res) => {
+  const cookieOpts = {
+    path: '/',
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    expires: new Date(0),
+    maxAge: 0,
+  };
+  res.clearCookie('access_token', cookieOpts);
+  res.clearCookie('refresh_token', cookieOpts);
+  res.clearCookie('imp_token', cookieOpts);
+  res.clearCookie('_csrf', cookieOpts);
+  res.cookie('access_token', '', cookieOpts);
+  res.cookie('refresh_token', '', cookieOpts);
+  res.cookie('imp_token', '', cookieOpts);
+  res.json({ ok: true, message: 'Berhasil keluar.' });
 });
 
 api.get('/auth/me', (req, res) => {
@@ -3130,28 +3049,29 @@ api.get(['/users/me/qr', '/profile/qr'], requireAuth, async (req, res) => {
   const userBookings = bookings.filter(b => b.user_id === u.id);
   const activeBooking = userBookings.find(b => (b.payment_status === 'verified' || b.payment_status === 'paid' || b.booking_status === 'confirmed') && !['cancelled', 'expired', 'failed'].includes(b.payment_status));
 
-  if (!activeBooking) {
-    return res.status(400).json({
-      ver_code: `TREXIO-USER-${u.id}`,
-      qr_image: null,
-      message: 'Tidak ada E-Ticket aktif. Silakan tuntaskan pembayaran booking Anda.',
-      user: { id: u.id, name: u.name, email: u.email, level_pendaki: u.level_pendaki || 'Pendaki Regular' },
-      active_booking: null,
-      total_bookings: userBookings.length,
-    });
-  }
-
-  const ticketToken = activeBooking.ticket_token || `TKT-${crypto.createHash('sha256').update(`${activeBooking.booking_code}:${u.id}:${activeBooking.created_at}`).digest('hex').substring(0, 16).toUpperCase()}`;
-  activeBooking.ticket_token = ticketToken;
-
   const passCode = `TREXIO-PASS-${u.id}`;
-  const payloadData = {
-    type: 'trexio_user_pass',
-    user_id: u.id,
-    ver_code: passCode,
-    booking_code: activeBooking.booking_code,
-    token: ticketToken
-  };
+  let payloadData;
+
+  if (activeBooking) {
+    const ticketToken = activeBooking.ticket_token || `TKT-${crypto.createHash('sha256').update(`${activeBooking.booking_code}:${u.id}:${activeBooking.created_at}`).digest('hex').substring(0, 16).toUpperCase()}`;
+    activeBooking.ticket_token = ticketToken;
+    payloadData = {
+      type: 'trexio_user_pass',
+      user_id: u.id,
+      ver_code: passCode,
+      booking_code: activeBooking.booking_code,
+      token: ticketToken
+    };
+  } else {
+    payloadData = {
+      type: 'trexio_user_identity_pass',
+      user_id: u.id,
+      ver_code: passCode,
+      name: u.name,
+      email: u.email,
+      level_pendaki: u.level_pendaki || 'Pendaki Regular'
+    };
+  }
 
   try {
     const qrImage = await QRCode.toDataURL(JSON.stringify(payloadData), {
@@ -3164,7 +3084,7 @@ api.get(['/users/me/qr', '/profile/qr'], requireAuth, async (req, res) => {
       ver_code: passCode,
       qr_image: qrImage,
       user: { id: u.id, name: u.name, email: u.email, level_pendaki: u.level_pendaki || 'Pendaki Regular' },
-      active_booking: formatBookingWithChecklist(activeBooking),
+      active_booking: activeBooking ? formatBookingWithChecklist(activeBooking) : null,
       user_bookings: userBookings.map(formatBookingWithChecklist),
       total_bookings: userBookings.length,
     });
@@ -5342,8 +5262,34 @@ function enrichTripWithVendor(t) {
     ? Number((vendorRevs.reduce((sum, r) => sum + (Number(r.rating) || 5), 0) / vendorRevs.length).toFixed(1))
     : 5.0;
 
+  let departureDates = t.departure_dates;
+  let availableDates = t.available_dates;
+  if (!availableDates || !Array.isArray(availableDates) || availableDates.length === 0) {
+    if (Array.isArray(departureDates) && departureDates.length > 0) {
+      availableDates = departureDates.map((d, i) => (typeof d === 'object' && d !== null) ? d : { date: String(d), label: `Batch ${i + 1}`, seats_left: t.available_seats || t.stock || 10, status: 'available' });
+    } else if (typeof departureDates === 'string' && departureDates.trim()) {
+      availableDates = departureDates.split(',').map((s, i) => ({ date: s.trim(), label: `Batch ${i + 1}`, seats_left: t.available_seats || t.stock || 10, status: 'available' }));
+    } else {
+      const now = new Date();
+      availableDates = [1, 2, 3, 4].map(w => {
+        const d = new Date(now);
+        d.setDate(now.getDate() + (w * 7));
+        const ds = d.toISOString().split('T')[0];
+        return {
+          date: ds,
+          label: `Batch ${w} (${ds})`,
+          seats_left: t.available_seats || t.stock || 10,
+          status: 'available'
+        };
+      });
+      departureDates = availableDates.map(a => a.date);
+    }
+  }
+
   return {
     ...t,
+    departure_dates: departureDates,
+    available_dates: availableDates,
     vendor_id: v ? v.id : t.vendor_id,
     vendor_name: v ? (v.brand_name || v.name) : (t.vendor_name || 'TREXIO Partner'),
     vendor_verified: isVerified,
@@ -9398,10 +9344,10 @@ api.post(['/subscriptions/subscribe', '/tenant/subscription/subscribe'], require
   }
 
   // Create Midtrans Transaction
-  let snapToken = `SNAP-SIM-SUB-${Date.now()}`;
-  let redirectUrl = `https://app.sandbox.midtrans.com/snap/v2/vtweb/${snapToken}`;
+  let snapToken = null;
+  let redirectUrl = null;
 
-  if (midtransConfig.server_key) {
+  if (midtransConfig.server_key && !midtransConfig.server_key.includes('demo') && !midtransConfig.server_key.includes('placeholder')) {
     try {
       const snap = new midtransClient.Snap({
         isProduction: midtransConfig.is_production,
@@ -9415,7 +9361,7 @@ api.post(['/subscriptions/subscribe', '/tenant/subscription/subscribe'], require
         customer_details: {
           first_name: req.user.name || 'Tenant Admin',
           email: req.user.email || 'admin@trexio.id',
-          phone: '08123456789'
+          phone: req.user.phone || '08123456789'
         },
         item_details: [{ id: plan.id, price: plan.price, quantity: 1, name: `Subscription: ${plan.name}` }]
       };
@@ -9424,8 +9370,17 @@ api.post(['/subscriptions/subscribe', '/tenant/subscription/subscribe'], require
       snapToken = tx.token;
       redirectUrl = tx.redirect_url;
     } catch (err) {
-      // Fallback silently to simulated sandbox payment if Midtrans key is unauthorized or unverified
+      console.error('[SUBSCRIPTION] Midtrans Snap error:', err.message);
+      return res.status(502).json({
+        detail: `Gagal memproses pembayaran langganan melalui Midtrans: ${err.message}`,
+        code: 'PAYMENT_GATEWAY_ERROR'
+      });
     }
+  } else {
+    return res.status(503).json({
+      detail: 'Konfigurasi MIDTRANS_SERVER_KEY belum tersedia. Hubungi Administrator untuk mengaktifkan pembayaran langganan.',
+      code: 'MIDTRANS_CREDENTIALS_REQUIRED'
+    });
   }
 
   tenant_subscriptions.unshift(newSub);
@@ -9565,10 +9520,10 @@ api.post(['/ads/campaigns/create', '/vendor/ad-campaigns'], requireVendor, async
   };
 
   // Create Midtrans Payment Token
-  let snapToken = `SNAP-SIM-AD-${Date.now()}`;
-  let redirectUrl = `https://app.sandbox.midtrans.com/snap/v2/vtweb/${snapToken}`;
+  let snapToken = null;
+  let redirectUrl = null;
 
-  if (midtransConfig.server_key) {
+  if (midtransConfig.server_key && !midtransConfig.server_key.includes('demo') && !midtransConfig.server_key.includes('placeholder')) {
     try {
       const snap = new midtransClient.Snap({
         isProduction: midtransConfig.is_production,
@@ -9582,7 +9537,7 @@ api.post(['/ads/campaigns/create', '/vendor/ad-campaigns'], requireVendor, async
         customer_details: {
           first_name: req.user.name || v.brand_name,
           email: req.user.email || 'vendor@trexio.id',
-          phone: '08123456789'
+          phone: req.user.phone || '08123456789'
         },
         item_details: [{ id: pkg.id, price: totalAmount, quantity: 1, name: `Iklan: ${pkg.name} (${selectedDuration} Hari)` }]
       };
@@ -9591,8 +9546,17 @@ api.post(['/ads/campaigns/create', '/vendor/ad-campaigns'], requireVendor, async
       snapToken = tx.token;
       redirectUrl = tx.redirect_url;
     } catch (err) {
-      // Fallback silently to simulated sandbox payment if Midtrans key is unauthorized or unverified
+      console.error('[AD_CAMPAIGN] Midtrans Snap error:', err.message);
+      return res.status(502).json({
+        detail: `Gagal memproses pembayaran paket iklan melalui Midtrans: ${err.message}`,
+        code: 'PAYMENT_GATEWAY_ERROR'
+      });
     }
+  } else {
+    return res.status(503).json({
+      detail: 'Konfigurasi MIDTRANS_SERVER_KEY belum tersedia. Hubungi Administrator untuk mengaktifkan pembayaran iklan.',
+      code: 'MIDTRANS_CREDENTIALS_REQUIRED'
+    });
   }
 
   advertising_campaigns.unshift(newCampaign);
@@ -10602,7 +10566,6 @@ api.post('/reviews', requireAuth, (req, res) => {
 
 // --- Notifications & Communication Center ---
 api.get('/notifications', requireAuth, (req, res) => {
-  seedDefaultUserNotifications(req.user.id);
   const { category } = req.query;
   const allUserNotifs = notifications.filter(n => n.user_id === req.user.id).reverse();
 
@@ -12275,43 +12238,18 @@ api.post('/payments/midtrans/snap-token/:booking_id', requireAuth, async (req, r
       });
     } catch (err) {
       console.error(`[PAYMENT_TRACE][${reqId}] ❌ Midtrans Snap SDK Error:`, err.message);
-      return res.status(500).json({
-        detail: 'Gagal menginisialisasi pembayaran. Silakan coba lagi atau gunakan metode lain.',
-        code: 'PAYMENT_INITIALIZATION_FAILED'
+      return res.status(502).json({
+        detail: `Gagal menginisialisasi pembayaran dengan Midtrans Gateway: ${err.message || 'Layanan tidak dapat dihubungi'}.`,
+        code: 'PAYMENT_GATEWAY_ERROR'
       });
     }
   }
 
-  // Simulated Midtrans Snap Token for Sandbox/Testing mode
-  const simulatedToken = `SNAP-SIM-${booking.id}-${Date.now().toString().slice(-6)}`;
-  booking.midtrans_token = simulatedToken;
-
-  const paymentTx = {
-    id: `TX-${uuidv4().substring(0, 8)}`,
-    booking_id: booking.id,
-    booking_code: booking.booking_code,
-    user_id: booking.user_id,
-    order_id: orderId,
-    midtrans_token: simulatedToken,
-    payment_method: selectedChannel,
-    payment_type: channelSpec ? channelSpec.midtrans_type : 'bank_transfer',
-    amount: booking.total_amount,
-    currency: 'IDR',
-    status: 'pending',
-    created_at: nowISO(),
-    updated_at: nowISO(),
-  };
-  payment_transactions.unshift(paymentTx);
-
-  saveBookingsToDisk();
-  savePaymentsDataToDisk();
-
-  res.json({
-    token: simulatedToken,
-    redirect_url: `https://app.sandbox.midtrans.com/snap/v2/vtweb/${simulatedToken}`,
-    order_id: orderId,
-    enabled_payments: channelSpec?.enabled_payments || null,
-    is_simulated: true,
+  // If Midtrans Server Key is missing or invalid, fail fast with explicit blocker message (Zero Mock Policy)
+  console.warn(`[PAYMENT_TRACE][${reqId}] ❌ Midtrans credentials missing or invalid.`);
+  return res.status(503).json({
+    detail: 'Payment Gateway Midtrans belum terkonfigurasi. Pastikan MIDTRANS_SERVER_KEY yang valid telah diatur pada environment variable sistem.',
+    code: 'MIDTRANS_CREDENTIALS_REQUIRED'
   });
 });
 
@@ -13658,6 +13596,14 @@ async function hydrateAndSeedUsers() {
         created_at: nowISO(),
       };
       users.push(admin);
+    } else {
+      admin.role = 'super_admin';
+      if (!Array.isArray(admin.roles) || !admin.roles.includes('super_admin')) {
+        admin.roles = Array.from(new Set([...(admin.roles || []), 'super_admin', 'admin', 'user', 'vendor']));
+      }
+      if (SEED_ADMIN_PASSWORD) {
+        admin.password_hash = bcrypt.hashSync(SEED_ADMIN_PASSWORD, 10);
+      }
     }
     if (supabaseAuth.supabaseAuthEnabled) {
       const ensured = await supabaseAuth.ensureUser(seedEmail, SEED_ADMIN_PASSWORD, {

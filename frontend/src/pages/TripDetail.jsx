@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { api, apiFetch, formatRupiah } from "@/lib/api";
+import { resolveTripDates } from "@/lib/tripDates";
 import { addItemToCart } from "@/lib/cartStorage";
 import { useCompare } from "@/context/CompareContext";
 import { useAuth } from "@/context/AuthContext";
@@ -48,9 +49,15 @@ export default function TripDetail() {
   const { id } = useParams();
   const { user } = useAuth();
   const [trip, setTrip] = useState(null);
+  const [selectedTripDate, setSelectedTripDate] = useState("");
   const [activeImg, setActiveImg] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
   const { toggleCompare, isInCompare } = useCompare();
+
+  // Resolved list of departure batches
+  const availableBatches = useMemo(() => {
+    return resolveTripDates(trip);
+  }, [trip]);
 
   // Reviews state & Audit eligibility
   const [reviewsData, setReviewsData] = useState({ reviews: [], total: 0, average: 5.0 });
@@ -80,6 +87,10 @@ export default function TripDetail() {
   useEffect(() => {
     api.get(`/trips/${id}`).then((r) => {
       setTrip(r.data);
+      const batches = resolveTripDates(r.data);
+      if (batches.length > 0) {
+        setSelectedTripDate(batches[0].date);
+      }
       const targetId = r.data.id || id;
       loadReviews(targetId);
       loadEligibility(targetId);
@@ -118,6 +129,7 @@ export default function TripDetail() {
   const addToCart = async () => {
     if (!trip) return;
     try {
+      const dateToBook = selectedTripDate || availableBatches[0]?.date || "";
       await addItemToCart({
         item_id: trip.id,
         item_type: "trip",
@@ -125,7 +137,7 @@ export default function TripDetail() {
         price: trip.price,
         quantity: 1,
         cover_image: trip.cover_image,
-        departure_date: Array.isArray(trip.departure_dates) ? trip.departure_dates[0] : "",
+        departure_date: dateToBook,
       });
       toast.success("Berhasil ditambahkan ke keranjang!");
     } catch (e) {
@@ -589,30 +601,29 @@ export default function TripDetail() {
                 Tanggal keberangkatan
               </div>
               <div className="flex flex-wrap gap-2">
-                {(Array.isArray(trip.available_dates) && trip.available_dates.length > 0
-                  ? trip.available_dates
-                  : Array.isArray(trip.departure_dates)
-                  ? trip.departure_dates
-                  : typeof trip.departure_dates === "string"
-                  ? trip.departure_dates.split(",").map((s) => s.trim()).filter(Boolean)
-                  : []
-                ).slice(0, 8).map((d, idx) => {
-                  const dateStr = typeof d === "object" ? (d.date || "") : String(d);
-                  const label = typeof d === "object" && d.label ? d.label : null;
-                  const isFull = typeof d === "object" && d.status === "full";
-                  const seats = typeof d === "object" && d.seats_left !== undefined ? d.seats_left : null;
+                {availableBatches.slice(0, 8).map((d, idx) => {
+                  const dateStr = d.date;
+                  const label = d.label;
+                  const isFull = d.status === "full" || d.seats_left === 0;
+                  const seats = d.seats_left !== undefined ? d.seats_left : null;
+                  const isSelected = selectedTripDate === dateStr;
 
                   return (
-                    <div
+                    <button
                       key={idx}
-                      className={`rounded-lg border px-2.5 py-1 text-xs font-semibold flex flex-col gap-0.5 ${
-                        isFull
-                          ? "bg-slate-100 dark:bg-slate-900 border-border text-muted-foreground opacity-60"
-                          : "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200"
+                      type="button"
+                      disabled={isFull}
+                      onClick={() => setSelectedTripDate(dateStr)}
+                      className={`rounded-lg border px-2.5 py-1 text-xs font-semibold flex flex-col gap-0.5 text-left transition-all cursor-pointer ${
+                        isSelected
+                          ? "border-emerald-600 bg-emerald-600 text-white shadow-xs"
+                          : isFull
+                          ? "bg-slate-100 dark:bg-slate-900 border-border text-muted-foreground opacity-60 cursor-not-allowed"
+                          : "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200 hover:bg-emerald-500/20"
                       }`}
                     >
                       <span className="font-extrabold text-[11px] truncate max-w-[140px]">
-                        {label || (dateStr ? new Date(dateStr).toLocaleDateString("id-ID", { day: "numeric", month: "short" }) : "Batch " + (idx + 1))}
+                        {label}
                       </span>
                       {dateStr && (
                         <span className="text-[10px] opacity-80 flex items-center justify-between gap-1">
@@ -620,7 +631,7 @@ export default function TripDetail() {
                           {isFull ? <span className="text-red-500 font-extrabold">FULL</span> : seats ? <span>({seats} seat)</span> : null}
                         </span>
                       )}
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -629,7 +640,7 @@ export default function TripDetail() {
             <div className="mt-6 flex flex-col gap-2">
               <Button
                 data-testid="trip-book-btn"
-                onClick={() => nav(`/booking/${trip.id}`)}
+                onClick={() => nav(`/booking/${trip.id}${selectedTripDate ? `?date=${encodeURIComponent(selectedTripDate)}` : ""}`)}
                 disabled={remaining <= 0}
                 className="w-full bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90 text-white rounded-md trx-btn-press"
               >

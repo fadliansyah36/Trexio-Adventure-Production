@@ -240,6 +240,15 @@ export default function MyBookings() {
 
   // Initial load & Polling Interval for Live Updates
   useEffect(() => {
+    if (searchParams.get("payment_success") === "true") {
+      toast.success("Pembayaran Berhasil Terverifikasi! 🎉 E-Tiket & manifes trip Anda telah terbit dan siap digunakan.", {
+        duration: 5000,
+      });
+      setActiveTab("upcoming");
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     fetchBookings(true);
 
     const interval = setInterval(() => {
