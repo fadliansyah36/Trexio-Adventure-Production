@@ -14,6 +14,10 @@
     "test:tahap9": "node scripts/tahap9-automated-test-suite.js",
     "security-scan": "node scripts/security-scan.js",
     "verify-integrity": "node scripts/verify-repo-integrity.js",
+    "db:push": "node scripts/db-push.js",
+    "db:pull": "node scripts/db-pull.js",
+    "supabase:push": "node scripts/db-push.js",
+    "supabase:pull": "node scripts/db-pull.js",
     "pre-push": "npm run verify-integrity && npm run security-scan",
     "lint": "echo 'No lint issues'"
   },

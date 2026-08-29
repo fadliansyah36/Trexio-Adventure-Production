@@ -13,10 +13,19 @@ export async function resetAndSeedDatabase(dataSource: DataSource): Promise<void
     return;
   }
 
-  console.log('[TypeORM] Initializing default seed accounts for fresh database...');
-  const hashedAdminPass = await bcrypt.hash('admin123', 10);
-  const hashedVendorPass = await bcrypt.hash('vendor123', 10);
-  const hashedTravelerPass = await bcrypt.hash('traveler123', 10);
+  const adminPass = process.env.SEED_ADMIN_PASSWORD || process.env.ADMIN_INITIAL_PASSWORD;
+  const vendorPass = process.env.SEED_VENDOR_PASSWORD;
+  const travelerPass = process.env.SEED_DEMO_PASSWORD;
+
+  if (!adminPass || !vendorPass || !travelerPass) {
+    console.log('[TypeORM] Seed credentials not fully defined in environment variables. Skipping seed to prevent insecure defaults.');
+    return;
+  }
+
+  console.log('[TypeORM] Initializing default seed accounts from environment variables...');
+  const hashedAdminPass = await bcrypt.hash(adminPass, 10);
+  const hashedVendorPass = await bcrypt.hash(vendorPass, 10);
+  const hashedTravelerPass = await bcrypt.hash(travelerPass, 10);
 
   const freshUsers = [
     {

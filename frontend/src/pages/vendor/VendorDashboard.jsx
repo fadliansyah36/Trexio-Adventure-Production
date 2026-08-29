@@ -51,13 +51,13 @@ export default function VendorDashboard() {
   }, []);
 
   const grossSales = finance?.gross_sales || vendor.stats?.revenue || 0;
-  const trexioFee = finance?.trexio_fee || Math.round(grossSales * 0.07);
-  const netRevenue = finance?.net_revenue || (grossSales - trexioFee);
+  const trexioFee = finance?.trexio_fee !== undefined ? finance.trexio_fee : (finance?.platform_fee ?? 0);
+  const netRevenue = finance?.net_revenue !== undefined ? finance.net_revenue : Math.max(0, grossSales - trexioFee);
   const wallet = finance?.wallet || { available_balance: 0, pending_balance: 0 };
 
   const kpis = [
     { label: "GROSS SALES", value: formatRupiah(grossSales), sub: "Omset kotor sebelum fee", icon: TrendUp, color: "bg-emerald-500 text-white" },
-    { label: "NET REVENUE MITRA", value: formatRupiah(netRevenue), sub: "Setelah potongan Trexio 7%", icon: Wallet, color: "bg-[hsl(var(--primary))] text-white" },
+    { label: "NET REVENUE MITRA", value: formatRupiah(netRevenue), sub: "Setelah potongan komisi platform", icon: Wallet, color: "bg-[hsl(var(--primary))] text-white" },
     { label: "SALDO SIAP TARIK", value: formatRupiah(wallet.available_balance), sub: "Tersedia di dompet", icon: Wallet, color: "bg-emerald-900 text-emerald-200" },
     { label: "SALDO PENDING (ESCROW)", value: formatRupiah(wallet.pending_balance), sub: "Trip sedang berjalan", icon: Clock, color: "bg-amber-500 text-white" },
     { label: "TOTAL BOOKING", value: vendor.stats?.total_bookings ?? recentBookings.length, sub: "Seluruh riwayat pendaftaran", icon: ClipboardText, color: "bg-blue-600 text-white" },

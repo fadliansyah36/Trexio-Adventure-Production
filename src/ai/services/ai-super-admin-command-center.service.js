@@ -280,11 +280,13 @@ class AISuperAdminCommandCenterService {
       }
     });
 
+    const platformFeeRate = parseFloat(process.env.PLATFORM_FEE_RATE || '0.07') || 0.07;
+
     return {
       total_bookings_record: bookings.length,
       status_breakdown: statusBreakdown,
       total_gmv: totalGMV,
-      estimated_platform_fee: Math.round(totalGMV * 0.05),
+      estimated_platform_fee: Math.round(totalGMV * platformFeeRate),
       avg_booking_value: bookings.length ? Math.round(totalGMV / Math.max(1, bookings.length)) : 0,
     };
   }

@@ -37,6 +37,11 @@ import {
   ShieldCheck,
   ArrowCounterClockwise,
   CreditCard,
+  Lock,
+  UploadSimple,
+  Image as ImageIcon,
+  FileText,
+  Check,
 } from "@phosphor-icons/react";
 
 export default function MyBookings() {
@@ -52,6 +57,14 @@ export default function MyBookings() {
   const [showQrModal, setShowQrModal] = useState(false);
   const [qrModalBookingCode, setQrModalBookingCode] = useState(null);
   const [showHikerScannerModal, setShowHikerScannerModal] = useState(false);
+
+  // Finish Trip Alternative Flow State (Foto Bukti Lokasi)
+  const [finishProofModal, setFinishProofModal] = useState(null);
+  const [proofFile, setProofFile] = useState(null);
+  const [proofPreview, setProofPreview] = useState("");
+  const [proofNotes, setProofNotes] = useState("");
+  const [submittingProof, setSubmittingProof] = useState(false);
+  const [viewProofModal, setViewProofModal] = useState(null);
 
   // Review modal state
   const [reviewModal, setReviewModal] = useState(null);
@@ -261,7 +274,7 @@ export default function MyBookings() {
   }, [autoSync, fetchBookings]);
 
   useEffect(() => {
-    if (selectedBooking && selectedBooking.booking_code) {
+    if (selectedBooking && selectedBooking.booking_code && isBookingPaid(selectedBooking)) {
       api.get(`/bookings/code/${selectedBooking.booking_code}/qr`)
         .then((res) => setSelectedBookingQrImage(res.data.qr_image))
         .catch(() => setSelectedBookingQrImage(null));
@@ -301,7 +314,7 @@ export default function MyBookings() {
       setBookings((prev) =>
         prev.map((b) =>
           (b.id === booking.id || b.booking_code === booking.booking_code)
-            ? { ...b, trip_status: "COMPLETED" }
+            ? { ...b, trip_status: "COMPLETED", booking_status: "completed" }
             : b
         )
       );
@@ -309,10 +322,67 @@ export default function MyBookings() {
         setSelectedBooking((prev) => ({
           ...prev,
           trip_status: "COMPLETED",
+          booking_status: "completed",
         }));
       }
     } catch (err) {
       toast.error(err?.response?.data?.detail || "Gagal mengonfirmasi selesai trip.");
+    }
+  }
+
+  async function handleSubmitProof(e) {
+    if (e) e.preventDefault();
+    if (!finishProofModal) return;
+    if (!proofFile && !proofNotes.trim()) {
+      toast.error("Silakan pilih file foto bukti kehadiran/penyelesaian trip di lokasi.");
+      return;
+    }
+
+    setSubmittingProof(true);
+    try {
+      const formData = new FormData();
+      if (proofFile) {
+        formData.append("file", proofFile);
+      }
+      if (proofNotes) {
+        formData.append("notes", proofNotes);
+      }
+
+      const res = await api.post(
+        `/bookings/${finishProofModal.id || finishProofModal.booking_code}/complete-with-proof`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+
+      if (res.data?.ok) {
+        toast.success(res.data.message || "Trip pendakian berhasil dikonfirmasi selesai!");
+        const updatedBooking = res.data.booking;
+        if (updatedBooking) {
+          setBookings((prev) =>
+            prev.map((b) =>
+              b.id === updatedBooking.id || b.booking_code === updatedBooking.booking_code
+                ? updatedBooking
+                : b
+            )
+          );
+          if (
+            selectedBooking &&
+            (selectedBooking.id === updatedBooking.id ||
+              selectedBooking.booking_code === updatedBooking.booking_code)
+          ) {
+            setSelectedBooking(updatedBooking);
+          }
+        }
+        setFinishProofModal(null);
+        setProofFile(null);
+        setProofPreview("");
+        setProofNotes("");
+        fetchBookings(true);
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || "Gagal mengonfirmasi penyelesaian trip.");
+    } finally {
+      setSubmittingProof(false);
     }
   }
 
@@ -648,9 +718,15 @@ export default function MyBookings() {
                     <div className="flex-1 space-y-2">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono font-black text-xs text-emerald-600 bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20">
-                            {b.booking_code}
-                          </span>
+                          {isBookingPaid(b) ? (
+                            <span className="font-mono font-black text-xs text-emerald-600 bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20">
+                              {b.booking_code}
+                            </span>
+                          ) : (
+                            <span className="font-mono text-xs text-muted-foreground bg-muted px-2.5 py-0.5 rounded-md border border-border flex items-center gap-1">
+                              <Lock size={12} /> Tiket Terkunci
+                            </span>
+                          )}
                           {isBookingPaid(b) && (
                             b.checked_in ? (
                               <span className="text-[11px] font-black text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-300 flex items-center gap-1">
@@ -744,29 +820,54 @@ export default function MyBookings() {
                           )
                         )}
 
+                        {/* QR Pass ONLY when Paid */}
                         {isBookingPaid(b) && (
                           <button
                             onClick={() => {
                               setQrModalBookingCode(b.booking_code);
                               setShowQrModal(true);
                             }}
-                            className="bg-slate-900 hover:bg-black text-white font-extrabold text-xs px-3 py-2 rounded-xl transition-colors shadow-xs flex items-center gap-1.5"
+                            className="bg-slate-900 hover:bg-black text-white font-extrabold text-xs px-3 py-2 rounded-xl transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
                           >
                             <QrCode size={16} /> QR Pass
                           </button>
                         )}
+
+                        {/* Detail Button */}
                         <button
                           onClick={() => setSelectedBooking(b)}
-                          className="border border-border hover:bg-muted text-foreground font-bold text-xs px-3 py-2 rounded-xl transition-colors"
+                          className="border border-border hover:bg-muted text-foreground font-bold text-xs px-3 py-2 rounded-xl transition-colors cursor-pointer"
                         >
                           Detail
                         </button>
 
+                        {/* Selesaikan Trip (Foto Bukti) - Only when paid and NOT yet completed */}
+                        {isBookingPaid(b) &&
+                          (b.trip_status || "").toUpperCase() !== "COMPLETED" &&
+                          (b.booking_status || "").toLowerCase() !== "completed" && (
+                            <button
+                              onClick={() => {
+                                setFinishProofModal(b);
+                                setProofFile(null);
+                                setProofPreview("");
+                                setProofNotes("");
+                              }}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Camera size={16} weight="bold" /> Selesaikan Trip
+                            </button>
+                          )}
+
+                        {/* Chat Organizer */}
                         <button
                           onClick={async () => {
                             try {
+                              if (!b.vendor_id) {
+                                toast.error("Data kontak vendor untuk pesanan ini belum terdaftar.");
+                                return;
+                              }
                               const res = await api.post("/chat/conversations", {
-                                vendor_id: b.vendor_id || "vendor_official",
+                                vendor_id: b.vendor_id,
                                 booking_id: b.id,
                                 booking_code: b.booking_code,
                                 product_title: b.trip_title,
@@ -779,23 +880,35 @@ export default function MyBookings() {
                               toast.error("Gagal membuka ruang chat dengan organizer.");
                             }
                           }}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-3 py-2 rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                          className="border border-border bg-card hover:bg-muted text-foreground font-bold text-xs px-3 py-2 rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
                         >
                           <ChatCircleDots size={16} /> Chat Organizer
                         </button>
+
+                        {/* Selesai & Review status / Photo Proof */}
                         {((b.trip_status || "").toUpperCase() === "COMPLETED" || (b.booking_status || "").toLowerCase() === "completed") && (
-                          !b.reviewed ? (
-                            <button
-                              onClick={() => setReviewModal(b)}
-                              className="bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl transition-all flex items-center gap-1 shadow-xs cursor-pointer"
-                            >
-                              <Star size={14} weight="fill" /> Tulis Ulasan & Rating
-                            </button>
-                          ) : (
-                            <span className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-bold text-xs px-3 py-2 rounded-xl border border-emerald-500/20 inline-flex items-center gap-1">
-                              <CheckCircle size={14} weight="fill" className="text-emerald-500" /> Ulasan Terkirim
-                            </span>
-                          )
+                          <>
+                            {b.completion_proof && (
+                              <button
+                                onClick={() => setViewProofModal(b)}
+                                className="border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold text-xs px-3 py-2 rounded-xl transition-colors flex items-center gap-1 cursor-pointer"
+                              >
+                                <ImageIcon size={14} /> Bukti Foto
+                              </button>
+                            )}
+                            {!b.reviewed ? (
+                              <button
+                                onClick={() => setReviewModal(b)}
+                                className="bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl transition-all flex items-center gap-1 shadow-xs cursor-pointer"
+                              >
+                                <Star size={14} weight="fill" /> Tulis Ulasan & Rating
+                              </button>
+                            ) : (
+                              <span className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-bold text-xs px-3 py-2 rounded-xl border border-emerald-500/20 inline-flex items-center gap-1">
+                                <CheckCircle size={14} weight="fill" className="text-emerald-500" /> Ulasan Terkirim
+                              </span>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
@@ -912,64 +1025,91 @@ export default function MyBookings() {
                 <div className="flex items-center gap-2 font-black text-sm sm:text-base text-foreground">
                   <QrCode size={20} className="text-emerald-500" /> TREXIO ADVENTURE PASS
                 </div>
-                <button onClick={() => setSelectedBooking(null)} aria-label="Tutup Detail Booking" className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground font-bold text-sm hover:bg-muted transition-colors">
+                <button onClick={() => setSelectedBooking(null)} aria-label="Tutup Detail Booking" className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground font-bold text-sm hover:bg-muted transition-colors cursor-pointer">
                   ✕
                 </button>
               </div>
 
               <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-                {/* QR Pass */}
-                <div className="bg-gradient-to-br from-emerald-600 via-teal-800 to-slate-900 text-white rounded-2xl p-4 sm:p-6 text-center space-y-3 shadow-md">
-                  <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-emerald-200">
-                    <span>VERIFIED DIGITAL E-TICKET</span>
-                    {selectedBooking.checked_in ? (
-                      <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 rounded-full">
-                        ✓ CHECKED-IN
-                      </span>
-                    ) : (
-                      <span className="bg-amber-500/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full">
-                        READY TO SCAN
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="bg-white p-3 sm:p-4 rounded-xl inline-block shadow-inner mx-auto border-2 border-emerald-400/30">
-                    {selectedBookingQrImage ? (
-                      <img
-                        src={selectedBookingQrImage}
-                        alt="Scannable QR Code E-Ticket"
-                        className="w-36 h-36 object-contain mx-auto rounded-lg"
-                      />
-                    ) : (
-                      <div className="w-36 h-36 bg-neutral-900 rounded-lg flex flex-col items-center justify-center p-2 text-center text-white space-y-1 mx-auto">
-                        <QrCode size={64} className="text-emerald-400" />
-                        <span className="font-mono text-[9px] text-neutral-300">SCAN AT BASECAMP</span>
+                {/* QR Pass / Locked E-Ticket Condition */}
+                {!isBookingPaid(selectedBooking) ? (
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5 text-center space-y-3">
+                    <div className="w-12 h-12 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">
+                      <Lock size={24} weight="bold" />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="font-mono font-black text-xs text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                        E-TICKET TERKUNCI
                       </div>
+                      <h4 className="font-black text-sm text-foreground">
+                        Menunggu Penyelesaian Pembayaran
+                      </h4>
+                      <p className="text-xs text-muted-foreground max-w-xs mx-auto leading-relaxed">
+                        QR Code dan kode tiket verifikasi digital hanya dapat diakses setelah pembayaran diselesaikan dan terverifikasi (PAID).
+                      </p>
+                    </div>
+                    {isBookingUnpaid(selectedBooking) && (
+                      <Link
+                        to={`/payment/${selectedBooking.id || selectedBooking.booking_code}`}
+                        className="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl shadow-xs transition-all"
+                      >
+                        <CreditCard size={16} /> Lanjutkan Pembayaran Sekarang
+                      </Link>
                     )}
                   </div>
+                ) : (
+                  <div className="bg-gradient-to-br from-emerald-600 via-teal-800 to-slate-900 text-white rounded-2xl p-4 sm:p-6 text-center space-y-3 shadow-md">
+                    <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-emerald-200">
+                      <span>VERIFIED DIGITAL E-TICKET</span>
+                      {selectedBooking.checked_in ? (
+                        <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 rounded-full">
+                          ✓ CHECKED-IN
+                        </span>
+                      ) : (
+                        <span className="bg-amber-500/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full">
+                          READY TO SCAN
+                        </span>
+                      )}
+                    </div>
 
-                  <div>
-                    <div className="font-mono font-black text-base sm:text-lg text-emerald-200">{selectedBooking.booking_code}</div>
-                    <div className="font-extrabold text-sm sm:text-base text-white">{selectedBooking.trip_title}</div>
+                    <div className="bg-white p-3 sm:p-4 rounded-xl inline-block shadow-inner mx-auto border-2 border-emerald-400/30">
+                      {selectedBookingQrImage ? (
+                        <img
+                          src={selectedBookingQrImage}
+                          alt="Scannable QR Code E-Ticket"
+                          className="w-36 h-36 object-contain mx-auto rounded-lg"
+                        />
+                      ) : (
+                        <div className="w-36 h-36 bg-neutral-900 rounded-lg flex flex-col items-center justify-center p-2 text-center text-white space-y-1 mx-auto">
+                          <QrCode size={64} className="text-emerald-400" />
+                          <span className="font-mono text-[9px] text-neutral-300">SCAN AT BASECAMP</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <div className="font-mono font-black text-base sm:text-lg text-emerald-200">{selectedBooking.booking_code}</div>
+                      <div className="font-extrabold text-sm sm:text-base text-white">{selectedBooking.trip_title}</div>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Status Kehadiran & Meeting Point (Read-Only) */}
                 <div className="bg-muted/40 border border-border rounded-xl p-3.5 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="font-extrabold text-xs text-foreground flex items-center gap-1.5">
-                      <ShieldCheck size={16} className="text-emerald-500" /> Status Validasi Kehadiran
+                      <ShieldCheck size={16} className="text-emerald-500" /> Status Validasi Kehadiran & Trip
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                      Otentikasi Vendor
+                      Otentikasi Vendor Partner
                     </span>
                   </div>
 
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    Pemeriksaan e-Tiket & registrasi simaksi wajib dilakukan oleh petugas Vendor/Basecamp resmi melalui pemindaian QR Code Pass saat Anda tiba di meeting point.
+                    Validasi kehadiran dan penyelesaian trip bersifat fleksibel. Anda dapat divalidasi oleh Vendor melalui <strong>Pemindaian QR Code Pass</strong> di meeting point ATAU mengonfirmasi sendiri melalui <strong>Unggah Foto Bukti Lokasi</strong>. Salah satu pilihan sudah 100% sah dan tervalidasi.
                   </p>
 
-                  <div className="pt-1">
+                  <div className="pt-1 space-y-2">
                     {selectedBooking.checked_in ? (
                       <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-200 font-bold text-xs rounded-xl flex items-center gap-2">
                         <CheckCircle size={18} weight="fill" className="text-emerald-600 shrink-0" />
@@ -986,12 +1126,66 @@ export default function MyBookings() {
                       <div className="p-3 bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-200 font-bold text-xs rounded-xl flex items-center gap-2">
                         <Clock size={18} className="text-amber-600 shrink-0" />
                         <div>
-                          <div>Menunggu Pemindaian QR oleh Petugas Basecamp</div>
+                          <div>Menunggu Pemindaian QR oleh Petugas Basecamp / Vendor Owner</div>
                           <div className="text-[10px] font-normal text-amber-700 dark:text-amber-300">
-                            Tunjukkan QR Pass di atas kepada petugas meeting point untuk check-in.
+                            Tunjukkan QR Pass kepada petugas meeting point untuk validasi instan.
                           </div>
                         </div>
                       </div>
+                    )}
+
+                    {/* Status Trip Selesai or Button Selesaikan Trip */}
+                    {isBookingPaid(selectedBooking) && (
+                      ((selectedBooking.trip_status || "").toUpperCase() === "COMPLETED" || (selectedBooking.booking_status || "").toLowerCase() === "completed") ? (
+                        <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-200 font-bold text-xs rounded-xl flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle size={18} weight="fill" className="text-emerald-600 shrink-0" />
+                            <div>
+                              <div>Trip Telah Selesai (Completed)</div>
+                              {selectedBooking.completed_at && (
+                                <div className="text-[10px] font-normal text-emerald-700 dark:text-emerald-300">
+                                  Waktu Selesai: {new Date(selectedBooking.completed_at).toLocaleString("id-ID")}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          {selectedBooking.completion_proof && (
+                            <button
+                              type="button"
+                              onClick={() => setViewProofModal(selectedBooking)}
+                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-extrabold flex items-center gap-1 cursor-pointer"
+                            >
+                              <ImageIcon size={13} /> Bukti Foto
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-blue-500/10 border border-blue-500/30 text-blue-900 dark:text-blue-200 rounded-xl space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold flex items-center gap-1.5">
+                              <Camera size={16} className="text-blue-500" /> Opsi Selesaikan Trip (Foto Bukti)
+                            </span>
+                            <span className="text-[10px] bg-blue-500/20 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full font-bold">
+                              Opsi Alternatif
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground leading-relaxed">
+                            Jika scan QR terkendala sinyal di gunung, Anda dapat menyelesaikan trip dengan mengirimkan foto bukti bahwa Anda telah berada di lokasi/menyelesaikan trip.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFinishProofModal(selectedBooking);
+                              setProofFile(null);
+                              setProofPreview("");
+                              setProofNotes("");
+                            }}
+                            className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                          >
+                            <Camera size={16} weight="bold" /> Unggah Foto Bukti & Selesaikan Trip
+                          </button>
+                        </div>
+                      )
                     )}
                   </div>
                 </div>
@@ -1042,7 +1236,240 @@ export default function MyBookings() {
               <div className="shrink-0 pt-2 border-t border-border">
                 <button
                   onClick={() => setSelectedBooking(null)}
-                  className="w-full bg-slate-900 text-white font-black text-xs py-2.5 rounded-xl hover:bg-black"
+                  className="w-full bg-slate-900 text-white font-black text-xs py-2.5 rounded-xl hover:bg-black cursor-pointer"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* FINISH TRIP PHOTO PROOF MODAL (OPSI KEDUA PENYELESAIAN TRIP) */}
+        {finishProofModal && (
+          <div className="fixed inset-0 z-[110] bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 pb-20 md:pb-6 overflow-y-auto min-h-screen">
+            <div className="bg-card border border-border rounded-3xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl animate-in zoom-in-95 my-auto max-h-[calc(100dvh-5.5rem)] sm:max-h-[90vh] flex flex-col">
+              <div className="shrink-0 flex items-center justify-between border-b border-border pb-3">
+                <div className="flex items-center gap-2 font-black text-base text-foreground">
+                  <div className="p-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <Camera size={20} weight="bold" />
+                  </div>
+                  <span>Konfirmasi Selesai Trip (Foto Bukti)</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFinishProofModal(null);
+                    setProofFile(null);
+                    setProofPreview("");
+                    setProofNotes("");
+                  }}
+                  aria-label="Tutup"
+                  className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmitProof} className="flex-1 overflow-y-auto space-y-4 pr-1">
+                {/* Trip Info Header */}
+                <div className="p-3.5 bg-muted/50 rounded-2xl border border-border space-y-1 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono font-black text-emerald-600">
+                      #{finishProofModal.booking_code}
+                    </span>
+                    <span className="font-bold text-muted-foreground">
+                      {finishProofModal.partner_name || "Vendor Partner"}
+                    </span>
+                  </div>
+                  <div className="font-black text-sm text-foreground">
+                    {finishProofModal.trip_title}
+                  </div>
+                  <div className="text-muted-foreground text-[11px]">
+                    Destinasi: {finishProofModal.trip_destination}
+                  </div>
+                </div>
+
+                {/* Explanation Banner */}
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-3.5 text-xs text-emerald-900 dark:text-emerald-200 space-y-1.5">
+                  <div className="font-extrabold flex items-center gap-1.5">
+                    <ShieldCheck size={16} className="text-emerald-600" />
+                    Validasi Lokasi & Pengajuan Payout Vendor
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-muted-foreground">
+                    Unggah foto bukti bahwa Anda dan rombongan telah berada di lokasi basecamp/jalur/puncak dan menyelesaikan trip. Bukti ini akan memvalidasi pesanan dan mengizinkan pengajuan payout dana dari Vendor ke Super Admin secara transparan.
+                  </p>
+                </div>
+
+                {/* File Upload Box */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-foreground block">
+                    Foto Bukti Kehadiran / Selesai di Lokasi <span className="text-rose-500">*</span>
+                  </label>
+
+                  {proofPreview ? (
+                    <div className="relative rounded-2xl border-2 border-emerald-500/40 overflow-hidden bg-black/5 p-2 text-center">
+                      <img
+                        src={proofPreview}
+                        alt="Bukti Kehadiran Trip"
+                        className="w-full max-h-52 object-contain rounded-xl mx-auto"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProofFile(null);
+                          setProofPreview("");
+                        }}
+                        className="absolute top-4 right-4 p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-full shadow-lg transition-colors cursor-pointer"
+                        title="Hapus Foto"
+                      >
+                        <Trash size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border hover:border-emerald-500 bg-muted/20 hover:bg-emerald-500/5 rounded-2xl cursor-pointer transition-all">
+                      <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center mb-2">
+                        <UploadSimple size={24} weight="bold" />
+                      </div>
+                      <span className="text-xs font-bold text-foreground">
+                        Klik atau Tarik Foto Bukti ke Sini
+                      </span>
+                      <span className="text-[10px] text-muted-foreground mt-1">
+                        Format JPG, PNG, atau WEBP (Maksimal 5MB)
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            if (file.size > 5 * 1024 * 1024) {
+                              toast.error("Ukuran file foto maksimal 5MB.");
+                              return;
+                            }
+                            setProofFile(file);
+                            const url = URL.createObjectURL(file);
+                            setProofPreview(url);
+                          }
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
+
+                {/* Notes Input */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-foreground block">
+                    Catatan / Pesan Penyelesaian Trip (Opsional)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={proofNotes}
+                    onChange={(e) => setProofNotes(e.target.value)}
+                    placeholder="Contoh: Trip selesai dengan lancar bersama guide Pak Budi di Basecamp..."
+                    className="w-full p-2.5 rounded-xl border border-border bg-background text-xs font-medium focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="pt-2 flex flex-col-reverse sm:flex-row justify-end gap-2 border-t border-border">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFinishProofModal(null);
+                      setProofFile(null);
+                      setProofPreview("");
+                      setProofNotes("");
+                    }}
+                    className="px-4 py-2.5 border border-border rounded-xl text-xs font-bold hover:bg-muted transition-colors cursor-pointer"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingProof || (!proofFile && !proofNotes.trim())}
+                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-black text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    {submittingProof ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Mengirim Bukti...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Check size={16} weight="bold" />
+                        <span>Kirim Bukti & Selesaikan Trip</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* VIEW PHOTO PROOF MODAL */}
+        {viewProofModal && (
+          <div className="fixed inset-0 z-[110] bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 pb-20 md:pb-6 overflow-y-auto min-h-screen">
+            <div className="bg-card border border-border rounded-3xl max-w-md w-full p-5 sm:p-6 space-y-4 shadow-2xl animate-in zoom-in-95 my-auto max-h-[calc(100dvh-5.5rem)] sm:max-h-[90vh] flex flex-col">
+              <div className="shrink-0 flex items-center justify-between border-b border-border pb-3">
+                <div className="flex items-center gap-2 font-black text-base text-foreground">
+                  <ImageIcon size={20} className="text-emerald-500" />
+                  <span>Foto Bukti Penyelesaian Trip</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setViewProofModal(null)}
+                  aria-label="Tutup"
+                  className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
+                <div className="font-bold text-foreground">
+                  Booking #{viewProofModal.booking_code} — {viewProofModal.trip_title}
+                </div>
+
+                {viewProofModal.completion_proof ? (
+                  <div className="rounded-2xl overflow-hidden border border-border bg-black/5">
+                    <img
+                      src={viewProofModal.completion_proof}
+                      alt="Foto Bukti Penyelesaian"
+                      className="w-full max-h-72 object-contain mx-auto"
+                    />
+                  </div>
+                ) : (
+                  <div className="p-8 text-center text-muted-foreground font-bold">
+                    Foto tidak tersedia
+                  </div>
+                )}
+
+                {viewProofModal.completion_notes && (
+                  <div className="p-3 bg-muted/40 rounded-xl border border-border">
+                    <span className="font-bold text-foreground block mb-0.5">Catatan Pendaki:</span>
+                    <p className="text-muted-foreground italic">"{viewProofModal.completion_notes}"</p>
+                  </div>
+                )}
+
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-800 dark:text-emerald-300 font-medium">
+                  Status: <strong>Telah Divalidasi Selesai (COMPLETED)</strong>
+                  {viewProofModal.completed_at && (
+                    <div className="text-[10px] text-muted-foreground mt-0.5">
+                      Diverifikasi pada: {new Date(viewProofModal.completed_at).toLocaleString("id-ID")}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="shrink-0 pt-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setViewProofModal(null)}
+                  className="w-full py-2.5 bg-slate-900 text-white font-bold text-xs rounded-xl hover:bg-black cursor-pointer"
                 >
                   Tutup
                 </button>

@@ -236,8 +236,8 @@ export function TransactionLedger({
                 const txCode = item.tx_id || item.booking_code || item.id;
                 const productName = item.product || item.product_name || item.description || "Layanan Trexio";
                 const grossAmount = item.gross || item.amount || 0;
-                const feeAmount = item.fee !== undefined ? item.fee : item.trexio_fee || Math.round(grossAmount * 0.07);
-                const netAmount = item.net !== undefined ? item.net : item.net_amount || (grossAmount - feeAmount);
+                const feeAmount = item.fee !== undefined ? item.fee : (item.trexio_fee !== undefined ? item.trexio_fee : (item.platform_fee ?? 0));
+                const netAmount = item.net !== undefined ? item.net : (item.net_amount !== undefined ? item.net_amount : Math.max(0, grossAmount - feeAmount));
 
                 return (
                   <tr

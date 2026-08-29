@@ -171,8 +171,12 @@ export default function TripDetail() {
 
   const handleChatVendor = async () => {
     try {
-      const vId = trip.vendor_id || trip.vendor?.id || 'vendor_official';
-      const vName = trip.vendor_name || trip.vendor?.brand_name || trip.organizer || "TREXIO Official";
+      const vId = trip.vendor_id || trip.vendor?.id;
+      if (!vId) {
+        toast.error("Vendor penyelenggara untuk trip ini belum terhubung ke sistem perpesanan.");
+        return;
+      }
+      const vName = trip.vendor_name || trip.vendor?.brand_name || trip.organizer || "Mitra Vendor";
       const res = await api.post("/chat/conversations", {
         vendor_id: vId,
         vendor_name: vName,

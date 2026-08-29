@@ -59,26 +59,14 @@ export class AuthService {
     return this.loginWithSupabase({ email: fallbackEmail, name: fallbackName, idToken });
   }
 
-  async validateUser(emailOrShorthand: string, pass: string): Promise<UserOrmEntity | null> {
-    const cleanInput = (emailOrShorthand || '').trim().toLowerCase();
+  async validateUser(emailOrId: string, pass: string): Promise<UserOrmEntity | null> {
+    const cleanInput = (emailOrId || '').trim().toLowerCase();
+    if (!cleanInput) return null;
     
-    // Find user by email or ID
-    let user = await this.userRepository.findOne({
+    // Find user by email or ID strictly
+    const user = await this.userRepository.findOne({
       where: [{ email: cleanInput }, { id: cleanInput }],
     });
-
-    // Handle role shorthand keywords
-    if (!user) {
-      if (['superadmin', 'super_admin', 'super'].includes(cleanInput)) {
-        user = await this.userRepository.findOne({ where: { email: 'superadmin@trexio.id' } });
-      } else if (['admin', 'tenant'].includes(cleanInput)) {
-        user = await this.userRepository.findOne({ where: { email: 'admin@trexio.id' } });
-      } else if (['vendor', 'mitra', 'organizer'].includes(cleanInput)) {
-        user = await this.userRepository.findOne({ where: { email: 'vendor@trexio.id' } });
-      } else if (['user', 'traveler', 'client'].includes(cleanInput)) {
-        user = await this.userRepository.findOne({ where: { email: 'traveler@trexio.id' } });
-      }
-    }
 
     if (!user) {
       return null;

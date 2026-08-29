@@ -2,34 +2,22 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
-const defaultAllowedOrigins = [
-  'https://trexio.id',
-  'https://www.trexio.id',
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'http://127.0.0.1:3000',
-  'http://127.0.0.1:5173',
-];
-
-const envAllowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
-  : [];
-
-const allowedOrigins = Array.from(new Set([...defaultAllowedOrigins, ...envAllowedOrigins]));
+const envAllowedOrigins = (process.env.ALLOWED_ORIGINS || process.env.CORS_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
 
 const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.includes(origin)) {
+    if (envAllowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
     try {
       const parsedUrl = new URL(origin);
       if (
-        parsedUrl.hostname === 'localhost' ||
-        parsedUrl.hostname === '127.0.0.1' ||
         parsedUrl.hostname.endsWith('.run.app') ||
         parsedUrl.hostname.endsWith('.trexio.id')
       ) {

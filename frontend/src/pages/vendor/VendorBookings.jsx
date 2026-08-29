@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useOutletContext, useSearchParams } from "react-router-dom";
 import { api, formatRupiah, formatDateID } from "@/lib/api";
-import { ClipboardText, Lock, QrCode, CheckCircle, Clock, FileText, User, DownloadSimple, CheckSquare } from "@phosphor-icons/react";
+import { ClipboardText, Lock, QrCode, CheckCircle, Clock, FileText, User, DownloadSimple, CheckSquare, Camera, Image as ImageIcon, ShieldCheck } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { exportVendorBookingsCSV } from "@/lib/exportCsv";
 import EmptyState from "@/components/EmptyState";
@@ -171,14 +171,24 @@ export default function VendorBookings() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      {b.checked_in ? (
+                      {((b.trip_status || "").toUpperCase() === "COMPLETED" || (b.booking_status || "").toLowerCase() === "completed") ? (
+                        b.completion_proof || b.completion_method === "PHOTO_PROOF" ? (
+                          <span className="inline-flex items-center gap-1 text-emerald-800 dark:text-emerald-300 font-extrabold bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                            <Camera weight="bold" size={12} className="text-emerald-600 dark:text-emerald-400" /> Selesai (Bukti Foto)
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300 font-extrabold bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                            <CheckCircle weight="fill" size={12} className="text-emerald-500" /> Selesai (Valid)
+                          </span>
+                        )
+                      ) : b.checked_in ? (
                         <span className="inline-flex items-center gap-1 text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                           <CheckCircle weight="fill" size={12} /> Checked In
                         </span>
                       ) : (
                         <button
                           onClick={() => handleCheckinDirect(b.booking_code)}
-                          className="text-[11px] font-bold text-[hsl(var(--primary))] hover:underline"
+                          className="text-[11px] font-bold text-[hsl(var(--primary))] hover:underline cursor-pointer"
                         >
                           Check In Now
                         </button>
@@ -188,7 +198,7 @@ export default function VendorBookings() {
                     <td className="px-4 py-3 text-center">
                       <button
                         onClick={() => setSelectedBooking(b)}
-                        className="px-3 py-1 font-bold bg-neutral-100 border border-neutral-200 rounded-lg text-foreground hover:bg-neutral-200"
+                        className="px-3 py-1 font-bold bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg text-foreground hover:bg-neutral-200 dark:hover:bg-neutral-700 cursor-pointer"
                       >
                         Detail & Manifest
                       </button>
@@ -207,22 +217,73 @@ export default function VendorBookings() {
           <div className="relative bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full p-4 sm:p-6 shadow-xl my-auto max-h-[calc(100dvh-5.5rem)] sm:max-h-[90vh] flex flex-col">
             <div className="shrink-0 flex justify-between items-center border-b border-border pb-3 mb-3">
               <div>
-                <div className="text-[10px] uppercase font-bold text-muted-foreground">Detail Booking Pass</div>
+                <div className="text-[10px] uppercase font-bold text-muted-foreground">Detail Booking Pass & Verifikasi</div>
                 <h3 className="font-black text-base sm:text-lg text-foreground font-mono">#{selectedBooking.booking_code}</h3>
               </div>
-              <button onClick={() => setSelectedBooking(null)} className="text-muted-foreground hover:text-foreground font-bold p-1">✕</button>
+              <button onClick={() => setSelectedBooking(null)} className="text-muted-foreground hover:text-foreground font-bold p-1 cursor-pointer">✕</button>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-4 text-xs pr-1">
+              {/* Mutual Verification Status Banner */}
+              {((selectedBooking.trip_status || "").toUpperCase() === "COMPLETED" || (selectedBooking.booking_status || "").toLowerCase() === "completed") ? (
+                <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-emerald-900 dark:text-emerald-200 space-y-1.5">
+                  <div className="font-black text-xs flex items-center gap-1.5">
+                    <ShieldCheck size={18} weight="fill" className="text-emerald-600 shrink-0" />
+                    <span>Status: Trip Telah Selesai & Tervalidasi (COMPLETED)</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Pesanan ini telah tervalidasi sah melalui <strong>{selectedBooking.completion_proof || selectedBooking.completion_method === 'PHOTO_PROOF' ? 'Unggahan Bukti Foto Lokasi oleh Pendaki' : 'Validasi Pemindaian QR Basecamp'}</strong>. Pendapatan bersih booking otomatis tersedia untuk pengajuan payout ke Super Admin tanpa memerlukan tindakan scan QR ulang.
+                  </p>
+                </div>
+              ) : (
+                <div className="p-3 bg-muted/40 border border-border rounded-xl text-xs space-y-1">
+                  <div className="font-bold text-foreground flex items-center gap-1.5">
+                    <Clock size={15} className="text-amber-500" /> Menunggu Validasi Selesai Trip
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Validasi penyelesaian trip dapat dilakukan oleh Vendor melalui <strong>Scan QR Pass</strong> di meeting point ATAU langsung oleh Pendaki via <strong>Unggah Foto Bukti Lokasi</strong> di aplikasi. Salah satu metode sudah mencukupi untuk membuka payout.
+                  </p>
+                </div>
+              )}
+
+              {/* Photo Proof Box (If uploaded by user) */}
+              {selectedBooking.completion_proof && (
+                <div className="p-3.5 bg-card border border-emerald-500/30 rounded-2xl space-y-2">
+                  <div className="font-bold uppercase text-emerald-700 dark:text-emerald-400 text-[10px] flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Camera size={14} weight="bold" /> Bukti Foto Kehadiran & Selesai Trip dari Pendaki
+                    </span>
+                    {selectedBooking.completed_at && (
+                      <span className="text-muted-foreground font-normal">
+                        {new Date(selectedBooking.completed_at).toLocaleString("id-ID")}
+                      </span>
+                    )}
+                  </div>
+                  <div className="rounded-xl overflow-hidden border border-border bg-black/5 max-h-56">
+                    <img
+                      src={selectedBooking.completion_proof}
+                      alt="Foto Bukti Kehadiran Trip"
+                      className="w-full h-48 object-contain mx-auto"
+                    />
+                  </div>
+                  {selectedBooking.completion_notes && (
+                    <div className="text-[11px] bg-muted/50 p-2.5 rounded-xl border border-border">
+                      <span className="font-bold text-foreground block mb-0.5">Catatan Pendaki:</span>
+                      <p className="text-muted-foreground italic">"{selectedBooking.completion_notes}"</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="p-3.5 bg-neutral-50 rounded-xl space-y-1.5 border border-border">
+                <div className="p-3.5 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl space-y-1.5 border border-border">
                   <div className="font-bold uppercase text-neutral-500 text-[10px]">Informasi Trip</div>
                   <div className="font-extrabold text-sm text-foreground">{selectedBooking.trip_title || "Expedisi Outdoor"}</div>
                   <div>Keberangkatan: <span className="font-bold">{selectedBooking.departure_date ? formatDateID(selectedBooking.departure_date) : "—"}</span></div>
                   <div>Jumlah Peserta: <span className="font-bold">{selectedBooking.quantity} Pax</span></div>
                 </div>
 
-                <div className="p-3.5 bg-neutral-50 rounded-xl space-y-1.5 border border-border">
+                <div className="p-3.5 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl space-y-1.5 border border-border">
                   <div className="font-bold uppercase text-neutral-500 text-[10px]">Kontak Pemesan</div>
                   <div className="font-extrabold text-sm text-foreground">{selectedBooking.contact_name}</div>
                   <div>Email: <span className="font-bold break-all">{selectedBooking.contact_email}</span></div>
@@ -231,21 +292,35 @@ export default function VendorBookings() {
               </div>
 
               {/* Financial Breakdown */}
-              <div className="p-3.5 border border-emerald-200 bg-emerald-50/50 rounded-xl space-y-1.5 text-xs">
-                <div className="font-bold uppercase text-emerald-800 text-[10px]">Financial Breakdown Booking Ini</div>
-                <div className="flex justify-between font-medium text-emerald-950">
-                  <span>Nilai Transaksi Kotor (Gross Amount)</span>
-                  <span className="font-bold">{formatRupiah(selectedBooking.total_amount)}</span>
-                </div>
-                <div className="flex justify-between font-medium text-rose-700">
-                  <span>Potongan Komisi Platform Trexio (7%)</span>
-                  <span className="font-bold">-{formatRupiah(Math.round((selectedBooking.total_amount || 0) * 0.07))}</span>
-                </div>
-                <div className="flex justify-between font-black text-emerald-900 border-t border-emerald-200 pt-2 text-sm">
-                  <span>Pendapatan Bersih Mitra (Net Revenue)</span>
-                  <span>{formatRupiah(Math.round((selectedBooking.total_amount || 0) * 0.93))}</span>
-                </div>
-              </div>
+              {(() => {
+                const gross = Number(selectedBooking.total_amount || 0);
+                const fee = selectedBooking.platform_fee !== undefined
+                  ? Number(selectedBooking.platform_fee)
+                  : selectedBooking.trexio_fee !== undefined
+                  ? Number(selectedBooking.trexio_fee)
+                  : Math.round(gross * (selectedBooking.commission_rate || 0.07));
+                const net = selectedBooking.net_amount !== undefined
+                  ? Number(selectedBooking.net_amount)
+                  : Math.max(0, gross - fee);
+
+                return (
+                  <div className="p-3.5 border border-emerald-200 dark:border-emerald-900 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-xl space-y-1.5 text-xs">
+                    <div className="font-bold uppercase text-emerald-800 dark:text-emerald-300 text-[10px]">Financial Breakdown Booking Ini</div>
+                    <div className="flex justify-between font-medium text-emerald-950 dark:text-emerald-100">
+                      <span>Nilai Transaksi Kotor (Gross Amount)</span>
+                      <span className="font-bold">{formatRupiah(gross)}</span>
+                    </div>
+                    <div className="flex justify-between font-medium text-rose-700 dark:text-rose-400">
+                      <span>Potongan Komisi Platform Trexio</span>
+                      <span className="font-bold">-{formatRupiah(fee)}</span>
+                    </div>
+                    <div className="flex justify-between font-black text-emerald-900 dark:text-emerald-200 border-t border-emerald-200 dark:border-emerald-800 pt-2 text-sm">
+                      <span>Pendapatan Bersih Mitra (Net Revenue)</span>
+                      <span>{formatRupiah(net)}</span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Preparation Packing Checklist Status */}
               <div className="space-y-2 text-xs">
@@ -255,7 +330,7 @@ export default function VendorBookings() {
                     {selectedBooking.prep_progress ?? (selectedBooking.packing_checklist ? Math.round((selectedBooking.packing_checklist.filter(i=>i.checked).length / selectedBooking.packing_checklist.length)*100) : 0)}% Ready
                   </span>
                 </div>
-                <div className="p-3 border border-border rounded-xl bg-neutral-50/70 space-y-2">
+                <div className="p-3 border border-border rounded-xl bg-neutral-50/70 dark:bg-neutral-800/40 space-y-2">
                   {selectedBooking.packing_checklist && selectedBooking.packing_checklist.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
                       {selectedBooking.packing_checklist.map((item) => (
@@ -263,9 +338,9 @@ export default function VendorBookings() {
                           {item.checked ? (
                             <CheckSquare size={14} weight="fill" className="text-emerald-600 shrink-0" />
                           ) : (
-                            <span className="w-3.5 h-3.5 border border-neutral-300 rounded-sm shrink-0 inline-block" />
+                            <span className="w-3.5 h-3.5 border border-neutral-300 dark:border-neutral-600 rounded-sm shrink-0 inline-block" />
                           )}
-                          <span className={item.checked ? "line-through text-neutral-500 truncate" : "text-neutral-800 truncate"}>
+                          <span className={item.checked ? "line-through text-neutral-500 truncate" : "text-neutral-800 dark:text-neutral-200 truncate"}>
                             {item.label}
                           </span>
                         </div>
@@ -282,7 +357,7 @@ export default function VendorBookings() {
                 <div className="font-bold uppercase text-neutral-500 text-[10px]">Manifest Daftar Peserta (Operasional)</div>
                 <div className="p-3 border border-border rounded-xl space-y-2">
                   {Array.from({ length: selectedBooking.quantity || 1 }).map((_, idx) => (
-                    <div key={idx} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 sm:gap-2 text-xs font-semibold p-2 bg-neutral-50 rounded-lg">
+                    <div key={idx} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 sm:gap-2 text-xs font-semibold p-2 bg-neutral-50 dark:bg-neutral-800/60 rounded-lg">
                       <div className="flex items-center gap-2">
                         <User size={16} className="text-muted-foreground shrink-0" />
                         <span>Peserta #{idx + 1}: {idx === 0 ? selectedBooking.contact_name : `Peserta Pendamping ${idx + 1}`}</span>
@@ -295,7 +370,7 @@ export default function VendorBookings() {
             </div>
 
             <div className="shrink-0 flex justify-end items-center gap-2 pt-3 border-t border-border mt-3">
-              {selectedBooking.checked_in && selectedBooking.trip_status !== 'COMPLETED' && (
+              {((selectedBooking.trip_status || "").toUpperCase() !== "COMPLETED" && (selectedBooking.booking_status || "").toLowerCase() !== "completed") && (
                 <button
                   type="button"
                   onClick={async () => {
@@ -315,7 +390,7 @@ export default function VendorBookings() {
               )}
               <button
                 onClick={() => setSelectedBooking(null)}
-                className="px-4 py-2 font-bold text-xs border border-border rounded-xl hover:bg-neutral-100"
+                className="px-4 py-2 font-bold text-xs border border-border rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
               >
                 Tutup
               </button>

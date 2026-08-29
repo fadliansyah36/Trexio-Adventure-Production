@@ -71,13 +71,17 @@ async function findUserByEmail(email) {
 }
 
 // Update a Supabase Auth user's password by id.
-async function adminUpdatePassword(userId, password) {
+async function adminUpdatePassword(userId, password, userMetadata = {}) {
   if (!supabaseAuthEnabled || !userId) return { ok: false, disabled: true };
   try {
+    const payload = { password, email_confirm: true };
+    if (userMetadata && Object.keys(userMetadata).length > 0) {
+      payload.user_metadata = userMetadata;
+    }
     const r = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
       method: 'PUT',
       headers: await adminHeaders(),
-      body: JSON.stringify({ password }),
+      body: JSON.stringify(payload),
     });
     const data = await r.json().catch(() => ({}));
     return r.ok ? { ok: true, user: data } : { ok: false, status: r.status, error: data };
@@ -91,7 +95,7 @@ async function ensureUser(email, password, userMetadata = {}) {
   if (!supabaseAuthEnabled) return { ok: false, disabled: true };
   const existing = await findUserByEmail(email);
   if (existing) {
-    await adminUpdatePassword(existing.id, password);
+    await adminUpdatePassword(existing.id, password, userMetadata);
     return { ok: true, user: existing, existed: true };
   }
   return adminCreateUser(email, password, userMetadata);

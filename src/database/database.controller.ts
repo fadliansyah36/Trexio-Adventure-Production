@@ -7,40 +7,16 @@ export class DatabaseController {
 
   @Post('reset-seed')
   async resetAndSeed() {
+    if (process.env.NODE_ENV === 'production') {
+      return {
+        ok: false,
+        message: 'Endpoint seeding dinonaktifkan di lingkungan produksi.',
+      };
+    }
     await this.databaseService.resetAndSeed();
     return {
       ok: true,
-      message: 'Berhasil melakukan reset akun dan seeding kredensial pengujian baru di database!',
-      credentials: [
-        {
-          role: 'Super Admin',
-          email: 'superadmin@trexio.id',
-          shorthand: 'superadmin',
-          password: 'admin123',
-          login_url: '/admin/login',
-        },
-        {
-          role: 'Tenant Admin',
-          email: 'admin@trexio.id',
-          shorthand: 'admin',
-          password: 'admin123',
-          login_url: '/admin/login',
-        },
-        {
-          role: 'Vendor / Mitra',
-          email: 'vendor@trexio.id',
-          shorthand: 'vendor',
-          password: 'vendor123',
-          login_url: '/partner/login',
-        },
-        {
-          role: 'Traveler / User',
-          email: 'traveler@trexio.id',
-          shorthand: 'traveler',
-          password: 'traveler123',
-          login_url: '/login',
-        },
-      ],
+      message: 'Proses seeding database selesai dari konfigurasi environment.',
     };
   }
 }

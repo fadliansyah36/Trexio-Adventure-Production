@@ -484,8 +484,8 @@ export default function SuperCustomerCare() {
                 <div className="flex-1 p-4 overflow-y-auto space-y-3 max-h-[380px]">
                   {Array.isArray(selectedConv.messages) && selectedConv.messages.length > 0 ? (
                     selectedConv.messages.map((m) => {
-                      const isCsAdmin = m.sender_id === "super_admin_cs" || m.sender_id === "vendor_official";
-                      const isAutoBot = m.sender_id === "cs_bot_auto";
+                      const isCsAdmin = m.sender_role === "super_admin" || m.sender_role === "admin" || m.sender_id === user?.id;
+                      const isAutoBot = m.sender_id === "cs_bot_auto" || m.sender_role === "system";
 
                       return (
                         <div

@@ -3,31 +3,12 @@ import { ConversationEntity, MessageEntity } from '../../core/entities/domain.en
 
 @Injectable()
 export class ChatService {
-  private conversations: ConversationEntity[] = [
-    {
-      id: 'conv_official_01',
-      user_id: 'default',
-      vendor_id: 'vendor_official',
-      vendor_name: 'Mitra TREXIO Official',
-      last_message: 'Halo! Ada yang bisa kami bantu terkait trip / pendakian Anda?',
-      updated_at: new Date().toISOString(),
-    },
-  ];
+  private conversations: ConversationEntity[] = [];
 
-  private messages: MessageEntity[] = [
-    {
-      id: 'msg_welcome_01',
-      conversation_id: 'conv_official_01',
-      sender_id: 'vendor_official',
-      sender_name: 'CS TREXIO Official',
-      text: 'Halo! Selamat datang di Layanan Bantuan & Chat Mitra TREXIO. Ada yang bisa kami bantu mengenai jadwal trip, perlengkapan, atau pendaftaran vendor?',
-      attachments: [],
-      created_at: new Date().toISOString(),
-    },
-  ];
+  private messages: MessageEntity[] = [];
 
   async getConversations(userId: string): Promise<ConversationEntity[]> {
-    return this.conversations;
+    return this.conversations.filter(c => !userId || c.user_id === userId || c.vendor_id === userId);
   }
 
   async getMessages(convId: string): Promise<MessageEntity[]> {

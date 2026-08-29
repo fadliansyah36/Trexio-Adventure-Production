@@ -222,16 +222,16 @@ export default function VendorFinance() {
               {Number(wdForm.amount) >= 50000 && (
                 <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-200 space-y-1 font-mono text-[11px]">
                   <div className="flex justify-between text-neutral-600">
-                    <span>Nominal Penarikan Gross:</span>
+                    <span>Nominal Pengajuan Penarikan:</span>
                     <span className="font-bold">{formatRupiah(Number(wdForm.amount))}</span>
                   </div>
-                  <div className="flex justify-between text-rose-600">
-                    <span>Potongan Komisi Trexio (7%):</span>
-                    <span className="font-bold">-{formatRupiah(Math.round(Number(wdForm.amount) * 0.07))}</span>
+                  <div className="flex justify-between text-neutral-600">
+                    <span>Biaya Transfer / Platform:</span>
+                    <span className="font-bold text-emerald-600">Rp 0 (Gratis)</span>
                   </div>
                   <div className="flex justify-between text-emerald-700 font-extrabold border-t border-neutral-200 pt-1">
-                    <span>Estimasi Net Ditransfer:</span>
-                    <span>{formatRupiah(Math.round(Number(wdForm.amount) * 0.93))}</span>
+                    <span>Total Bersih Diterima di Rekening:</span>
+                    <span>{formatRupiah(Number(wdForm.amount))}</span>
                   </div>
                 </div>
               )}

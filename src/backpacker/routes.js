@@ -144,7 +144,7 @@ function createBackpackerRouter(options = {}) {
       return {
         id: item.id,
         product_id: item.id,
-        vendor_id: item.vendor_id || 'vendor_official',
+        vendor_id: item.vendor_id || null,
         vendor_name: item.provider || item.organizer || 'TREXIO Partner',
         title: item.title,
         slug: item.slug || item.id,
@@ -843,7 +843,7 @@ function createBackpackerRouter(options = {}) {
         return {
           id: t.id,
           product_id: t.id,
-          vendor_id: t.vendor_id || 'vendor_official',
+          vendor_id: t.vendor_id || null,
           vendor_name: t.vendor_name || 'TREXIO Partner',
           title: t.title,
           slug: t.slug || t.id,
@@ -896,13 +896,13 @@ function createBackpackerRouter(options = {}) {
 
       const p1 = transportProducts[0] || {
         id: 'cat_shut_00',
-        vendor_id: 'vendor_official',
+        vendor_id: null,
         price: 150000,
         title: 'Shuttle VIP Jakarta/Bandung ke Basecamp Cibodas Gede'
       };
       const p2 = transportProducts[1] || {
         id: 'cat_shut_02',
-        vendor_id: 'vendor_official',
+        vendor_id: null,
         price: 120000,
         title: 'Shuttle Executive HiAce Bandara Lombok ↔ Sembalun'
       };
@@ -927,7 +927,7 @@ function createBackpackerRouter(options = {}) {
               duration: '10 jam',
               price: 350000,
               product_id: p1.id,
-              vendor_id: p1.vendor_id || 'vendor_official',
+              vendor_id: p1.vendor_id || null,
               availability: 8
             },
             {
@@ -938,7 +938,7 @@ function createBackpackerRouter(options = {}) {
               duration: '5 jam',
               price: 180000,
               product_id: p2.id,
-              vendor_id: p2.vendor_id || 'vendor_official',
+              vendor_id: p2.vendor_id || null,
               availability: 12
             },
             {
@@ -983,7 +983,7 @@ function createBackpackerRouter(options = {}) {
               duration: '3 jam',
               price: 350000,
               product_id: p1.id,
-              vendor_id: p1.vendor_id || 'vendor_official',
+              vendor_id: p1.vendor_id || null,
               availability: 6
             }
           ]
@@ -1006,7 +1006,7 @@ function createBackpackerRouter(options = {}) {
               duration: '9 jam',
               price: 700000,
               product_id: p1.id,
-              vendor_id: p1.vendor_id || 'vendor_official',
+              vendor_id: p1.vendor_id || null,
               availability: 5
             },
             {
@@ -1017,7 +1017,7 @@ function createBackpackerRouter(options = {}) {
               duration: '3 jam',
               price: 250000,
               product_id: p2.id,
-              vendor_id: p2.vendor_id || 'vendor_official',
+              vendor_id: p2.vendor_id || null,
               availability: 10
             }
           ]
@@ -1040,7 +1040,7 @@ function createBackpackerRouter(options = {}) {
               duration: '16 jam',
               price: 1050000,
               product_id: p1.id,
-              vendor_id: p1.vendor_id || 'vendor_official',
+              vendor_id: p1.vendor_id || null,
               availability: 7
             }
           ]
