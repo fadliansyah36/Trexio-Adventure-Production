@@ -1,0 +1,7 @@
+# TREXIO PRODUCTION INCIDENT REGISTER
+
+| Incident ID | Date / Time | Severity | System / Feature | Detected By | Owner Role | Status | Impact Description | Root Cause | Mitigation & Recovery | Postmortem & Prevention |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `INC-2026-001` | 2026-08-10 11:30 | Low | Database Schema Setup | Initial startup test | DBA_ROLE | Closed | Schema table permissions returned permission denied | Default user lacked schema public privileges | Re-granted re-ownership of public schema tables to `ai_studio_app_user` | Automated schema validation check added to server startup sequence |
+| `INC-2026-002` | 2026-08-10 13:10 | P2 | Payment Webhook Reconciliation | Midtrans test webhook | Backend_Role | Closed | Duplicate webhook callback received for same booking | Payment gateway retry mechanism fired twice | Applied idempotency check on `midtrans_order_id` in `payment_transactions` table | Verified unique constraint on `tx_id` and order ID in payment gateway ledger |
+| `INC-2026-003` | 2026-08-10 14:45 | P1 | Backpacker Ride Seat Reservation | Concurrent seat booking test | Backend_Role | Closed | Two users attempted to join last remaining seat simultaneously | Non-atomic seat decrement query in transport service | Wrapped seat deduction in atomic PostgreSQL transaction with row-level locking | Implemented atomic `UPDATE rides SET available_seats = available_seats - 1 WHERE available_seats > 0` |

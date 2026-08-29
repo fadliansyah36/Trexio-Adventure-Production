@@ -1,0 +1,76 @@
+{
+  "summary": "Phase 3 (Vendor Public Storefront + Super Admin Impersonation + Auto-Slug) backend testing complete. Created /app/backend/tests/test_phase3_storefront_impersonation.py with 34 targeted tests covering: public storefront (no-auth) + PII strip + 404 cases (nonexistent/rejected/suspended), pending-vendor storefront returns products=[], slug auto-generation on onboard from brand name, slug availability checks (available/too-short/reserved/taken/auth-required), slug update endpoint (success + all error paths), impersonation happy path (admin→traveler→exit with cookie flip), impersonation guards (404 non-existent, 403 other super_admin, 403 non-super, 401/403 anon), impersonation exit route ordering (works with no cookie/no auth), impersonation audit trail (start+end persisted with correct actor/target/details), impersonation JWT TTL = 30 min, invalid imp_token falls through cleanly (no 500), /auth/me always exposes impersonation field, and regression checks (all vendors have slug, TREXIO Official slug = 'trexio-official', unique index on vendors.slug). All 34 Phase 3 tests pass in isolation AND all 98 tests (Phase 1: 32 + Phase 2: 32 + Phase 3: 34) pass together across 2 consecutive full-suite runs.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "POST /api/vendor/onboard",
+        "issue": "Response contains full raw vendor doc including nested legal.nik, payout.account_number, contact.phone (PII). This is fine for owner-facing response, but consumers should not log/echo it. Public /storefront/{slug} correctly strips these — verified."
+      },
+      {
+        "endpoint": "GET /api/storefront/{slug}",
+        "issue": "Pending vendors' storefront returns 200 with empty products (not 404). This is by design (allows brand page preview even before verification) but should be documented for consumers so they don't render 'empty vendor' pages that look broken."
+      }
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_phase3_storefront_impersonation.py",
+    "/app/test_reports/pytest/iteration_8_phase3.xml",
+    "/app/test_reports/pytest/iteration_8_full.xml"
+  ],
+  "action_items": [
+    "No blocking action items. Phase 3 backend is production-ready per specified requirements.",
+    "Optional documentation: /storefront/{slug} pending-vendor behavior (200 with products=[]) should be surfaced in API docs so frontend can render a 'coming soon' state."
+  ],
+  "critical_code_review_comments": [
+    "routers/impersonation.py:18 exit_impersonation — correctly declared BEFORE /{user_id} route so path matching selects it first even when the path segment 'exit' would otherwise be captured by the parameter. This ordering is intentional and verified by test_f_exit_no_cookie_no_auth_returns_ok.",
+    "security.py:112 get_current_user — impersonation branch swallows ExpiredSignatureError + InvalidTokenError with `pass`, correctly falling through to access_token. Good defensive coding; verified by test_b_invalid_imp_token_falls_through.",
+    "routers/impersonation.py:47-49 — target_roles derivation uses `.get('roles') or [role]` which is correct; guard against impersonating another super_admin works. Also allows self-impersonation (str(target._id)==admin.id) which is a no-op but not harmful.",
+    "routers/storefront.py:52 _serialize_public_vendor — whitelist-only approach; sensitive fields (legal, payout, documents, contact) never present in output. Verified by test_c_public_hides_sensitive_pii.",
+    "routers/storefront.py:76 slug is lowercased/stripped before lookup; good. However SLUG_RE is not enforced on the read path — safe because non-matching slugs simply won't exist in DB.",
+    "server.py:165 back-fill loop iterates all vendors missing slug; safe on startup but could log slug assignments for audit trail. Non-critical.",
+    "server.py:171 create_index('slug', unique=True, sparse=True) is wrapped in try/except which silences legitimate index creation errors. Consider logging exceptions rather than swallowing them.",
+    "routers/impersonation.py:40 start_impersonation — cookie is set with samesite=none + secure=True + httponly=True + max_age=1800; matches review_request spec exactly."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_phase3_storefront_impersonation.py (created — 34 tests covering all 15 review_request bullets)"
+  ],
+  "success_rate": {
+    "backend": "100% (98/98 tests passing: Phase 1: 32 + Phase 2: 32 + Phase 3: 34)",
+    "frontend": "not tested (backend-only per request)"
+  },
+  "test_credentials": "admin@trexio.id / admin123 (super_admin), traveler@trexio.id / traveler123 (user). Loaded from /app/memory/test_credentials.md. Phase 3 vendor/slug flow uses a *dedicated freshly-registered user* per class (test_phase3_slug_{hex}@trexio.io) to avoid cross-worker state collision with Phase 2's TestVendorLifecycle which also mutates traveler@trexio.id.",
+  "seed_data_creation": "None permanent. Class-scoped fixture registers ephemeral users and cleans them up on teardown. TREXIO Official system vendor preserved (verified slug = 'trexio-official').",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Combined suite command: `cd /app/backend && python -m pytest tests/test_super_admin_tenants.py tests/test_vendor_phase2.py tests/test_phase3_storefront_impersonation.py`. pytest.ini enforces -n 2 --dist loadscope so classes may run on different workers. CRITICAL RULE for Phase 3+: any class that mutates a shared user (traveler@trexio.id) will collide with Phase 2's TestVendorLifecycle. Solution used in Phase 3 → TestTravelerVendorFlow registers its own ephemeral user via class-scoped fixture. Audit-count assertions use `>= before + 1` (not ==) to tolerate parallel impersonation calls from TestImpersonationTokenTTL. When adding new tests, either (a) reuse an ephemeral registered user or (b) put all touching-tests into a single class.",
+  "verified_scenarios": [
+    "Storefront /storefront/trexio-official no-auth → 200 with brand_name/slug/verified/all 6 types/product_count≥6/products[] of 6+ trips",
+    "Storefront /storefront/nonexistent → 404",
+    "Storefront /storefront/{rejected_slug} → 404, /storefront/{suspended_slug} → 404",
+    "Storefront /storefront/{pending_slug} → 200 with products=[] (verified=false)",
+    "Public vendor response strips legal/payout/documents/contact/user_id/tenant_id and includes id/slug/brand_name/tagline/description/logo/cover_image/types/verified/website/city/province/product_count/joined_at",
+    "GET /vendor/slug/check?slug=free-slug → {available:true}; ab → false; admin (reserved) → false; trexio-official → false with 'dipakai'/'sudah' message; anon → 401/403",
+    "PATCH /vendor/me/slug new_slug → 200 {ok,slug,storefront_url:/@slug}; /storefront/{new_slug} reads back the vendor",
+    "PATCH /vendor/me/slug invalid/reserved/duplicate → 400",
+    "POST /vendor/onboard brand='Petualang Tanpa Batas' → slug auto = 'petualang-tanpa-batas...'; brand='QA Vendor' → 'qa-vendor...'",
+    "GET /vendor/me returns slug field",
+    "POST /super/impersonate/{traveler_id} → 200 with impersonating.email=traveler; imp_token cookie set (httponly/secure/samesite=none/max_age=1800)",
+    "GET /auth/me during impersonation → traveler email + impersonation:{active:true, actor_id:admin, actor_email:admin@trexio.id}",
+    "POST /super/impersonate/exit → 200 {ok:true}; /auth/me flips back to admin with impersonation:{active:false}",
+    "POST /super/impersonate/{non_existent} → 404",
+    "POST /super/impersonate/{other_super_admin} → 403 with 'super admin' in detail",
+    "POST /super/impersonate/{user_id} by traveler → 403; anon → 401/403",
+    "POST /super/impersonate/exit with NO auth and NO cookie → 200 {ok:true} (route ordering fix verified)",
+    "Audit: after impersonate+exit, db.audit_logs contains action='impersonation_start' & 'impersonation_end' entries with actor_id=admin, actor_email=admin@trexio.id, resource='user', resource_id=traveler, details.target_email=traveler",
+    "Impersonation JWT payload: exp - now ≈ 1800s (30 min), impersonation=true, actor=admin_id, sub=target_id",
+    "Garbage imp_token cookie → get_current_user falls through to access_token, /auth/me returns admin (200, not 500)",
+    "GET /auth/me for both admin and traveler returns impersonation:{active:false} when not impersonating (field ALWAYS present)",
+    "Regression: no vendor in DB has missing/null/empty slug (startup back-fill worked)",
+    "Regression: unique index exists on vendors.slug (verified via index_information())",
+    "Regression: TREXIO Official slug == 'trexio-official' exactly",
+    "Regression: Phase 1 /super/stats and /tenant/current still work",
+    "Combined suite (Phase 1+2+3, 98 tests) passes in parallel on 2 consecutive runs (~17s and ~80s including cold cache)"
+  ]
+}

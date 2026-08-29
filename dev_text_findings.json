@@ -1,0 +1,410 @@
+[
+  {
+    "file": "frontend/src/App.js",
+    "line": 10,
+    "keyword": "dummy",
+    "snippet": "// Run production audit on boot to verify records and log console warnings for dummy data"
+  },
+  {
+    "file": "frontend/src/App.js",
+    "line": 10,
+    "keyword": "dummy data",
+    "snippet": "// Run production audit on boot to verify records and log console warnings for dummy data"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 5,
+    "keyword": "dummy",
+    "snippet": "* Common dummy / test identifiers to scan for in local storage and session storage"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 7,
+    "keyword": "dummy",
+    "snippet": "const DUMMY_IDENTIFIERS = ["
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 9,
+    "keyword": "mock",
+    "snippet": "'mock_id',"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 11,
+    "keyword": "mock",
+    "snippet": "'mock_user',"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 13,
+    "keyword": "dummy",
+    "snippet": "'dummy',"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 14,
+    "keyword": "mock",
+    "snippet": "'mock_data',"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 18,
+    "keyword": "mock",
+    "snippet": "'mock_session'"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 41,
+    "keyword": "dummy",
+    "snippet": "* Audit function to scan and clean storage for dummy identifiers"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 67,
+    "keyword": "dummy",
+    "snippet": "const matchesDummyKey = DUMMY_IDENTIFIERS.some((identifier) => lowerKey.includes(identifier));"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 68,
+    "keyword": "dummy",
+    "snippet": "const matchesDummyValue = DUMMY_IDENTIFIERS.some((identifier) => lowerValue.includes(identifier));"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 70,
+    "keyword": "dummy",
+    "snippet": "if (matchesDummyKey || matchesDummyValue) {"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 100,
+    "keyword": "mock",
+    "snippet": "* common dummy identifiers (e.g., 'test_user', 'mock_id') and clears them"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 100,
+    "keyword": "dummy",
+    "snippet": "* common dummy identifiers (e.g., 'test_user', 'mock_id') and clears them"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 110,
+    "keyword": "dummy",
+    "snippet": "`[ProductionAudit] Production mode detected. Cleared ${clearedItems.length} dummy item(s) from storage:`,"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 115,
+    "keyword": "dummy",
+    "snippet": "`[ProductionAudit] Production storage audit clean (${totalScanned} storage keys inspected, 0 dummy items found).`"
+  },
+  {
+    "file": "frontend/src/components/ui/toast.jsx",
+    "line": 22,
+    "keyword": "WIP",
+    "snippet": "\"group pointer-events-auto relative flex w-full items-center justify-between space-x-2 overflow-hidden rounded-md border p-4 pr-6 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full\","
+  },
+  {
+    "file": "frontend/src/components/vendor/VendorCoverImageManager.jsx",
+    "line": 197,
+    "keyword": "mock",
+    "snippet": "<Eye size={16} className=\"text-emerald-500\" /> Live Mockup Header Storefront Publik"
+  },
+  {
+    "file": "frontend/src/pages/CategoryPage.jsx",
+    "line": 513,
+    "keyword": "WIP",
+    "snippet": "{/* 12 CATEGORIES PWA SWIPABLE BAR */}"
+  },
+  {
+    "file": "frontend/src/pages/Home.jsx",
+    "line": 380,
+    "keyword": "Phase ",
+    "snippet": "// Phase 3 AI Dynamic Homepage Ranking Engine"
+  },
+  {
+    "file": "frontend/src/pages/Home.jsx",
+    "line": 380,
+    "keyword": "Phase 3",
+    "snippet": "// Phase 3 AI Dynamic Homepage Ranking Engine"
+  },
+  {
+    "file": "frontend/src/pages/SafetyCenter.jsx",
+    "line": 192,
+    "keyword": "Phase ",
+    "snippet": "<span>Phase 7 — Trexio Adventure Intelligence</span>"
+  },
+  {
+    "file": "frontend/src/pages/admin/AIGrowthIntelligence.jsx",
+    "line": 118,
+    "keyword": "Phase ",
+    "snippet": "<span>TREXIO PHASE 12</span>"
+  },
+  {
+    "file": "frontend/src/pages/admin/AIGrowthIntelligence.jsx",
+    "line": 118,
+    "keyword": "Phase 1",
+    "snippet": "<span>TREXIO PHASE 12</span>"
+  },
+  {
+    "file": "frontend/src/pages/admin/AISuperAdminCommandCenter.jsx",
+    "line": 148,
+    "keyword": "Phase ",
+    "snippet": "Phase 10 Intelligence"
+  },
+  {
+    "file": "frontend/src/pages/admin/AISuperAdminCommandCenter.jsx",
+    "line": 148,
+    "keyword": "Phase 1",
+    "snippet": "Phase 10 Intelligence"
+  },
+  {
+    "file": "frontend/src/pages/admin/AITrustRiskCenter.jsx",
+    "line": 169,
+    "keyword": "Phase ",
+    "snippet": "<span>TREXIO PHASE 11</span>"
+  },
+  {
+    "file": "frontend/src/pages/admin/AITrustRiskCenter.jsx",
+    "line": 169,
+    "keyword": "Phase 1",
+    "snippet": "<span>TREXIO PHASE 11</span>"
+  },
+  {
+    "file": "frontend/src/pages/backpacker/BackpackerDashboard.jsx",
+    "line": 63,
+    "keyword": "Phase ",
+    "snippet": "// Phase 8A Activity Center & Lifecycle States"
+  },
+  {
+    "file": "frontend/src/pages/backpacker/BackpackerDashboard.jsx",
+    "line": 67,
+    "keyword": "Phase ",
+    "snippet": "// Phase 4 Tracking, Consent, and Social States"
+  },
+  {
+    "file": "frontend/src/pages/backpacker/BackpackerDashboard.jsx",
+    "line": 78,
+    "keyword": "Phase ",
+    "snippet": "// Phase N3 Contact Access & Profile Contact States"
+  },
+  {
+    "file": "frontend/src/pages/backpacker/BackpackerDashboard.jsx",
+    "line": 264,
+    "keyword": "mock",
+    "snippet": "// Update mock location update"
+  },
+  {
+    "file": "frontend/src/pages/super/AIEvaluationDashboard.jsx",
+    "line": 99,
+    "keyword": "Phase ",
+    "snippet": "<span>Phase 14 — Central AI Evaluation & Quality Control</span>"
+  },
+  {
+    "file": "frontend/src/pages/super/AIEvaluationDashboard.jsx",
+    "line": 99,
+    "keyword": "Phase 1",
+    "snippet": "<span>Phase 14 — Central AI Evaluation & Quality Control</span>"
+  },
+  {
+    "file": "frontend/src/pages/super/AIEvaluationDashboard.jsx",
+    "line": 229,
+    "keyword": "Phase ",
+    "snippet": "{/* Capability Evaluation Matrix across Phase 1–13 */}"
+  },
+  {
+    "file": "frontend/src/pages/super/AIEvaluationDashboard.jsx",
+    "line": 229,
+    "keyword": "Phase 1",
+    "snippet": "{/* Capability Evaluation Matrix across Phase 1–13 */}"
+  },
+  {
+    "file": "frontend/src/pages/super/AIEvaluationDashboard.jsx",
+    "line": 234,
+    "keyword": "Phase ",
+    "snippet": "<SlidersHorizontal size={18} className=\"text-indigo-400\" /> Phase 1–13 Capability Quality Matrix"
+  },
+  {
+    "file": "frontend/src/pages/super/AIEvaluationDashboard.jsx",
+    "line": 234,
+    "keyword": "Phase 1",
+    "snippet": "<SlidersHorizontal size={18} className=\"text-indigo-400\" /> Phase 1–13 Capability Quality Matrix"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperAIControl.jsx",
+    "line": 56,
+    "keyword": "Phase ",
+    "snippet": "// Phase 3 Homepage Ranking Config State"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperAIControl.jsx",
+    "line": 56,
+    "keyword": "Phase 3",
+    "snippet": "// Phase 3 Homepage Ranking Config State"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperAIControl.jsx",
+    "line": 67,
+    "keyword": "Phase ",
+    "snippet": "// Phase 5 AI Smart Search Config & Analytics State"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperAIControl.jsx",
+    "line": 191,
+    "keyword": "Phase ",
+    "snippet": "<span>Trexio AI Architecture — Phase 1</span>"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperAIControl.jsx",
+    "line": 191,
+    "keyword": "Phase 1",
+    "snippet": "<span>Trexio AI Architecture — Phase 1</span>"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperAIControl.jsx",
+    "line": 231,
+    "keyword": "Phase ",
+    "snippet": "<span>AI Evaluation, Quality & Observability (Phase 14)</span>"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperAIControl.jsx",
+    "line": 231,
+    "keyword": "Phase 1",
+    "snippet": "<span>AI Evaluation, Quality & Observability (Phase 14)</span>"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperAIControl.jsx",
+    "line": 317,
+    "keyword": "Phase ",
+    "snippet": "{/* AI Homepage Ranking Configuration Section (Phase 3) */}"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperAIControl.jsx",
+    "line": 317,
+    "keyword": "Phase 3",
+    "snippet": "{/* AI Homepage Ranking Configuration Section (Phase 3) */}"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperAIControl.jsx",
+    "line": 322,
+    "keyword": "Phase ",
+    "snippet": "<Rocket size={18} className=\"text-emerald-400\" /> AI Homepage Section Ranking & Time Decay (Phase 3)"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperAIControl.jsx",
+    "line": 322,
+    "keyword": "Phase 3",
+    "snippet": "<Rocket size={18} className=\"text-emerald-400\" /> AI Homepage Section Ranking & Time Decay (Phase 3)"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperAIControl.jsx",
+    "line": 394,
+    "keyword": "Phase ",
+    "snippet": "{/* AI Smart Search & Trip Discovery Engine Section (Phase 5) */}"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperAIControl.jsx",
+    "line": 399,
+    "keyword": "Phase ",
+    "snippet": "<Sparkle size={18} className=\"text-emerald-400\" weight=\"fill\" /> AI Smart Search & Trip Discovery Engine (Phase 5)"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperAIControl.jsx",
+    "line": 524,
+    "keyword": "Phase ",
+    "snippet": "<Brain size={18} className=\"text-emerald-400\" /> AI Recommendation Scoring Weights & Diversity Rules (Phase 2)"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperAIControl.jsx",
+    "line": 524,
+    "keyword": "Phase 2",
+    "snippet": "<Brain size={18} className=\"text-emerald-400\" /> AI Recommendation Scoring Weights & Diversity Rules (Phase 2)"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperAIControl.jsx",
+    "line": 760,
+    "keyword": "Phase ",
+    "snippet": "{/* Phase 7 — AI Safety & Adventure Intelligence Center */}"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperAIControl.jsx",
+    "line": 766,
+    "keyword": "Phase ",
+    "snippet": "<span>Phase 7 Active Engine</span>"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperSEOControl.jsx",
+    "line": 284,
+    "keyword": "Phase ",
+    "snippet": "Phase 6"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperSEOControl.jsx",
+    "line": 288,
+    "keyword": "Phase ",
+    "snippet": "Pusat kendali Technical SEO, Programmatic Marketplace Routes, Ingest Berita Terverifikasi (SSRF-Safe), dan Analytics Keyword Demand dari Phase 5 Smart Search."
+  },
+  {
+    "file": "frontend/src/pages/super/SuperSEOControl.jsx",
+    "line": 416,
+    "keyword": "Phase ",
+    "snippet": "<Lightbulb className=\"w-5 h-5 text-amber-500\" /> High-Opportunity Keywords (Phase 5 Analytics)"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperSEOControl.jsx",
+    "line": 573,
+    "keyword": "Phase ",
+    "snippet": "<MagnifyingGlass className=\"w-5 h-5 text-emerald-600\" /> Analisis Keyword Berdasarkan Real Search Engine Phase 5"
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorAICopilot.jsx",
+    "line": 137,
+    "keyword": "Phase ",
+    "snippet": "<span>Phase 8 — AI Vendor Business Copilot</span>"
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorDashboard.jsx",
+    "line": 121,
+    "keyword": "Phase ",
+    "snippet": "Phase 8 AI Copilot"
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorProducts.jsx",
+    "line": 347,
+    "keyword": "Phase ",
+    "snippet": "// Phase 8 AI Listing Assistant States"
+  },
+  {
+    "file": "frontend/src/services/analyticsService.js",
+    "line": 23,
+    "keyword": "hardcoded",
+    "snippet": "// [SECURITY] No hardcoded fallback key. Skip init when key is not provided via env."
+  },
+  {
+    "file": "frontend/src/utils/productionAudit.js",
+    "line": 6,
+    "keyword": "mock",
+    "snippet": "* rather than null or mock/dummy values. Displays a warning in the dev console if any legacy dummy records are detected."
+  },
+  {
+    "file": "frontend/src/utils/productionAudit.js",
+    "line": 6,
+    "keyword": "dummy",
+    "snippet": "* rather than null or mock/dummy values. Displays a warning in the dev console if any legacy dummy records are detected."
+  },
+  {
+    "file": "frontend/src/utils/productionAudit.js",
+    "line": 13,
+    "keyword": "dummy",
+    "snippet": "if (data && data.dummy_records_found > 0) {"
+  },
+  {
+    "file": "frontend/src/utils/productionAudit.js",
+    "line": 15,
+    "keyword": "dummy",
+    "snippet": "`[TREXIO PRODUCTION AUDIT WARNING] Detected ${data.dummy_records_found} legacy dummy or uninitialized records across ${data.users_audited} users. Records have been sanitized:`,"
+  }
+]

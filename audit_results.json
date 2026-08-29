@@ -1,0 +1,3032 @@
+[
+  {
+    "file": "data/db_ai_golden_dataset.json",
+    "line": 85,
+    "keyword": "fake",
+    "snippet": "\"no_fake_sales_data\""
+  },
+  {
+    "file": "data/db_audit_logs.json",
+    "line": 53,
+    "keyword": "sandbox",
+    "snippet": "\"old_val\": \"sandbox\","
+  },
+  {
+    "file": "data/db_audit_logs.json",
+    "line": 54,
+    "keyword": "sandbox",
+    "snippet": "\"new_val\": \"sandbox\","
+  },
+  {
+    "file": "data/db_backpacker_profiles.json",
+    "line": 3,
+    "keyword": "demo",
+    "snippet": "\"id\": \"bp_prof_demo_01\","
+  },
+  {
+    "file": "data/db_backpacker_profiles.json",
+    "line": 4,
+    "keyword": "demo",
+    "snippet": "\"user_id\": \"user_demo_01\","
+  },
+  {
+    "file": "data/db_journey_expenses.json",
+    "line": 4,
+    "keyword": "demo",
+    "snippet": "\"journey_id\": \"journey_demo_01\","
+  },
+  {
+    "file": "data/db_journey_expenses.json",
+    "line": 5,
+    "keyword": "demo",
+    "snippet": "\"payer_id\": \"user_demo_01\","
+  },
+  {
+    "file": "data/db_journey_expenses.json",
+    "line": 12,
+    "keyword": "demo",
+    "snippet": "\"user_id\": \"user_demo_01\","
+  },
+  {
+    "file": "data/db_journey_participants.json",
+    "line": 4,
+    "keyword": "demo",
+    "snippet": "\"journey_id\": \"journey_demo_01\","
+  },
+  {
+    "file": "data/db_journey_participants.json",
+    "line": 5,
+    "keyword": "demo",
+    "snippet": "\"user_id\": \"user_demo_01\","
+  },
+  {
+    "file": "data/db_journey_stops.json",
+    "line": 4,
+    "keyword": "demo",
+    "snippet": "\"journey_id\": \"journey_demo_01\","
+  },
+  {
+    "file": "data/db_journey_stops.json",
+    "line": 14,
+    "keyword": "demo",
+    "snippet": "\"journey_id\": \"journey_demo_01\","
+  },
+  {
+    "file": "data/db_journey_stops.json",
+    "line": 24,
+    "keyword": "demo",
+    "snippet": "\"journey_id\": \"journey_demo_01\","
+  },
+  {
+    "file": "data/db_journeys.json",
+    "line": 3,
+    "keyword": "demo",
+    "snippet": "\"id\": \"journey_demo_01\","
+  },
+  {
+    "file": "data/db_journeys.json",
+    "line": 4,
+    "keyword": "demo",
+    "snippet": "\"owner_id\": \"user_demo_01\","
+  },
+  {
+    "file": "data/db_shared_ride_participants.json",
+    "line": 4,
+    "keyword": "demo",
+    "snippet": "\"shared_ride_id\": \"ride_demo_01\","
+  },
+  {
+    "file": "data/db_shared_ride_participants.json",
+    "line": 5,
+    "keyword": "demo",
+    "snippet": "\"user_id\": \"user_demo_01\","
+  },
+  {
+    "file": "data/db_shared_rides.json",
+    "line": 3,
+    "keyword": "demo",
+    "snippet": "\"id\": \"ride_demo_01\","
+  },
+  {
+    "file": "data/db_shared_rides.json",
+    "line": 4,
+    "keyword": "demo",
+    "snippet": "\"owner_id\": \"user_demo_01\","
+  },
+  {
+    "file": "data/db_travel_intents.json",
+    "line": 3,
+    "keyword": "demo",
+    "snippet": "\"id\": \"intent_demo_01\","
+  },
+  {
+    "file": "data/db_travel_intents.json",
+    "line": 4,
+    "keyword": "demo",
+    "snippet": "\"user_id\": \"user_demo_01\","
+  },
+  {
+    "file": "data/db_users.json",
+    "line": 13,
+    "keyword": "tenant_default",
+    "snippet": "\"tenant_id\": \"tenant_default\","
+  },
+  {
+    "file": "data/db_users.json",
+    "line": 30,
+    "keyword": "tenant_default",
+    "snippet": "\"tenant_id\": \"tenant_default\","
+  },
+  {
+    "file": "design_guidelines.json",
+    "line": 138,
+    "keyword": "placeholder",
+    "snippet": "\"Never use via.placeholder.com. ONLY use the provided image URLs.\","
+  },
+  {
+    "file": "frontend/src/App.js",
+    "line": 10,
+    "keyword": "dummy",
+    "snippet": "// Run production audit on boot to verify records and log console warnings for dummy data"
+  },
+  {
+    "file": "frontend/src/components/ActivityLog.jsx",
+    "line": 236,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Cari aktivitas, perangkat, atau detail perubahan...\""
+  },
+  {
+    "file": "frontend/src/components/CameraQrScanner.jsx",
+    "line": 348,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: TRX-981240 atau TREXIO-PASS-...\""
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 5,
+    "keyword": "dummy",
+    "snippet": "* Common dummy / test identifiers to scan for in local storage and session storage"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 7,
+    "keyword": "DUMMY_",
+    "snippet": "const DUMMY_IDENTIFIERS = ["
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 9,
+    "keyword": "mock",
+    "snippet": "'mock_id',"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 11,
+    "keyword": "mock",
+    "snippet": "'mock_user',"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 13,
+    "keyword": "dummy",
+    "snippet": "'dummy',"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 14,
+    "keyword": "mock",
+    "snippet": "'mock_data',"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 15,
+    "keyword": "demo",
+    "snippet": "'demo_user',"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 16,
+    "keyword": "sample",
+    "snippet": "'sample_id',"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 18,
+    "keyword": "mock",
+    "snippet": "'mock_session'"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 41,
+    "keyword": "dummy",
+    "snippet": "* Audit function to scan and clean storage for dummy identifiers"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 67,
+    "keyword": "DUMMY_",
+    "snippet": "const matchesDummyKey = DUMMY_IDENTIFIERS.some((identifier) => lowerKey.includes(identifier));"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 68,
+    "keyword": "DUMMY_",
+    "snippet": "const matchesDummyValue = DUMMY_IDENTIFIERS.some((identifier) => lowerValue.includes(identifier));"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 100,
+    "keyword": "mock",
+    "snippet": "* common dummy identifiers (e.g., 'test_user', 'mock_id') and clears them"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 100,
+    "keyword": "dummy",
+    "snippet": "* common dummy identifiers (e.g., 'test_user', 'mock_id') and clears them"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 110,
+    "keyword": "dummy",
+    "snippet": "`[ProductionAudit] Production mode detected. Cleared ${clearedItems.length} dummy item(s) from storage:`,"
+  },
+  {
+    "file": "frontend/src/components/ProductionAudit.jsx",
+    "line": 115,
+    "keyword": "dummy",
+    "snippet": "`[ProductionAudit] Production storage audit clean (${totalScanned} storage keys inspected, 0 dummy items found).`"
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 643,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Masukkan nama lengkap\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 673,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"email@trexio.com\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 759,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"08123456789\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 775,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Deskripsi atau kutipan singkat profil Anda...\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 798,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"e.g. Lead System Architect\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 812,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"e.g. Executive Platform Operations\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 826,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"08123456789\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 840,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"e.g. Terenkripsi TOTP 2FA\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 865,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"e.g. Semeru Ranupani Explorer\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 879,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"08123456789\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 893,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"e.g. 24 Jam (Senin - Minggu)\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 907,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Jl. Raya Basecamp...\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 920,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Keterangan fasilitas, syarat registrasi SIMAKSI, dll...\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 943,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"e.g. Trexio Outdoor Gear\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 972,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Nama PIC Usaha\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 986,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"08123456789\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 1000,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"e.g. BCA, Bank Mandiri, BRI\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 1013,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"1234567890\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 1024,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"A.N. Pemilik Usaha\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 1035,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"e.g. Area Gunung Semeru & Arjuno\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 1076,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"e.g. Bandung, Jawa Barat\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 1089,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Nama anggota keluarga / rekan\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 1100,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"08123456789\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 1111,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Alergi, riwayat cedera, atau catatan medis untuk tim medis basecamp...\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 1156,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Masukkan password saat ini\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 1184,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Masukkan password baru\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 1261,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Ulangi password baru\""
+  },
+  {
+    "file": "frontend/src/components/RoleProfileEditor.jsx",
+    "line": 1364,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: 123456\""
+  },
+  {
+    "file": "frontend/src/components/auth/ForgotPasswordModal.jsx",
+    "line": 229,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: user@email.com atau 081234567890\""
+  },
+  {
+    "file": "frontend/src/components/auth/ForgotPasswordModal.jsx",
+    "line": 338,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"123456\""
+  },
+  {
+    "file": "frontend/src/components/auth/ForgotPasswordModal.jsx",
+    "line": 397,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Minimal 6 karakter\""
+  },
+  {
+    "file": "frontend/src/components/auth/ForgotPasswordModal.jsx",
+    "line": 421,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Ulangi kata sandi baru\""
+  },
+  {
+    "file": "frontend/src/components/auth/WhatsAppOtpModal.jsx",
+    "line": 109,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Nama Pemilik Akun\""
+  },
+  {
+    "file": "frontend/src/components/auth/WhatsAppOtpModal.jsx",
+    "line": 121,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: 081234567890\""
+  },
+  {
+    "file": "frontend/src/components/auth/WhatsAppOtpModal.jsx",
+    "line": 164,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"123456\""
+  },
+  {
+    "file": "frontend/src/components/site/AIAssistantWidget.jsx",
+    "line": 379,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Tanya Trexio AI (misal: 'open trip Bromo 800rb')...\""
+  },
+  {
+    "file": "frontend/src/components/site/ChatHistory.jsx",
+    "line": 87,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Cari dalam riwayat percakapan...\""
+  },
+  {
+    "file": "frontend/src/components/site/ChatWidget.jsx",
+    "line": 416,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Tulis pesan ke mitra...\""
+  },
+  {
+    "file": "frontend/src/components/site/Navbar.jsx",
+    "line": 309,
+    "keyword": "placeholder",
+    "snippet": "<SearchBarWithAutocomplete placeholder=\"Cari trip, rental gear, vendor...\" variant=\"navbar\" />"
+  },
+  {
+    "file": "frontend/src/components/site/SearchBarWithAutocomplete.jsx",
+    "line": 17,
+    "keyword": "placeholder",
+    "snippet": "placeholder = \"Cari trip, sewa alat, gunung, atau vendor...\","
+  },
+  {
+    "file": "frontend/src/components/site/SearchBarWithAutocomplete.jsx",
+    "line": 136,
+    "keyword": "placeholder",
+    "snippet": "placeholder={placeholder}"
+  },
+  {
+    "file": "frontend/src/components/site/SearchBarWithAutocomplete.jsx",
+    "line": 137,
+    "keyword": "placeholder",
+    "snippet": "aria-label={placeholder || \"Cari destinasi, trip, atau peralatan\"}"
+  },
+  {
+    "file": "frontend/src/components/site/SearchBarWithAutocomplete.jsx",
+    "line": 139,
+    "keyword": "placeholder",
+    "snippet": "className={`w-full bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-hidden ${"
+  },
+  {
+    "file": "frontend/src/components/tenant-builder/TenantLandingRenderer.jsx",
+    "line": 291,
+    "keyword": "sample",
+    "snippet": "{(sec.sampleTrips || []).map((trip) => ("
+  },
+  {
+    "file": "frontend/src/components/tenant-builder/landingTemplatesData.js",
+    "line": 52,
+    "keyword": "sample",
+    "snippet": "sampleTrips: ["
+  },
+  {
+    "file": "frontend/src/components/tenant-builder/landingTemplatesData.js",
+    "line": 204,
+    "keyword": "sample",
+    "snippet": "sampleTrips: ["
+  },
+  {
+    "file": "frontend/src/components/tenant-builder/landingTemplatesData.js",
+    "line": 316,
+    "keyword": "sample",
+    "snippet": "sampleTrips: ["
+  },
+  {
+    "file": "frontend/src/components/tenant-builder/landingTemplatesData.js",
+    "line": 400,
+    "keyword": "sample",
+    "snippet": "sampleTrips: ["
+  },
+  {
+    "file": "frontend/src/components/tenant-builder/landingTemplatesData.js",
+    "line": 484,
+    "keyword": "sample",
+    "snippet": "sampleTrips: ["
+  },
+  {
+    "file": "frontend/src/components/tenant-builder/landingTemplatesData.js",
+    "line": 568,
+    "keyword": "sample",
+    "snippet": "sampleTrips: ["
+  },
+  {
+    "file": "frontend/src/components/tenant-builder/landingTemplatesData.js",
+    "line": 652,
+    "keyword": "sample",
+    "snippet": "sampleTrips: ["
+  },
+  {
+    "file": "frontend/src/components/ui/command.jsx",
+    "line": 41,
+    "keyword": "placeholder",
+    "snippet": "\"flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled"
+  },
+  {
+    "file": "frontend/src/components/ui/input.jsx",
+    "line": 10,
+    "keyword": "placeholder",
+    "snippet": "\"flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transpa"
+  },
+  {
+    "file": "frontend/src/components/ui/select.jsx",
+    "line": 17,
+    "keyword": "placeholder",
+    "snippet": "\"flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ri"
+  },
+  {
+    "file": "frontend/src/components/ui/textarea.jsx",
+    "line": 9,
+    "keyword": "placeholder",
+    "snippet": "\"flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm placeholder:text-muted-foreground focu"
+  },
+  {
+    "file": "frontend/src/components/vendor/TransactionLedger.jsx",
+    "line": 171,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Cari ID transaksi, nama produk, atau pembeli...\""
+  },
+  {
+    "file": "frontend/src/components/vendor/ValidatedInput.jsx",
+    "line": 9,
+    "keyword": "placeholder",
+    "snippet": "placeholder,"
+  },
+  {
+    "file": "frontend/src/components/vendor/ValidatedInput.jsx",
+    "line": 136,
+    "keyword": "placeholder",
+    "snippet": "placeholder={placeholder}"
+  },
+  {
+    "file": "frontend/src/components/vendor/ValidatedInput.jsx",
+    "line": 159,
+    "keyword": "placeholder",
+    "snippet": "placeholder={placeholder}"
+  },
+  {
+    "file": "frontend/src/components/vendor/VendorCoverImageManager.jsx",
+    "line": 354,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"https://images.unsplash.com/photo-1464822759023-fed622ff2c3b\""
+  },
+  {
+    "file": "frontend/src/pages/AITripDiscoveryDashboard.jsx",
+    "line": 183,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Saya pemula mau mendaki gunung 2 hari di Jawa Tengah bersama 3 teman, budget 1 juta per orang, termasuk peralatan tenda"
+  },
+  {
+    "file": "frontend/src/pages/AITripDiscoveryDashboard.jsx",
+    "line": 184,
+    "keyword": "placeholder",
+    "snippet": "className=\"w-full p-4 rounded-2xl bg-slate-950 border border-zinc-700/80 text-sm text-white placeholder:text-zinc-500 focus:outline-none foc"
+  },
+  {
+    "file": "frontend/src/pages/Booking.jsx",
+    "line": 413,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Alergi makanan, kebutuhan khusus, dsb.\""
+  },
+  {
+    "file": "frontend/src/pages/Cart.jsx",
+    "line": 478,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: TREXIO10\""
+  },
+  {
+    "file": "frontend/src/pages/CategoryPage.jsx",
+    "line": 505,
+    "keyword": "placeholder",
+    "snippet": "placeholder={`Cari nama, lokasi, atau penyedia ${meta.name.toLowerCase()}…`}"
+  },
+  {
+    "file": "frontend/src/pages/CategoryPage.jsx",
+    "line": 506,
+    "keyword": "placeholder",
+    "snippet": "className=\"pl-10 pr-4 py-2.5 h-11 bg-white dark:bg-zinc-900 border-white/20 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 ro"
+  },
+  {
+    "file": "frontend/src/pages/CategoryPage.jsx",
+    "line": 924,
+    "keyword": "placeholder",
+    "snippet": "placeholder={currentCatConfig.notesPlaceholder}"
+  },
+  {
+    "file": "frontend/src/pages/Checkout.jsx",
+    "line": 476,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Nama Lengkap\""
+  },
+  {
+    "file": "frontend/src/pages/Checkout.jsx",
+    "line": 489,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"email@contoh.com\""
+  },
+  {
+    "file": "frontend/src/pages/Checkout.jsx",
+    "line": 501,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"081234567890\""
+  },
+  {
+    "file": "frontend/src/pages/Checkout.jsx",
+    "line": 513,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Ukuran sepatu, lokasi penjemputan khusus, dll.\""
+  },
+  {
+    "file": "frontend/src/pages/Checkout.jsx",
+    "line": 592,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Masukkan kode promo (mis. TREXIO10)\""
+  },
+  {
+    "file": "frontend/src/pages/CommunityDetail.jsx",
+    "line": 203,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Ceritakan pengalamanmu...\""
+  },
+  {
+    "file": "frontend/src/pages/CommunityDetail.jsx",
+    "line": 209,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"URL gambar (opsional)\""
+  },
+  {
+    "file": "frontend/src/pages/CommunityDiscussion.jsx",
+    "line": 478,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Cari topik, nama gunung, simaksi, atau gear...\""
+  },
+  {
+    "file": "frontend/src/pages/CommunityDiscussion.jsx",
+    "line": 719,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Info Kuota Simaksi Gunung Rinjani Agustus 2026...\""
+  },
+  {
+    "file": "frontend/src/pages/CommunityDiscussion.jsx",
+    "line": 730,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Tulis detail pertanyaan, kondisi jalur, atau pengalaman perjalananmu di sini...\""
+  },
+  {
+    "file": "frontend/src/pages/CommunityDiscussion.jsx",
+    "line": 740,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"https://images.unsplash.com/...\""
+  },
+  {
+    "file": "frontend/src/pages/CommunityDiscussion.jsx",
+    "line": 843,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Tulis balasan atau jawaban membantu...\""
+  },
+  {
+    "file": "frontend/src/pages/CommunityDiscussion.jsx",
+    "line": 933,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Jelaskan alasan mengapa konten ini melanggar panduan komunitas TREXIO...\""
+  },
+  {
+    "file": "frontend/src/pages/Contact.jsx",
+    "line": 114,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Budi Santoso\""
+  },
+  {
+    "file": "frontend/src/pages/Contact.jsx",
+    "line": 125,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"budi@example.com\""
+  },
+  {
+    "file": "frontend/src/pages/Contact.jsx",
+    "line": 138,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"08123456789\""
+  },
+  {
+    "file": "frontend/src/pages/Contact.jsx",
+    "line": 164,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Tuliskan detail pertanyaan atau kendala kamu...\""
+  },
+  {
+    "file": "frontend/src/pages/Destinations.jsx",
+    "line": 47,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Cari nama gunung, pulau, atau provinsi...\""
+  },
+  {
+    "file": "frontend/src/pages/Destinations.jsx",
+    "line": 48,
+    "keyword": "placeholder",
+    "snippet": "className=\"bg-white/10 backdrop-blur border-white/20 text-white placeholder:text-slate-400 h-11 px-4 rounded-xl shadow-lg\""
+  },
+  {
+    "file": "frontend/src/pages/Explore.jsx",
+    "line": 179,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Cari destinasi, trip, sewa alat, atau vendor (contoh: Bromo, Rinjani)...\""
+  },
+  {
+    "file": "frontend/src/pages/Explore.jsx",
+    "line": 242,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Saya pemula mau mendaki gunung 2 hari di Jawa Tengah bersama 3 teman, budget 1 juta per orang, termasuk peralatan tenda"
+  },
+  {
+    "file": "frontend/src/pages/Explore.jsx",
+    "line": 243,
+    "keyword": "placeholder",
+    "snippet": "className=\"w-full p-3.5 rounded-2xl bg-black/50 border border-white/15 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus"
+  },
+  {
+    "file": "frontend/src/pages/Home.jsx",
+    "line": 557,
+    "keyword": "placeholder",
+    "snippet": "placeholder={homepageConfig?.hero?.searchPlaceholder || \"Temukan trip, gunung, guide, basecamp...\"}"
+  },
+  {
+    "file": "frontend/src/pages/Login.jsx",
+    "line": 109,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"you@email.com\""
+  },
+  {
+    "file": "frontend/src/pages/Login.jsx",
+    "line": 133,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"••••••••\""
+  },
+  {
+    "file": "frontend/src/pages/MyBookings.jsx",
+    "line": 880,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"+ Tambah item perlengkapan khusus (cth: Obat Alergi, Powerbank)...\""
+  },
+  {
+    "file": "frontend/src/pages/MyBookings.jsx",
+    "line": 1081,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Ceritakan tentang guide, pelayanan, makanan, dan keindahan jalur...\""
+  },
+  {
+    "file": "frontend/src/pages/PaymentConfirmation.jsx",
+    "line": 105,
+    "keyword": "sandbox",
+    "snippet": ": \"https://app.sandbox.midtrans.com/snap/snap.js\";"
+  },
+  {
+    "file": "frontend/src/pages/PaymentConfirmation.jsx",
+    "line": 135,
+    "keyword": "simulate",
+    "snippet": "if (window.snap && data.token && !data.is_simulated) {"
+  },
+  {
+    "file": "frontend/src/pages/PaymentConfirmation.jsx",
+    "line": 157,
+    "keyword": "simulate",
+    "snippet": "await simulatePayment(selectedChannel);"
+  },
+  {
+    "file": "frontend/src/pages/PaymentConfirmation.jsx",
+    "line": 165,
+    "keyword": "simulate",
+    "snippet": "async function simulatePayment(channelName) {"
+  },
+  {
+    "file": "frontend/src/pages/PaymentConfirmation.jsx",
+    "line": 168,
+    "keyword": "simulate",
+    "snippet": "await api.post(`/payments/midtrans/simulate-paid/${id}`, {"
+  },
+  {
+    "file": "frontend/src/pages/Register.jsx",
+    "line": 93,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Nama Lengkap Anda\""
+  },
+  {
+    "file": "frontend/src/pages/Register.jsx",
+    "line": 106,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"email@domain.com\""
+  },
+  {
+    "file": "frontend/src/pages/Register.jsx",
+    "line": 119,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"081234567890\""
+  },
+  {
+    "file": "frontend/src/pages/Register.jsx",
+    "line": 132,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"••••••••\""
+  },
+  {
+    "file": "frontend/src/pages/Register.jsx",
+    "line": 157,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"••••••••\""
+  },
+  {
+    "file": "frontend/src/pages/Rentals.jsx",
+    "line": 57,
+    "keyword": "placeholder",
+    "snippet": "<SelectValue placeholder=\"Semua kategori\" />"
+  },
+  {
+    "file": "frontend/src/pages/Rentals.jsx",
+    "line": 68,
+    "keyword": "placeholder",
+    "snippet": "<SelectValue placeholder=\"Semua kota\" />"
+  },
+  {
+    "file": "frontend/src/pages/Storefront.jsx",
+    "line": 352,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Cari trip, gunung, atau alat outdoor...\""
+  },
+  {
+    "file": "frontend/src/pages/TripDetail.jsx",
+    "line": 438,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Bagikan pengalaman pendakian, keramahan guide, fasilitas tenda/makanan, dan kesan jalur...\""
+  },
+  {
+    "file": "frontend/src/pages/UserMessages.jsx",
+    "line": 439,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Cari dalam notifikasi, pesan, berita, atau pengumuman...\""
+  },
+  {
+    "file": "frontend/src/pages/UserMessages.jsx",
+    "line": 557,
+    "keyword": "demo",
+    "snippet": "const isUser = msg.sender_id === \"user\" || msg.sender_id === \"user_demo_01\" || msg.sender_name === \"Anda\";"
+  },
+  {
+    "file": "frontend/src/pages/UserMessages.jsx",
+    "line": 595,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Ketik pesan koordinasi untuk Partner atau CS...\""
+  },
+  {
+    "file": "frontend/src/pages/UserProfile.jsx",
+    "line": 527,
+    "keyword": "placeholder",
+    "snippet": "<Input placeholder=\"Nama Lengkap\" value={newTraveler.name} onChange={(e) => setNewTraveler({ ...newTraveler, name: e.target.value })} classN"
+  },
+  {
+    "file": "frontend/src/pages/UserProfile.jsx",
+    "line": 528,
+    "keyword": "placeholder",
+    "snippet": "<Input placeholder=\"No HP / WhatsApp\" value={newTraveler.phone} onChange={(e) => setNewTraveler({ ...newTraveler, phone: e.target.value })} "
+  },
+  {
+    "file": "frontend/src/pages/UserSupport.jsx",
+    "line": 181,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Judul kendala singkat...\""
+  },
+  {
+    "file": "frontend/src/pages/UserSupport.jsx",
+    "line": 192,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Jelaskan detail kendala secara rinci...\""
+  },
+  {
+    "file": "frontend/src/pages/UserTransactions.jsx",
+    "line": 297,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: BCA 89123456 a.n. Farhan\""
+  },
+  {
+    "file": "frontend/src/pages/Wallet.jsx",
+    "line": 132,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Atau ketik nominal...\""
+  },
+  {
+    "file": "frontend/src/pages/Wallet.jsx",
+    "line": 153,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Min. Rp50.000\""
+  },
+  {
+    "file": "frontend/src/pages/Wallet.jsx",
+    "line": 176,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"1234567890\""
+  },
+  {
+    "file": "frontend/src/pages/Wallet.jsx",
+    "line": 186,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Nama sesuai buku tabungan\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AIGrowthIntelligence.jsx",
+    "line": 472,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Ketik pertanyaan pertumbuhan marketplace...\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AISuperAdminCommandCenter.jsx",
+    "line": 287,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Bagaimana performa Trexio bulan ini? Atau Dimana demand tinggi tapi supply rendah?\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AISuperAdminCommandCenter.jsx",
+    "line": 782,
+    "keyword": "sample",
+    "snippet": "{(searchDiscovery?.recent_search_sample || ["
+  },
+  {
+    "file": "frontend/src/pages/admin/AITrustRiskCenter.jsx",
+    "line": 679,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Masukkan catatan investigasi...\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminLandingBuilder.jsx",
+    "line": 510,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Nusantara Adventure Tours\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminLandingBuilder.jsx",
+    "line": 521,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Solusi Open Trip Terpercaya sejak 2018\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminLandingBuilder.jsx",
+    "line": 534,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"628123456789\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminLogin.jsx",
+    "line": 364,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"000 000\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminLogin.jsx",
+    "line": 365,
+    "keyword": "placeholder",
+    "snippet": "className=\"text-center tracking-[0.5em] text-xl font-mono font-bold bg-slate-950/90 border-slate-700 text-emerald-400 placeholder:text-slate"
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminLogin.jsx",
+    "line": 447,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"admin@trexio.id\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminLogin.jsx",
+    "line": 450,
+    "keyword": "placeholder",
+    "snippet": "className={`pl-10 bg-slate-950/80 border text-slate-100 placeholder:text-slate-600 focus-visible:ring-emerald-500 font-['Manrope'] text-sm h"
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminLogin.jsx",
+    "line": 488,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"••••••••\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminLogin.jsx",
+    "line": 491,
+    "keyword": "placeholder",
+    "snippet": "className={`pl-10 pr-10 bg-slate-950/80 border text-slate-100 placeholder:text-slate-600 focus-visible:ring-emerald-500 font-['Manrope'] tex"
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminLogin.jsx",
+    "line": 590,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"admin@trexio.id atau 081234567890\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminLogin.jsx",
+    "line": 592,
+    "keyword": "placeholder",
+    "snippet": "className={`pl-10 bg-slate-950/80 border text-slate-100 placeholder:text-slate-600 focus-visible:ring-emerald-500 font-['Manrope'] text-sm h"
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminLogin.jsx",
+    "line": 700,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"TRX-XXXX\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminLogin.jsx",
+    "line": 728,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Minimal 6 karakter\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminLogin.jsx",
+    "line": 729,
+    "keyword": "placeholder",
+    "snippet": "className={`pl-10 pr-10 bg-slate-950/80 border text-slate-100 placeholder:text-slate-600 focus-visible:ring-emerald-500 font-['Manrope'] tex"
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminPayments.jsx",
+    "line": 300,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Cari kode booking / nama / trip...\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminPayments.jsx",
+    "line": 427,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: 5000000\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminPayments.jsx",
+    "line": 490,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Pencairan dana booking periode akhir pekan\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminTrips.jsx",
+    "line": 326,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Cari judul, slug, atau destinasi...\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminTrips.jsx",
+    "line": 641,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Open Trip Gunung Rinjani 4D3N\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminTrips.jsx",
+    "line": 651,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"mount-rinjani-4d3n\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminTrips.jsx",
+    "line": 661,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Nama Vendor / Organizer\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminTrips.jsx",
+    "line": 671,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Lombok, Gunung Rinjani, Raja Ampat...\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminTrips.jsx",
+    "line": 681,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Nusa Tenggara Barat, Jawa Timur...\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminTrips.jsx",
+    "line": 747,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Jelaskan ringkasan pengalaman trip, pemandangan, dan highlight perjalanan...\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminTrips.jsx",
+    "line": 763,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"1500000\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminTrips.jsx",
+    "line": 812,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Bestseller, Diskon 10%, Termasuk Makan\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminTrips.jsx",
+    "line": 835,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"2026-08-10, 2026-08-17, 2026-09-01\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminTrips.jsx",
+    "line": 855,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Stasiun Bandung, Bandara Soekarno Hatta, Basecamp Tarik\""
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminTrips.jsx",
+    "line": 877,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Transportasi AC Jakarta - Basecamp PP&#10;Tenda & Perlengkapan Camp&#10;Makan 3x sehari selama pendakian&#10;Tiket masuk kawasa"
+  },
+  {
+    "file": "frontend/src/pages/admin/AdminTrips.jsx",
+    "line": 894,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Pengeluaran pribadi&#10;Tip untuk Porter / Guide&#10;Sewa Sleeping Bag pribadi\""
+  },
+  {
+    "file": "frontend/src/pages/admin/website/AdminWebsiteBranding.jsx",
+    "line": 130,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"https://domain.com/logo.png atau data:image/...\""
+  },
+  {
+    "file": "frontend/src/pages/admin/website/AdminWebsiteBranding.jsx",
+    "line": 157,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"https://domain.com/favicon.ico\""
+  },
+  {
+    "file": "frontend/src/pages/admin/website/AdminWebsiteDomain.jsx",
+    "line": 196,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"www.rinjaniadventure.com\""
+  },
+  {
+    "file": "frontend/src/pages/admin/website/AdminWebsiteDomain.jsx",
+    "line": 229,
+    "keyword": "103.150.190.10",
+    "snippet": "<span className=\"text-amber-400 font-bold\">A Record:</span> <span className=\"text-white\">103.150.190.10</span>"
+  },
+  {
+    "file": "frontend/src/pages/admin/website/AdminWebsiteDomain.jsx",
+    "line": 231,
+    "keyword": "103.150.190.10",
+    "snippet": "<button onClick={() => copyToClipboard(\"103.150.190.10\", \"A Record\")} className=\"text-slate-400 hover:text-white\">"
+  },
+  {
+    "file": "frontend/src/pages/admin/website/AdminWebsiteNavigation.jsx",
+    "line": 163,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: PROMO KHUSUS\""
+  },
+  {
+    "file": "frontend/src/pages/admin/website/AdminWebsiteNavigation.jsx",
+    "line": 175,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: /promo atau https://wa.me/...\""
+  },
+  {
+    "file": "frontend/src/pages/admin/website/AdminWebsitePages.jsx",
+    "line": 230,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Paket Glamping Exclusive\""
+  },
+  {
+    "file": "frontend/src/pages/admin/website/AdminWebsitePages.jsx",
+    "line": 241,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"glamping-exclusive\""
+  },
+  {
+    "file": "frontend/src/pages/admin/website/AdminWebsiteSettings.jsx",
+    "line": 105,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"G-XXXXXXXXXX\""
+  },
+  {
+    "file": "frontend/src/pages/admin/website/AdminWebsiteSettings.jsx",
+    "line": 116,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"1234567890\""
+  },
+  {
+    "file": "frontend/src/pages/backpacker/BackpackerDashboard.jsx",
+    "line": 264,
+    "keyword": "mock",
+    "snippet": "// Update mock location update"
+  },
+  {
+    "file": "frontend/src/pages/backpacker/BackpackerDashboard.jsx",
+    "line": 1286,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Jakarta\""
+  },
+  {
+    "file": "frontend/src/pages/backpacker/BackpackerDashboard.jsx",
+    "line": 1300,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Sembalun\""
+  },
+  {
+    "file": "frontend/src/pages/backpacker/BackpackerDashboard.jsx",
+    "line": 2218,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Lombok, Jakarta\""
+  },
+  {
+    "file": "frontend/src/pages/backpacker/BackpackerDashboard.jsx",
+    "line": 2230,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Sembalun, Cibodas\""
+  },
+  {
+    "file": "frontend/src/pages/backpacker/BackpackerDashboard.jsx",
+    "line": 2242,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Jeep, HiAce, Elf\""
+  },
+  {
+    "file": "frontend/src/pages/backpacker/BackpackerDashboard.jsx",
+    "line": 2433,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Cari 2 orang tambahan untuk patungan Elf & Porter Rinjani\""
+  },
+  {
+    "file": "frontend/src/pages/backpacker/BackpackerDashboard.jsx",
+    "line": 2606,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Bandara Lombok (LOP)\""
+  },
+  {
+    "file": "frontend/src/pages/backpacker/BackpackerDashboard.jsx",
+    "line": 2618,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Sembalun / Senaru Basecamp\""
+  },
+  {
+    "file": "frontend/src/pages/backpacker/BackpackerDashboard.jsx",
+    "line": 2678,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Toyota Avanza / Isuzu Elf White\""
+  },
+  {
+    "file": "frontend/src/pages/backpacker/BackpackerDashboard.jsx",
+    "line": 2844,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Sewa Elf / Porter Basecamp\""
+  },
+  {
+    "file": "frontend/src/pages/backpacker/BackpackerDashboard.jsx",
+    "line": 2943,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Jelaskan secara rinci kronologi kejadian untuk ditindaklanjuti oleh Tim Komunitas Trexio...\""
+  },
+  {
+    "file": "frontend/src/pages/backpacker/BackpackerDashboard.jsx",
+    "line": 2989,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Pos 2 Montong Satas / Pelawangan Sembalun\""
+  },
+  {
+    "file": "frontend/src/pages/backpacker/BackpackerDashboard.jsx",
+    "line": 3142,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"628xxxxxxxx\""
+  },
+  {
+    "file": "frontend/src/pages/backpacker/BackpackerDashboard.jsx",
+    "line": 3153,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"username_instagram\""
+  },
+  {
+    "file": "frontend/src/pages/partner/PartnerLogin.jsx",
+    "line": 115,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"email@partner.com\""
+  },
+  {
+    "file": "frontend/src/pages/partner/PartnerLogin.jsx",
+    "line": 140,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"••••••••\""
+  },
+  {
+    "file": "frontend/src/pages/partner/PartnerRegister.jsx",
+    "line": 412,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Budi Santoso\""
+  },
+  {
+    "file": "frontend/src/pages/partner/PartnerRegister.jsx",
+    "line": 426,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"budi@organizer.id\""
+  },
+  {
+    "file": "frontend/src/pages/partner/PartnerRegister.jsx",
+    "line": 438,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"••••••••\""
+  },
+  {
+    "file": "frontend/src/pages/partner/PartnerRegister.jsx",
+    "line": 451,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"081234567890\""
+  },
+  {
+    "file": "frontend/src/pages/partner/PartnerRegister.jsx",
+    "line": 473,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Bromo Explorer Tour\""
+  },
+  {
+    "file": "frontend/src/pages/partner/PartnerRegister.jsx",
+    "line": 485,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Spesialis Open Trip Bromo & Semeru\""
+  },
+  {
+    "file": "frontend/src/pages/partner/PartnerRegister.jsx",
+    "line": 494,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Malang / Surabaya / Jakarta\""
+  },
+  {
+    "file": "frontend/src/pages/partner/PartnerRegister.jsx",
+    "line": 557,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"1234567890\""
+  },
+  {
+    "file": "frontend/src/pages/partner/PartnerRegister.jsx",
+    "line": 572,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Sesuai buku tabungan\""
+  },
+  {
+    "file": "frontend/src/pages/partner/PartnerRegister.jsx",
+    "line": 631,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Rian Utama\""
+  },
+  {
+    "file": "frontend/src/pages/partner/PartnerRegister.jsx",
+    "line": 643,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"admin@travelkita.id\""
+  },
+  {
+    "file": "frontend/src/pages/partner/PartnerRegister.jsx",
+    "line": 655,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"••••••••\""
+  },
+  {
+    "file": "frontend/src/pages/partner/PartnerRegister.jsx",
+    "line": 666,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"081234567890\""
+  },
+  {
+    "file": "frontend/src/pages/partner/PartnerRegister.jsx",
+    "line": 686,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Malang Travel Network\""
+  },
+  {
+    "file": "frontend/src/pages/partner/PartnerRegister.jsx",
+    "line": 698,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"malangtravel\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperBackpackerOperations.jsx",
+    "line": 419,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Cari destinasi, nama, atau ID...\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperBackpackerOperations.jsx",
+    "line": 422,
+    "keyword": "placeholder",
+    "snippet": "className=\"w-full bg-black/50 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-neutral-500 focus:outline-non"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperBackpackerOperations.jsx",
+    "line": 767,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"misal: Kami telah mencocokkan jadwal dan anggaran pendakian Anda.\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperBackpackerOperations.jsx",
+    "line": 770,
+    "keyword": "placeholder",
+    "snippet": "className=\"w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focu"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperBackpackerOperations.jsx",
+    "line": 881,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Alasan perubahan atau catatan moderasi...\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperBackpackerOperations.jsx",
+    "line": 882,
+    "keyword": "placeholder",
+    "snippet": "className=\"w-full bg-black/50 border border-white/10 rounded-xl p-3 text-xs text-white placeholder-neutral-500 focus:outline-none focus:bord"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperBillingRequests.jsx",
+    "line": 302,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Gambar produk buram, judul mengandung kata sensitif, atau stok pax kosong.\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperCommunity.jsx",
+    "line": 391,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Cari kata kunci, judul, atau author...\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperCommunity.jsx",
+    "line": 590,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Misal: Melanggar ketentuan tata krama forum TREXIO...\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperCommunity.jsx",
+    "line": 630,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Survival & Pertolongan Pertama\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperCommunity.jsx",
+    "line": 643,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"survival-first-aid\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperCommunity.jsx",
+    "line": 654,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Penjelasan cakupan bahasan kategori...\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperCustomerCare.jsx",
+    "line": 550,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Ketik pesan balasan CS Super Admin...\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperCustomerCare.jsx",
+    "line": 554,
+    "keyword": "placeholder",
+    "snippet": "className=\"flex-1 bg-black/60 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none fo"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperCustomerCare.jsx",
+    "line": 627,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Pemberitahuan Sistem: SOP Pendaftaran SIMAKSI Online Taman Nasional Bromo\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperCustomerCare.jsx",
+    "line": 628,
+    "keyword": "placeholder",
+    "snippet": "className=\"w-full bg-neutral-900 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperCustomerCare.jsx",
+    "line": 680,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"/my-bookings atau /safety\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperCustomerCare.jsx",
+    "line": 681,
+    "keyword": "placeholder",
+    "snippet": "className=\"w-full bg-neutral-900 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperCustomerCare.jsx",
+    "line": 693,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Tuliskan rincian pengumuman resmi di sini...\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperCustomerCare.jsx",
+    "line": 694,
+    "keyword": "placeholder",
+    "snippet": "className=\"w-full bg-neutral-900 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperCustomerCare.jsx",
+    "line": 819,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Ketik pesan sambutan CS offline...\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperCustomerCare.jsx",
+    "line": 820,
+    "keyword": "placeholder",
+    "snippet": "className=\"w-full bg-black/60 border border-white/10 rounded-xl p-3 text-xs text-white placeholder-neutral-500 focus:outline-none focus:bord"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperCustomerCare.jsx",
+    "line": 1030,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Cari aktor (email), nama aksi, resource, atau status...\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperCustomerCare.jsx",
+    "line": 1031,
+    "keyword": "placeholder",
+    "snippet": "className=\"w-full bg-transparent border-none text-xs text-white placeholder-neutral-500 focus:outline-none px-2\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperMasterData.jsx",
+    "line": 522,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Cari user, email, HP...\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperMasterData.jsx",
+    "line": 525,
+    "keyword": "placeholder",
+    "snippet": "className=\"w-full bg-slate-950 border border-white/10 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none "
+  },
+  {
+    "file": "frontend/src/pages/super/SuperMasterData.jsx",
+    "line": 749,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Cari brand vendor, owner...\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperMasterData.jsx",
+    "line": 752,
+    "keyword": "placeholder",
+    "snippet": "className=\"w-full bg-slate-950 border border-white/10 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none "
+  },
+  {
+    "file": "frontend/src/pages/super/SuperMasterData.jsx",
+    "line": 1080,
+    "keyword": "placeholder",
+    "snippet": "placeholder={editingUser ? \"••••••••\" : \"Min. 6 Karakter\"}"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperPayments.jsx",
+    "line": 680,
+    "keyword": "sandbox",
+    "snippet": "value={config.is_production ? \"production\" : \"sandbox\"}"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperPayments.jsx",
+    "line": 684,
+    "keyword": "sandbox",
+    "snippet": "<option value=\"sandbox\">Sandbox (Sandbox API Environment)</option>"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperPayments.jsx",
+    "line": 695,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: M123456\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperPayments.jsx",
+    "line": 706,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"SB-Mid-server-xxxxxxxxxxxx\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperPayments.jsx",
+    "line": 706,
+    "keyword": "SB-Mid-server-",
+    "snippet": "placeholder=\"SB-Mid-server-xxxxxxxxxxxx\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperPayments.jsx",
+    "line": 720,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"SB-Mid-client-xxxxxxxxxxxx\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperPayments.jsx",
+    "line": 804,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Cari kode booking / pelanggan...\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperPayments.jsx",
+    "line": 993,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Nomor rekening tidak cocok dengan nama pemilik atau data dokumen belum terverifikasi.\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperSEOControl.jsx",
+    "line": 652,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"https://rinjaninationalpark.id/berita-resmi-2026\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperSEOControl.jsx",
+    "line": 653,
+    "keyword": "placeholder",
+    "snippet": "className=\"flex-1 px-4 py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperSEOControl.jsx",
+    "line": 954,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Gunung Prau, SIMAKSI, Guide APGI\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperSEOControl.jsx",
+    "line": 964,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Gunung Prau\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperSecurity.jsx",
+    "line": 534,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Cari email, perangkat, IP...\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperSecurity.jsx",
+    "line": 590,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Cari user, tindakan, resource...\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperSecurity.jsx",
+    "line": 721,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Password Super Admin Anda...\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperSettings.jsx",
+    "line": 251,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Masukkan 6 digit kode dari HP Anda\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperSubscriptions.jsx",
+    "line": 404,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Misal: Pro Agency Yearly\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperTenantDetail.jsx",
+    "line": 220,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"https://...\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperTenantDetail.jsx",
+    "line": 230,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"https://...\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperTenantDetail.jsx",
+    "line": 291,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"explore.brandmu.com\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperTenants.jsx",
+    "line": 146,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Petualang Nusantara\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperTenants.jsx",
+    "line": 157,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"petualang-nusantara\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperVendors.jsx",
+    "line": 328,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: NIK tidak sesuai, dokumen KTP tidak jelas.\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperWebsitePlatform.jsx",
+    "line": 143,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"https://domain.com/logo.png (Tautan Direct Gambar)\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperWebsitePlatform.jsx",
+    "line": 146,
+    "keyword": "placeholder",
+    "snippet": "className=\"w-full bg-neutral-900 border border-white/20 rounded-xl px-3 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none f"
+  },
+  {
+    "file": "frontend/src/pages/super/SuperWebsitePlatform.jsx",
+    "line": 819,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Judul Banner...\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperWebsitePlatform.jsx",
+    "line": 830,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"PROMO DISKON...\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperWebsitePlatform.jsx",
+    "line": 842,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Deskripsi promo...\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperWebsitePlatform.jsx",
+    "line": 854,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"/explore\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperWebsitePlatform.jsx",
+    "line": 1140,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Pertanyaan...\""
+  },
+  {
+    "file": "frontend/src/pages/super/SuperWebsitePlatform.jsx",
+    "line": 1147,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Jawaban...\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorAICopilot.jsx",
+    "line": 332,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Tanyakan analisis bisnis, misal: 'Kenapa produk saya sedikit booking?'\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorCommunications.jsx",
+    "line": 201,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Cari nama traveler, produk, kode booking...\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorCommunications.jsx",
+    "line": 442,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Tulis pesan balasan untuk customer...\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorCommunity.jsx",
+    "line": 356,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Tips Memilih Tenda 4-Musim & Panduan Packing...\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorCommunity.jsx",
+    "line": 367,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Tuliskan ulasan teknis, panduan operasional basecamp, atau tips pendakian untuk audiens TREXIO...\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorCommunity.jsx",
+    "line": 377,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"https://images.unsplash.com/...\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorCustomers.jsx",
+    "line": 184,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Tulis balasan sopan & profesional...\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorFinance.jsx",
+    "line": 217,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: 1500000\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorOnboard.jsx",
+    "line": 307,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Bromo Tour Organizer\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorOnboard.jsx",
+    "line": 315,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Spesialis open trip & private tour\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorOnboard.jsx",
+    "line": 325,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"kontak@brand.com\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorOnboard.jsx",
+    "line": 335,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"081234567890\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorOnboard.jsx",
+    "line": 345,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"081234567890\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorOnboard.jsx",
+    "line": 358,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"https://...\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorOnboard.jsx",
+    "line": 374,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Jelaskan keunggulan dan pengalaman usaha travel Anda...\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorOnboard.jsx",
+    "line": 388,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"3515000000000000\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorOnboard.jsx",
+    "line": 399,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"00.000.000.0-000.000\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorOnboard.jsx",
+    "line": 409,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Jl. Raya Bromo No. 12\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorOnboard.jsx",
+    "line": 420,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Malang\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorOnboard.jsx",
+    "line": 430,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Jawa Timur\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorOnboard.jsx",
+    "line": 439,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"65100\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorOnboard.jsx",
+    "line": 456,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Bank BCA / Mandiri / BRI\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorOnboard.jsx",
+    "line": 466,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"1234567890\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorOnboard.jsx",
+    "line": 482,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Sesuai buku tabungan\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorOnboard.jsx",
+    "line": 528,
+    "keyword": "placeholder",
+    "snippet": "function Field({ label, value, set, testid, placeholder, type = \"text\" }) {"
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorOnboard.jsx",
+    "line": 536,
+    "keyword": "placeholder",
+    "snippet": "placeholder={placeholder}"
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorProducts.jsx",
+    "line": 305,
+    "keyword": "INITIAL_",
+    "snippet": "const INITIAL_FORM = {"
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorProducts.jsx",
+    "line": 344,
+    "keyword": "INITIAL_",
+    "snippet": "const [form, setForm] = useState(INITIAL_FORM);"
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorProducts.jsx",
+    "line": 491,
+    "keyword": "sample",
+    "snippet": "// Default sample batches for open-trip or private-trip"
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorProducts.jsx",
+    "line": 511,
+    "keyword": "INITIAL_",
+    "snippet": "...INITIAL_FORM,"
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorProducts.jsx",
+    "line": 1009,
+    "keyword": "placeholder",
+    "snippet": "placeholder={currentCategoryConfig.titlePlaceholder}"
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorProducts.jsx",
+    "line": 1023,
+    "keyword": "placeholder",
+    "snippet": "placeholder={currentCategoryConfig.destPlaceholder}"
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorProducts.jsx",
+    "line": 1036,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: 3 Hari 2 Malam / 24 Jam\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorProducts.jsx",
+    "line": 1050,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"1500000\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorProducts.jsx",
+    "line": 1100,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Dicuci Steril & 98% Baru\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorProducts.jsx",
+    "line": 1112,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"50000\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorProducts.jsx",
+    "line": 1129,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: APGI Utama / BNSP First Aid\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorProducts.jsx",
+    "line": 1141,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Indonesian, English, Japanese\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorProducts.jsx",
+    "line": 1158,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Toyota HiAce / Jeep Hardtop 4x4\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorProducts.jsx",
+    "line": 1170,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Stasiun Malang / Bandara LOP\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorProducts.jsx",
+    "line": 1186,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Kamar Mandi Dalam + Shower Air Hangat\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorProducts.jsx",
+    "line": 1253,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Label Batch (misal: Batch 1 - High Season)\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorProducts.jsx",
+    "line": 1260,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Kuota\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorProducts.jsx",
+    "line": 1379,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: Guide APGI, Tenda Steril, Makan 3x, P3K First Aid\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorProducts.jsx",
+    "line": 1468,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Jelaskan secara detail keunggulan layanan, rute, aturan, atau catatan penting...\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorPromotions.jsx",
+    "line": 483,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: TREXIO10\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorSettings.jsx",
+    "line": 317,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: REG.PAR.0123.00456.2024\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorSettings.jsx",
+    "line": 329,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Nama Sesuai BNSP\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorSettings.jsx",
+    "line": 423,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Contoh: APGI-JBT-2024-00892\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorSettings.jsx",
+    "line": 435,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Nama Sesuai APGI\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorSettings.jsx",
+    "line": 633,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"Sesuai KTP / Sertifikat BNSP\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorSettings.jsx",
+    "line": 644,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"081234567890\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorSettings.jsx",
+    "line": 685,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"No. BNSP\""
+  },
+  {
+    "file": "frontend/src/pages/vendor/VendorSettings.jsx",
+    "line": 696,
+    "keyword": "placeholder",
+    "snippet": "placeholder=\"No. APGI\""
+  },
+  {
+    "file": "frontend/src/services/analyticsService.js",
+    "line": 23,
+    "keyword": "hardcoded",
+    "snippet": "// [SECURITY] No hardcoded fallback key. Skip init when key is not provided via env."
+  },
+  {
+    "file": "frontend/src/utils/productionAudit.js",
+    "line": 6,
+    "keyword": "mock",
+    "snippet": "* rather than null or mock/dummy values. Displays a warning in the dev console if any legacy dummy records are detected."
+  },
+  {
+    "file": "frontend/src/utils/productionAudit.js",
+    "line": 6,
+    "keyword": "dummy",
+    "snippet": "* rather than null or mock/dummy values. Displays a warning in the dev console if any legacy dummy records are detected."
+  },
+  {
+    "file": "frontend/src/utils/productionAudit.js",
+    "line": 13,
+    "keyword": "dummy",
+    "snippet": "if (data && data.dummy_records_found > 0) {"
+  },
+  {
+    "file": "frontend/src/utils/productionAudit.js",
+    "line": 15,
+    "keyword": "dummy",
+    "snippet": "`[TREXIO PRODUCTION AUDIT WARNING] Detected ${data.dummy_records_found} legacy dummy or uninitialized records across ${data.users_audited} u"
+  },
+  {
+    "file": "scripts/security-scan.js",
+    "line": 27,
+    "keyword": "hardcoded",
+    "snippet": "// Secret Detection: Check for hardcoded private keys or tokens"
+  },
+  {
+    "file": "server.js",
+    "line": 52,
+    "keyword": "hardcoded",
+    "snippet": "// [C-5] Admin seed credentials come from environment (never hardcoded weak defaults)."
+  },
+  {
+    "file": "server.js",
+    "line": 183,
+    "keyword": "demo",
+    "snippet": "// [CLEANUP] All hardcoded/demo/seed users removed. Users now live in Supabase"
+  },
+  {
+    "file": "server.js",
+    "line": 183,
+    "keyword": "hardcoded",
+    "snippet": "// [CLEANUP] All hardcoded/demo/seed users removed. Users now live in Supabase"
+  },
+  {
+    "file": "server.js",
+    "line": 219,
+    "keyword": "M808589540",
+    "snippet": "merchant_id: 'M808589540',"
+  },
+  {
+    "file": "server.js",
+    "line": 307,
+    "keyword": "tenant_default",
+    "snippet": "id: 'tenant_default',"
+  },
+  {
+    "file": "server.js",
+    "line": 511,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: 'tenant_default',"
+  },
+  {
+    "file": "server.js",
+    "line": 2141,
+    "keyword": "dummy",
+    "snippet": "dummy_records_found: 0,"
+  },
+  {
+    "file": "server.js",
+    "line": 2151,
+    "keyword": "dummy",
+    "snippet": "auditReport.dummy_records_found++;"
+  },
+  {
+    "file": "server.js",
+    "line": 2157,
+    "keyword": "dummy",
+    "snippet": "auditReport.dummy_records_found++;"
+  },
+  {
+    "file": "server.js",
+    "line": 2163,
+    "keyword": "dummy",
+    "snippet": "auditReport.dummy_records_found++;"
+  },
+  {
+    "file": "server.js",
+    "line": 2170,
+    "keyword": "dummy",
+    "snippet": "if (auditReport.dummy_records_found > 0) {"
+  },
+  {
+    "file": "server.js",
+    "line": 2171,
+    "keyword": "dummy",
+    "snippet": "console.warn(`[Production Audit Warning] Found and corrected ${auditReport.dummy_records_found} missing/dummy collections in user records.`)"
+  },
+  {
+    "file": "server.js",
+    "line": 2189,
+    "keyword": "hardcoded",
+    "snippet": "// protected admin endpoints. Removed hardcoded super-admin email allowlist."
+  },
+  {
+    "file": "server.js",
+    "line": 2238,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: 'tenant_default',"
+  },
+  {
+    "file": "server.js",
+    "line": 2277,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: 'tenant_default',"
+  },
+  {
+    "file": "server.js",
+    "line": 2314,
+    "keyword": "hardcoded",
+    "snippet": "// User lookup by email or internal ID only. (Removed hardcoded admin-email"
+  },
+  {
+    "file": "server.js",
+    "line": 2652,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: 'tenant_default',"
+  },
+  {
+    "file": "server.js",
+    "line": 2730,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: 'tenant_default',"
+  },
+  {
+    "file": "server.js",
+    "line": 4170,
+    "keyword": "tenant_default",
+    "snippet": "id: 'tenant_default',"
+  },
+  {
+    "file": "server.js",
+    "line": 4243,
+    "keyword": "103.150.190.10",
+    "snippet": "res.json({ ok: true, customDomain, cname: 'cname.trexio.id', ip: '103.150.190.10', ssl: 'active' });"
+  },
+  {
+    "file": "server.js",
+    "line": 6612,
+    "keyword": "demo",
+    "snippet": "!midtransConfig.server_key.includes('demo') &&"
+  },
+  {
+    "file": "server.js",
+    "line": 6613,
+    "keyword": "placeholder",
+    "snippet": "!midtransConfig.server_key.includes('placeholder') &&"
+  },
+  {
+    "file": "server.js",
+    "line": 7145,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: req.user.tenant_id || 'tenant_default',"
+  },
+  {
+    "file": "server.js",
+    "line": 7785,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: 'tenant_default',"
+  },
+  {
+    "file": "server.js",
+    "line": 7973,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: 'tenant_default',"
+  },
+  {
+    "file": "server.js",
+    "line": 7992,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: 'tenant_default',"
+  },
+  {
+    "file": "server.js",
+    "line": 8245,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: req.user.tenant_id || 'tenant_default',"
+  },
+  {
+    "file": "server.js",
+    "line": 8292,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: req.user.tenant_id || 'tenant_default',"
+  },
+  {
+    "file": "server.js",
+    "line": 9194,
+    "keyword": "tenant_default",
+    "snippet": "const tenantId = req.user.tenant_id || 'tenant_default';"
+  },
+  {
+    "file": "server.js",
+    "line": 9209,
+    "keyword": "tenant_default",
+    "snippet": "const tenantId = req.user.tenant_id || 'tenant_default';"
+  },
+  {
+    "file": "server.js",
+    "line": 9220,
+    "keyword": "tenant_default",
+    "snippet": "const tenantId = req.user.tenant_id || 'tenant_default';"
+  },
+  {
+    "file": "server.js",
+    "line": 9261,
+    "keyword": "sandbox",
+    "snippet": "let redirectUrl = `https://app.sandbox.midtrans.com/snap/v2/vtweb/${snapToken}`;"
+  },
+  {
+    "file": "server.js",
+    "line": 9286,
+    "keyword": "simulate",
+    "snippet": "// Fallback silently to simulated sandbox payment if Midtrans key is unauthorized or unverified"
+  },
+  {
+    "file": "server.js",
+    "line": 9286,
+    "keyword": "sandbox",
+    "snippet": "// Fallback silently to simulated sandbox payment if Midtrans key is unauthorized or unverified"
+  },
+  {
+    "file": "server.js",
+    "line": 9325,
+    "keyword": "simulate",
+    "snippet": "api.post('/subscriptions/simulate-paid/:subscription_id', requireAuth, (req, res) => {"
+  },
+  {
+    "file": "server.js",
+    "line": 9473,
+    "keyword": "sandbox",
+    "snippet": "let redirectUrl = `https://app.sandbox.midtrans.com/snap/v2/vtweb/${snapToken}`;"
+  },
+  {
+    "file": "server.js",
+    "line": 9498,
+    "keyword": "simulate",
+    "snippet": "// Fallback silently to simulated sandbox payment if Midtrans key is unauthorized or unverified"
+  },
+  {
+    "file": "server.js",
+    "line": 9498,
+    "keyword": "sandbox",
+    "snippet": "// Fallback silently to simulated sandbox payment if Midtrans key is unauthorized or unverified"
+  },
+  {
+    "file": "server.js",
+    "line": 9537,
+    "keyword": "simulate",
+    "snippet": "api.post('/ads/campaigns/simulate-paid/:campaign_id', requireVendor, (req, res) => {"
+  },
+  {
+    "file": "server.js",
+    "line": 11046,
+    "keyword": "SB-Mid-server-",
+    "snippet": ".replace(/(SB-Mid-server-[A-Za-z0-9_-]+)/gi, '[MASKED_KEY]')"
+  },
+  {
+    "file": "server.js",
+    "line": 11090,
+    "keyword": "sandbox",
+    "snippet": "{ id: 'log_02', user: 'superadmin@trexio.id', actor_email: 'superadmin@trexio.id', actor_ip: '127.0.0.1', actor_user_agent: 'Web Chrome / Ma"
+  },
+  {
+    "file": "server.js",
+    "line": 11673,
+    "keyword": "M808589540",
+    "snippet": "merchant_id: process.env.MIDTRANS_MERCHANT_ID || 'M808589540',"
+  },
+  {
+    "file": "server.js",
+    "line": 11674,
+    "keyword": "sandbox",
+    "snippet": "allow_simulation: (process.env.ALLOW_PAYMENT_SIMULATION || 'Sandbox').toLowerCase() === 'sandbox' || process.env.ALLOW_PAYMENT_SIMULATION =="
+  },
+  {
+    "file": "server.js",
+    "line": 12211,
+    "keyword": "demo",
+    "snippet": "!midtransConfig.server_key.includes('demo') &&"
+  },
+  {
+    "file": "server.js",
+    "line": 12212,
+    "keyword": "placeholder",
+    "snippet": "!midtransConfig.server_key.includes('placeholder') &&"
+  },
+  {
+    "file": "server.js",
+    "line": 12287,
+    "keyword": "sandbox",
+    "snippet": "is_sandbox: !midtransConfig.is_production,"
+  },
+  {
+    "file": "server.js",
+    "line": 12299,
+    "keyword": "simulate",
+    "snippet": "const simulatedToken = `SNAP-SIM-${booking.id}-${Date.now().toString().slice(-6)}`;"
+  },
+  {
+    "file": "server.js",
+    "line": 12300,
+    "keyword": "simulate",
+    "snippet": "booking.midtrans_token = simulatedToken;"
+  },
+  {
+    "file": "server.js",
+    "line": 12308,
+    "keyword": "simulate",
+    "snippet": "midtrans_token: simulatedToken,"
+  },
+  {
+    "file": "server.js",
+    "line": 12323,
+    "keyword": "simulate",
+    "snippet": "token: simulatedToken,"
+  },
+  {
+    "file": "server.js",
+    "line": 12324,
+    "keyword": "simulate",
+    "snippet": "redirect_url: `https://app.sandbox.midtrans.com/snap/v2/vtweb/${simulatedToken}`,"
+  },
+  {
+    "file": "server.js",
+    "line": 12324,
+    "keyword": "sandbox",
+    "snippet": "redirect_url: `https://app.sandbox.midtrans.com/snap/v2/vtweb/${simulatedToken}`,"
+  },
+  {
+    "file": "server.js",
+    "line": 12327,
+    "keyword": "simulate",
+    "snippet": "is_simulated: true,"
+  },
+  {
+    "file": "server.js",
+    "line": 12347,
+    "keyword": "demo",
+    "snippet": "!midtransConfig.server_key.includes('demo') &&"
+  },
+  {
+    "file": "server.js",
+    "line": 12348,
+    "keyword": "placeholder",
+    "snippet": "!midtransConfig.server_key.includes('placeholder') &&"
+  },
+  {
+    "file": "server.js",
+    "line": 12400,
+    "keyword": "simulate",
+    "snippet": "api.post('/payments/midtrans/simulate-paid/:booking_id', requireAuth, (req, res) => {"
+  },
+  {
+    "file": "server.js",
+    "line": 12964,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: tenant_id || 'tenant_default',"
+  },
+  {
+    "file": "server.js",
+    "line": 13177,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: 'tenant_default',"
+  },
+  {
+    "file": "server.js",
+    "line": 13651,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: 'tenant_default',"
+  },
+  {
+    "file": "server.js",
+    "line": 13723,
+    "keyword": "seedSupabaseIfEmpty",
+    "snippet": "const { seedSupabaseIfEmpty } = require('./src/db/initialSeed');"
+  },
+  {
+    "file": "server.js",
+    "line": 13726,
+    "keyword": "seedSupabaseIfEmpty",
+    "snippet": "await seedSupabaseIfEmpty(loadAppDocs);"
+  },
+  {
+    "file": "src/ai/services/ai-adventure-intelligence.service.js",
+    "line": 234,
+    "keyword": "fake",
+    "snippet": "* If API fails, returns explicit is_available: false & status: \"UNAVAILABLE\" without fake data."
+  },
+  {
+    "file": "src/ai/services/ai-adventure-intelligence.service.js",
+    "line": 333,
+    "keyword": "fake",
+    "snippet": "// Return explicit UNAVAILABLE state without generating fake data"
+  },
+  {
+    "file": "src/ai/services/ai-evaluation.service.js",
+    "line": 177,
+    "keyword": "fake",
+    "snippet": "expectedConstraints: ['facts_only_pricing', 'no_fake_sales_data'],"
+  },
+  {
+    "file": "src/ai/services/ai-evaluation.service.js",
+    "line": 656,
+    "keyword": "sample",
+    "snippet": "sample_size: 0,"
+  },
+  {
+    "file": "src/ai/services/ai-evaluation.service.js",
+    "line": 673,
+    "keyword": "sample",
+    "snippet": "sample_size: count,"
+  },
+  {
+    "file": "src/ai/services/ai-risk-engine.service.js",
+    "line": 50,
+    "keyword": "demo",
+    "snippet": "entity_id: 'user_demo_01',"
+  },
+  {
+    "file": "src/ai/services/ai-super-admin-command-center.service.js",
+    "line": 329,
+    "keyword": "sample",
+    "snippet": "recent_search_sample: searchEvents.slice(0, 10).map((e) => ({"
+  },
+  {
+    "file": "src/backpacker/store.js",
+    "line": 97,
+    "keyword": "demo",
+    "snippet": "id: 'bp_prof_demo_01',"
+  },
+  {
+    "file": "src/backpacker/store.js",
+    "line": 98,
+    "keyword": "demo",
+    "snippet": "user_id: 'user_demo_01',"
+  },
+  {
+    "file": "src/backpacker/store.js",
+    "line": 114,
+    "keyword": "demo",
+    "snippet": "id: 'intent_demo_01',"
+  },
+  {
+    "file": "src/backpacker/store.js",
+    "line": 115,
+    "keyword": "demo",
+    "snippet": "user_id: 'user_demo_01',"
+  },
+  {
+    "file": "src/backpacker/store.js",
+    "line": 135,
+    "keyword": "demo",
+    "snippet": "id: 'journey_demo_01',"
+  },
+  {
+    "file": "src/backpacker/store.js",
+    "line": 136,
+    "keyword": "demo",
+    "snippet": "owner_id: 'user_demo_01',"
+  },
+  {
+    "file": "src/backpacker/store.js",
+    "line": 151,
+    "keyword": "demo",
+    "snippet": "journey_id: 'journey_demo_01',"
+  },
+  {
+    "file": "src/backpacker/store.js",
+    "line": 161,
+    "keyword": "demo",
+    "snippet": "journey_id: 'journey_demo_01',"
+  },
+  {
+    "file": "src/backpacker/store.js",
+    "line": 171,
+    "keyword": "demo",
+    "snippet": "journey_id: 'journey_demo_01',"
+  },
+  {
+    "file": "src/backpacker/store.js",
+    "line": 184,
+    "keyword": "demo",
+    "snippet": "journey_id: 'journey_demo_01',"
+  },
+  {
+    "file": "src/backpacker/store.js",
+    "line": 185,
+    "keyword": "demo",
+    "snippet": "user_id: 'user_demo_01',"
+  },
+  {
+    "file": "src/backpacker/store.js",
+    "line": 195,
+    "keyword": "demo",
+    "snippet": "journey_id: 'journey_demo_01',"
+  },
+  {
+    "file": "src/backpacker/store.js",
+    "line": 196,
+    "keyword": "demo",
+    "snippet": "payer_id: 'user_demo_01',"
+  },
+  {
+    "file": "src/backpacker/store.js",
+    "line": 202,
+    "keyword": "demo",
+    "snippet": "{ user_id: 'user_demo_01', amount: 600000, paid: true }"
+  },
+  {
+    "file": "src/backpacker/store.js",
+    "line": 212,
+    "keyword": "demo",
+    "snippet": "id: 'ride_demo_01',"
+  },
+  {
+    "file": "src/backpacker/store.js",
+    "line": 213,
+    "keyword": "demo",
+    "snippet": "owner_id: 'user_demo_01',"
+  },
+  {
+    "file": "src/backpacker/store.js",
+    "line": 233,
+    "keyword": "demo",
+    "snippet": "shared_ride_id: 'ride_demo_01',"
+  },
+  {
+    "file": "src/backpacker/store.js",
+    "line": 234,
+    "keyword": "demo",
+    "snippet": "user_id: 'user_demo_01',"
+  },
+  {
+    "file": "src/database/seeds/reset-seed.ts",
+    "line": 30,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: 'tenant_default',"
+  },
+  {
+    "file": "src/database/seeds/reset-seed.ts",
+    "line": 33,
+    "keyword": "user_admin_01",
+    "snippet": "id: 'user_admin_01',"
+  },
+  {
+    "file": "src/database/seeds/reset-seed.ts",
+    "line": 40,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: 'tenant_default',"
+  },
+  {
+    "file": "src/database/seeds/reset-seed.ts",
+    "line": 50,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: 'tenant_default',"
+  },
+  {
+    "file": "src/database/seeds/reset-seed.ts",
+    "line": 53,
+    "keyword": "demo",
+    "snippet": "id: 'user_demo_01',"
+  },
+  {
+    "file": "src/database/seeds/reset-seed.ts",
+    "line": 60,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: 'tenant_default',"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 3,
+    "keyword": "INITIAL_",
+    "snippet": "const INITIAL_DESTINATIONS = ["
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 46,
+    "keyword": "INITIAL_",
+    "snippet": "const INITIAL_VENDORS = ["
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 49,
+    "keyword": "user_admin_01",
+    "snippet": "user_id: 'user_admin_01',"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 79,
+    "keyword": "INITIAL_",
+    "snippet": "const INITIAL_TRIPS = ["
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 83,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: 'tenant_default',"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 117,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: 'tenant_default',"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 152,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: 'tenant_default',"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 185,
+    "keyword": "INITIAL_",
+    "snippet": "const INITIAL_RENTALS = ["
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 189,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: 'tenant_default',"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 205,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: 'tenant_default',"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 221,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: 'tenant_default',"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 236,
+    "keyword": "INITIAL_",
+    "snippet": "const INITIAL_COMMUNITIES = ["
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 261,
+    "keyword": "INITIAL_",
+    "snippet": "const INITIAL_ARTICLES = ["
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 286,
+    "keyword": "INITIAL_",
+    "snippet": "const INITIAL_ANNOUNCEMENTS = ["
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 313,
+    "keyword": "INITIAL_",
+    "snippet": "const INITIAL_COUPONS = ["
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 318,
+    "keyword": "INITIAL_",
+    "snippet": "const INITIAL_TENANTS = ["
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 320,
+    "keyword": "tenant_default",
+    "snippet": "id: 'tenant_default',"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 339,
+    "keyword": "seedSupabaseIfEmpty",
+    "snippet": "async function seedSupabaseIfEmpty(loadAppDocs) {"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 344,
+    "keyword": "INITIAL_",
+    "snippet": "await replaceAppCollection('trips', INITIAL_TRIPS);"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 350,
+    "keyword": "INITIAL_",
+    "snippet": "await replaceAppCollection('destinations', INITIAL_DESTINATIONS);"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 356,
+    "keyword": "INITIAL_",
+    "snippet": "await replaceAppCollection('vendors', INITIAL_VENDORS);"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 362,
+    "keyword": "INITIAL_",
+    "snippet": "await replaceAppCollection('rentals', INITIAL_RENTALS);"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 368,
+    "keyword": "INITIAL_",
+    "snippet": "await replaceAppCollection('communities', INITIAL_COMMUNITIES);"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 374,
+    "keyword": "INITIAL_",
+    "snippet": "await replaceAppCollection('articles', INITIAL_ARTICLES);"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 380,
+    "keyword": "INITIAL_",
+    "snippet": "await replaceAppCollection('announcements', INITIAL_ANNOUNCEMENTS);"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 386,
+    "keyword": "INITIAL_",
+    "snippet": "await replaceAppCollection('coupons', INITIAL_COUPONS);"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 392,
+    "keyword": "INITIAL_",
+    "snippet": "await replaceAppCollection('tenants', INITIAL_TENANTS);"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 400,
+    "keyword": "seedSupabaseIfEmpty",
+    "snippet": "seedSupabaseIfEmpty,"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 401,
+    "keyword": "INITIAL_",
+    "snippet": "INITIAL_DESTINATIONS,"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 402,
+    "keyword": "INITIAL_",
+    "snippet": "INITIAL_VENDORS,"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 403,
+    "keyword": "INITIAL_",
+    "snippet": "INITIAL_TRIPS,"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 404,
+    "keyword": "INITIAL_",
+    "snippet": "INITIAL_RENTALS,"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 405,
+    "keyword": "INITIAL_",
+    "snippet": "INITIAL_COMMUNITIES,"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 406,
+    "keyword": "INITIAL_",
+    "snippet": "INITIAL_ARTICLES,"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 407,
+    "keyword": "INITIAL_",
+    "snippet": "INITIAL_ANNOUNCEMENTS,"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 408,
+    "keyword": "INITIAL_",
+    "snippet": "INITIAL_COUPONS,"
+  },
+  {
+    "file": "src/db/initialSeed.js",
+    "line": 409,
+    "keyword": "INITIAL_",
+    "snippet": "INITIAL_TENANTS"
+  },
+  {
+    "file": "src/modules/auth/auth.service.ts",
+    "line": 73,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: 'tenant_default',"
+  },
+  {
+    "file": "src/modules/auth/auth.service.ts",
+    "line": 137,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: payload.tenant_id || 'tenant_default',"
+  },
+  {
+    "file": "src/modules/auth/auth.service.ts",
+    "line": 150,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: user.tenant_id || 'tenant_default',"
+  },
+  {
+    "file": "src/modules/auth/auth.service.ts",
+    "line": 184,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: 'tenant_default',"
+  },
+  {
+    "file": "src/modules/auth/guards/jwt-auth.guard.ts",
+    "line": 46,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: impDecoded.tenant_id || 'tenant_default',"
+  },
+  {
+    "file": "src/modules/auth/guards/jwt-auth.guard.ts",
+    "line": 70,
+    "keyword": "tenant_default",
+    "snippet": "tenant_id: decoded.tenant_id || 'tenant_default',"
+  },
+  {
+    "file": "src/modules/bookings/bookings.service.ts",
+    "line": 9,
+    "keyword": "demo",
+    "snippet": "id: 'book_demo_01',"
+  },
+  {
+    "file": "test_reports/iteration_1.json",
+    "line": 37,
+    "keyword": "hardcoded",
+    "snippet": "\"No hardcoded URLs / credentials — all from env.\","
+  },
+  {
+    "file": "test_reports/iteration_11.json",
+    "line": 2,
+    "keyword": "hardcoded",
+    "snippet": "\"summary\": \"Backend-only security batch verification (iteration 11) for Trexio: strict CSP with per-request nonce, login hardening/backdoor "
+  },
+  {
+    "file": "test_reports/iteration_11.json",
+    "line": 20,
+    "keyword": "hardcoded",
+    "snippet": "\"admin@trexio.id/admin123 was not exercised over HTTP (auth attempt budget/IP lock), but grep confirms no hardcoded 'admin123'/'trexio123'/'"
+  },
+  {
+    "file": "test_reports/iteration_4.json",
+    "line": 2,
+    "keyword": "placeholder",
+    "snippet": "\"summary\": \"PWA + Push Notifications + Homepage Layout Redesign — Iteration 4 focused testing. All new push endpoints + PWA static assets + "
+  },
+  {
+    "file": "test_reports/iteration_4.json",
+    "line": 33,
+    "keyword": "placeholder",
+    "snippet": "\"GOOD: Home.jsx hero tab switcher is dynamic — tab state drives (1) placeholder text (open-trip / rental / community branches), (2) submit t"
+  },
+  {
+    "file": "test_reports/iteration_4.json",
+    "line": 44,
+    "keyword": "placeholder",
+    "snippet": "\"frontend\": \"100% (7/7 UI smoke checks — hero tabs, placeholder swap, search routing, all 8 sections rendered, MyBookings push card visible "
+  },
+  {
+    "file": "test_reports/iteration_5.json",
+    "line": 2,
+    "keyword": "fake",
+    "snippet": "\"summary\": \"Iteration 5 focused testing — cross-router push integration (send_to_user helper called from routers/admin.py verify_payment and"
+  },
+  {
+    "file": "test_reports/iteration_9.json",
+    "line": 2,
+    "keyword": "simulate",
+    "snippet": "\"summary\": \"Backend-only security verification of the 6 CRITICAL fixes (C-1..C-6) on Trexio (node server.js on :8001 via preview /api). Crea"
+  },
+  {
+    "file": "test_reports/iteration_9.json",
+    "line": 24,
+    "keyword": "simulate",
+    "snippet": "\"context_for_next_testing_agent\": \"Run: python -m pytest /app/backend/tests/backend_test.py -v. All 6 CRITICAL security fixes verified as wo"
+  }
+]

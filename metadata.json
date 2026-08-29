@@ -1,0 +1,8 @@
+{
+  "name": "Trexio Web PWA",
+  "description": "Enterprise multi-tenant marketplace platform for open trips, outdoor gear rental, vendor storefronts, and traveler communities.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

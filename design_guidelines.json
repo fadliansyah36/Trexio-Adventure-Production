@@ -1,0 +1,152 @@
+{
+  "project_overview": {
+    "name": "TREXIO",
+    "type": "hybrid_fullstack",
+    "description": "Marketplace platform for open trips / adventure booking focusing on Indonesian travelers.",
+    "core_vibe": "Modern adventure aesthetic, earthy tones, bold typography, imagery-heavy, paired with a clean minimal marketplace layout."
+  },
+  "theme": {
+    "mode": "light",
+    "archetype": "Organic & Earthy + Swiss High-Contrast. The app uses bone-white and warm sand bases mixed with dark forest green and terracotta to convey adventure without losing marketplace clarity."
+  },
+  "typography": {
+    "headings": {
+      "family": "'Cabinet Grotesk', sans-serif",
+      "import_url": "https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@800,900,700,500,400&display=swap",
+      "weights": ["700", "800", "900"],
+      "tracking": "tracking-tighter",
+      "forbidden": ["Inter", "Roboto", "Space Grotesk"]
+    },
+    "body": {
+      "family": "'Manrope', sans-serif",
+      "import_url": "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap",
+      "weights": ["400", "500", "600"]
+    },
+    "rules": [
+      "H1 maximum text-5xl sm:text-6xl. No text-7xl+.",
+      "Overlines must be uppercase + tiny + tracking-[0.2em].",
+      "Never center-align paragraphs."
+    ]
+  },
+  "colors": {
+    "background": "#F7F5F0",
+    "foreground": "#1A1D1A",
+    "primary": {
+      "DEFAULT": "#CC5A3F",
+      "foreground": "#FFFFFF",
+      "description": "Terracotta for action buttons and CTA"
+    },
+    "secondary": {
+      "DEFAULT": "#1E3F20",
+      "foreground": "#F7F5F0",
+      "description": "Deep Forest Green for accents and heavy structural blocks"
+    },
+    "surface": "#FFFFFF",
+    "border": "#E5E1D8",
+    "muted": "#EBE8E0",
+    "muted_foreground": "#6B6E67",
+    "status": {
+      "pending": "#D98A3C",
+      "confirmed": "#1E3F20",
+      "completed": "#4A6E4F",
+      "cancelled": "#993333"
+    },
+    "forbidden": ["#7351B7", "purple gradients", "#1B93A4", "teal green/blue"]
+  },
+  "grids_and_layouts": {
+    "spacing": "Generous Spacing: Use 2-3x more spacing (p-8, p-12, p-16) to create breathing room.",
+    "bento_grid": "Use Mode A (Tetris Grid) for Homepage and Marketing sections. Use Mode B (Density Grid) for Admin and User Dashboards.",
+    "containers": "Containers with borders MUST have internal padding (p-6 or p-8) to prevent text collision.",
+    "alignment": "Mobile-First. Left-align text for better readability. Optical alignment over geometrical."
+  },
+  "components": {
+    "buttons": "Sharp edges (rounded-md) for marketplace utility feel. Strict focus states. Solid primary for CTAs only.",
+    "navigation": "Header must have visible nav links on desktop. Use Crystal Glass (backdrop-blur-xl bg-white/70) if scrolling under, solid if not. DO NOT use completely transparent background.",
+    "trip_card": "Image heavily dominant. 1px border. Minimal text overlay to preserve image. Must be reusable across Homepage and Explore.",
+    "sticky_booking_panel": "Must stick on scroll. Use Glassmorphism or solid white surface with drop-shadow-xl. Contains form and CTAs.",
+    "forms": "Use Shadcn/UI for Selects, Datepickers, and forms. Multi-step booking must feel seamless with clear progress indicators. Include file upload input for manual payment confirmation.",
+    "status_timeline": "Vertical step indicator for Payment Tracking. Clear visual distinction between past, current, and future states.",
+    "toasts": "Use 'sonner' for payment tracking and booking notifications."
+  },
+  "surfaces": {
+    "cards": "Flat background, 1px subtle border (border-[#E5E1D8]), no default shadow. Hover: slight lift (-translate-y-1) and shadow-lg.",
+    "glassmorphism": "backdrop-blur-xl bg-white/70 with 1px delicate inner stroke border-white/40. No muddy transparency.",
+    "dashboard": "Solid flat panels with sharp edges, dense spacing. Avoid 'card' wrapper overload."
+  },
+  "motion": {
+    "rules": [
+      "No universal transitions (transition-all is banned).",
+      "Use specific transitions: transition: transform 0.2s ease, opacity 0.2s ease.",
+      "Micro-animations on hover/click (e.g., scale button slightly down on active).",
+      "Respect prefers-reduced-motion."
+    ]
+  },
+  "icons_and_assets": {
+    "library": "@phosphor-icons/react",
+    "installation": "yarn add @phosphor-icons/react",
+    "usage": "Use Phospor Icons for that premium editorial and adventure feel."
+  },
+  "accessibility": {
+    "contrast": "Text below 18px must be 4.5:1. Interactive elements 3:1.",
+    "focus": "Focus states must have HIGHER contrast.",
+    "testing": "All interactive elements MUST include data-testid attribute (e.g., data-testid=\"booking-submit-button\")."
+  },
+  "image_urls": {
+    "hero_destinations": [
+      {
+        "url": "https://images.pexels.com/photos/38262907/pexels-photo-38262907.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Sunrise over Mount Bromo. Use for Homepage Hero background.",
+        "category": "hero"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1516690561799-46d8f74f9abf?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MDV8MHwxfHNlYXJjaHwxfHxyYWphJTIwYW1wYXQlMjBvY2VhbnxlbnwwfHx8fDE3ODQ1MTQ3Njd8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Raja Ampat Islets. Use for featured trip.",
+        "category": "featured_trip"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1570788777187-380906016960?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MDV8MHwxfHNlYXJjaHwzfHxyYWphJTIwYW1wYXQlMjBvY2VhbnxlbnwwfHx8fDE3ODQ1MTQ3Njd8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Raja Ampat green plants and water. Use for destination showcase.",
+        "category": "destination"
+      }
+    ],
+    "adventure_activities": [
+      {
+        "url": "https://images.unsplash.com/photo-1713323738386-12d82fe87db4?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODh8MHwxfHNlYXJjaHwxfHxoaWtpbmclMjBiYWNrcGFja2VyJTIwZm9yZXN0fGVufDB8fHx8MTc4NDUxNDc2N3ww&ixlib=rb-4.1.0&q=85",
+        "description": "Hiker walking through forest. Category: Hiking/Trekking.",
+        "category": "activity_type"
+      },
+      {
+        "url": "https://images.pexels.com/photos/1687514/pexels-photo-1687514.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Backpacker looking at mountain. Category: Outdoor Exploration.",
+        "category": "activity_type"
+      }
+    ],
+    "additional_trips": [
+      {
+        "url": "https://images.pexels.com/photos/28386069/pexels-photo-28386069.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Breathtaking view of Bromo. Use for trip detail image gallery.",
+        "category": "gallery"
+      }
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Execute the design strictly matching the E1 Anti-AI Designer persona. Focus on trust, clarity, and speed.",
+    "Implement the UI using React, Tailwind CSS, and Shadcn UI components. Use .js and .jsx files (No TypeScript).",
+    "Inject the custom font imports into the CSS file.",
+    "For multi-step booking, ensure the sticky panel updates state dynamically.",
+    "Build the dashboard leveraging a dense grid for KPI cards, queues, and trip catalogs.",
+    "Never use via.placeholder.com. ONLY use the provided image URLs.",
+    "Use Bahasa Indonesia for all UI copy."
+  ],
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
+    "Do not use generic centered layouts or simplistic gradients.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Never apply universal transitions (transition: all). Use specific property transitions.",
+    "Do not center align the app container (.App { text-align: center; }).",
+    "Never use AI assistant emoji characters for icons. Rely on @phosphor-icons/react.",
+    "Every interaction needs micro-animations - hover states, transitions.",
+    "Use 2-3x more spacing than feels comfortable. Ensure padding inside bordered containers.",
+    "Always add data-testid attributes to all interactive elements for testing.",
+    "Always add GENERAL UI UX DESIGN GUIDELINES"
+  ]
+}

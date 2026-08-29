@@ -1,0 +1,52 @@
+{
+  "summary": "PWA + Push Notifications + Homepage Layout Redesign — Iteration 4 focused testing. All new push endpoints + PWA static assets + open-trip.id-style homepage layout verified. 13/13 new push+PWA backend tests pass. Full backend regression: 63/71 pass (same 8 pre-existing Karimunjawa-seat-exhaustion failures from iter 1–3, ZERO new regressions from push router addition). Frontend UI smoke: homepage hero tab switcher (Open Trip / Private Tur / Rental Gear / Komunitas) works correctly — placeholder text swaps per tab (Open Trip→'Cari trip: Labuan Bajo, Bromo, Derawan…', Rental→'Cari alat: tenda, carrier, sleeping bag…', Community→'Cari komunitas: Semeru, Rinjani…') AND search form submits to the correct target (rental tab → /rental?q=…, open-trip tab → /explore?q=…). All 8 homepage sections render in order: Trust stats (4 items), Destinasi wisata (4 cards from API — see note), Open Trip (5 cards), Rental Gear (4 cards), Private Tur (3 cards), Destinasi trending (4 cards), Travel Articles (3 cards), CTA banner (Diskon 5% TREXIO10). MyBookings page (logged in as traveler) shows the push opt-in card at top with 'Notifikasi push' heading + 'Aktifkan' button (data-testid=push-enable-btn). PWA: /manifest.json (200, short_name=TREXIO, theme_color=#1E3F20, both icon sizes), /service-worker.js (200, contains push+notificationclick handlers), /offline.html (200), /icon-192.png + /icon-512.png (200 image/png), /index.html contains manifest link + theme-color meta. GET /api/push/config returns {public_key, enabled:true}. POST /api/push/subscribe requires auth (401 anon), persists to db.push_subscriptions with upsert (2× calls same endpoint → single row). POST /api/push/test returns 400 when no subs (as spec says), returns 200 with sent/total when subs exist. POST /api/push/broadcast requires admin (401 anon, 403 traveler, 200 admin).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/bookings + admin/bookings/{id}/verify", "issue": "PRE-EXISTING (documented in iterations 1/2/3) — 8 failures in TestBookingsFlow + TestBookingValidation.test_booking_flat_coupon cascade from featured_trip[0]='Snorkeling Karimunjawa 3H2M' being booked_seats=25/25 in seed. Not caused by iteration 4 push changes. Fix: either (a) reset seat count for this trip in seed, (b) point booking tests at a different trip index, or (c) add admin 'reset seats' endpoint."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Home — Destinasi wisata section", "issues": ["PRD asked for 6 destination cards; API /api/destinations currently returns only 4 (Bromo, Raja Ampat, Rinjani, Semeru). Home.jsx already slices .slice(0,6) so it will auto-fill if seed data grows to 6. Consider seeding 2 more destinations (e.g. Nusa Penida, Karimunjawa) to hit the target."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_push.py",
+    "/app/backend/tests/backend_test.py",
+    "/app/backend/tests/test_community_rental.py",
+    "/app/test_reports/pytest/iteration_4_push.xml",
+    "/app/test_reports/pytest/iteration_4_full.xml"
+  ],
+  "action_items": [
+    "OPTIONAL — seed 2 more destinations so Home 'Destinasi wisata' grid shows 6 cards as per open-trip.id mirror spec (currently 4).",
+    "OPTIONAL (carried over from iter 1/2/3) — reset booked_seats on 'Snorkeling Karimunjawa 3H2M' or move TestBookingsFlow to a different trip so the 8 pre-existing booking tests pass again. Not caused by this iteration.",
+    "OPTIONAL — actual push delivery cannot be tested from headless Chromium (Push API disabled). Confirmed the UI card renders and the enable button is present — end-to-end delivery must be tested manually with a real browser + granted Notification permission."
+  ],
+  "critical_code_review_comments": [
+    "GOOD: /app/backend/routers/push.py is clean — upsert on (user_id, endpoint) prevents duplicate rows; /broadcast auto-cleans 404/410 dead subscriptions; /test correctly returns 400 when 0 subs; VAPID_PRIVATE/PUBLIC read from .env with sensible fallback to enabled=false.",
+    "GOOD: server.py includes push_router under /api prefix (line 43). CORS + startup seed unchanged. No regression risk.",
+    "GOOD: /app/frontend/src/lib/usePush.js correctly gates on serviceWorker + PushManager + Notification support, converts VAPID public key via urlBase64ToUint8Array, uses sub.toJSON() for backend payload — spec-correct.",
+    "GOOD: /app/frontend/public/service-worker.js referenced from index.js registration flow; PWA manifest links + apple-touch-icon + theme-color in index.html — all present and served with HTTP 200 via ingress.",
+    "GOOD: Home.jsx hero tab switcher is dynamic — tab state drives (1) placeholder text (open-trip / rental / community branches), (2) submit target via TABS[key].target with correct '?' vs '&' separator handling for the Private Tur case (target='/explore?category=Cultural' → '&q=…' appended). Verified via UI: rental → /rental?q=tenda, open-trip → /explore?q=bromo.",
+    "GOOD: /api/push/broadcast + /api/push/test both raise HTTP 503 when VAPID_PRIVATE is unset (fail-fast). Currently VAPID_PRIVATE is configured so enabled=true.",
+    "MINOR: PWAInstallPrompt.jsx only sets deferred on first fire of beforeinstallprompt; if the user dismisses (localStorage=1) they cannot re-enable install without clearing storage. Acceptable UX.",
+    "MINOR: usePush.enable() calls Notification.requestPermission() which is HTTPS + user-gesture-only. Card visibility on MyBookings gated by push.enabled (config.enabled from server), which is correct — but the card does NOT re-check permission state after enable(); toast success alone is authoritative. Fine for MVP.",
+    "MINOR: routers/push.py _send_one() returns False on any WebPushException and always adds to dead[] on 4xx/5xx — but only actually 410/404 truly means gone. Non-fatal (dead list is only used in /broadcast cleanup) but could leak short-term errors into deletions. Consider only deleting on 404/410 explicitly."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_push.py (NEW — 13 tests covering PWA static assets + push config/subscribe/unsubscribe/test/broadcast with auth guards)"
+  ],
+  "success_rate": {
+    "backend": "88.7% (63/71). New push+PWA tests: 100% (13/13). Regression pass rate on existing suites: 100% (50/50 non-Karimunjawa tests pass, same 8 pre-existing seat-exhaustion failures).",
+    "frontend": "100% (7/7 UI smoke checks — hero tabs, placeholder swap, search routing, all 8 sections rendered, MyBookings push card visible with correct testids)"
+  },
+  "test_credentials": "admin@trexio.id / admin123 ; traveler@trexio.id / traveler123 (from /app/memory/test_credentials.md, verified working)",
+  "seed_data_creation": "Test suite created 1 push_subscription document (endpoint='https://fcm.googleapis.com/fcm/send/TEST_…') that was cleaned up in the same test via /push/unsubscribe. No orphan test data.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "PWA + push notifications are working. Focus areas for next iteration: (1) real-browser push delivery test (needs manual verification — headless Chromium disables Push API); (2) if adding more destinations to seed, run pytest backend/tests/backend_test.py::TestTripsPublic::test_list_destinations — currently asserts >=4, will still pass. Push endpoints live at /api/push/{config,subscribe,unsubscribe,test,broadcast}. Broadcast is admin-only. Test file: /app/backend/tests/test_push.py. VAPID keys are already configured in /app/backend/.env (VAPID_PRIVATE/VAPID_PUBLIC/VAPID_EMAIL). If VAPID is ever cleared, /push/config will return enabled=false and the MyBookings card will not render (push.enabled gate on line 136 of MyBookings.jsx).",
+  "rca_of_the_issue": "N/A — no bugs found in iteration 4 scope. The 8 pre-existing booking flow failures are unrelated to this iteration (Karimunjawa featured trip fully booked in seed since iter 1). Push router + PWA layer added cleanly with zero regressions."
+}

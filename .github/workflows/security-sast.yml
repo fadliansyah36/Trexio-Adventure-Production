@@ -1,0 +1,36 @@
+name: Trexio Security & SAST Gate
+
+on:
+  push:
+    branches: [ main, master, release/* ]
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    - cron: '0 2 * * 1' # Weekly Monday security sweep
+
+jobs:
+  sast-and-security-gate:
+    name: SAST, Secret Scanning & Dependency Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Run Automated SAST & Secret Scanner
+        run: npm run security-scan
+
+      - name: Dependency Vulnerability Audit
+        run: npm audit --audit-level=high --omit=dev || true
+
+      - name: Run Linter
+        run: npm run lint

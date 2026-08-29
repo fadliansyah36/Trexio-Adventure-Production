@@ -1,0 +1,74 @@
+{
+  "summary": "Phase 2 (Multi-Vendor + Plan Gating) backend testing complete. Created /app/backend/tests/test_vendor_phase2.py with 32 tests covering the full vendor lifecycle (onboarding validation, role sync, moderation, self-patch, document upload, plan info) plus plan gating (vendor quota, domain quota) and Phase 1 regression checks. All 32 Phase 2 tests pass. Also fixed a legitimate Phase 1 regression: TestCustomDomain in test_super_admin_tenants.py created its tenant with plan=free, which now correctly blocks domain adds under Phase 2 gating — updated the fixture to plan=enterprise so Phase 1 remains valid. Combined suite: 64/64 tests pass on 3 consecutive runs.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "POST /api/vendor/onboard",
+        "issue": "Empty types (payload {types: []}) returns 400 correctly, but the message is 'Pilih minimal 1 tipe vendor'. Ordering of type validation vs empty check works as intended."
+      },
+      {
+        "endpoint": "POST /api/super/tenants/{id}/domains",
+        "issue": "Domain quota check runs BEFORE domain-format validation. When plan quota is exhausted, submitting an invalid or duplicate domain returns 403 (quota) instead of 400 (format). Not a bug, but worth noting for API consumers."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_vendor_phase2.py",
+    "/app/backend/tests/test_super_admin_tenants.py",
+    "/app/test_reports/pytest/phase2_results.xml"
+  ],
+  "action_items": [
+    "No blocking action items — Phase 2 backend is production-ready per specified requirements.",
+    "Optional: consider validating domain format BEFORE plan quota check so invalid inputs return 400 even when quota exhausted.",
+    "Optional: consider raising a clear 400 (not 422) for empty 'types' list to make client parsing easier — currently returns 400 correctly, so this is already fine."
+  ],
+  "critical_code_review_comments": [
+    "routers/vendors.py:82 _sync_user_roles — silently no-ops when user record missing; consider logging so onboarding-role-drift is detectable.",
+    "routers/vendors.py:253 — document oversize check reads full body into memory before size check; for 5MB cap this is acceptable, but consider streaming for future limits >20MB.",
+    "core/plans.py:check_domain_quota — invoked BEFORE format validation in tenants.py:add_domain (line 248 vs 250). If plan quota exceeded, format errors are masked. Low risk.",
+    "server.py:ensure_official_vendor — idempotent create is correct; the trip back-fill uses updateMany with {'vendor_id': {'$exists': false}} so is safe on re-runs.",
+    "routers/tenants.py:377 super_list_vendors — enriches each vendor with user_email via N+1 queries. For >100 vendors this becomes slow; consider a $lookup aggregation.",
+    "routers/vendors.py:189 my_vendor — computes stats via N+1 (find all trip ids then two aggregate/count queries). Acceptable for small vendors, slow for large ones."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_vendor_phase2.py (created)",
+    "/app/backend/tests/test_super_admin_tenants.py (fixed TestCustomDomain plan=free → plan=enterprise to align with new domain gating)"
+  ],
+  "success_rate": {
+    "backend": "100% (64/64 tests passing including Phase 1 + Phase 2)",
+    "frontend": "not tested (backend-only per request)"
+  },
+  "test_credentials": "admin@trexio.id / admin123 (super_admin), traveler@trexio.id / traveler123 (user). Loaded from /app/memory/test_credentials.md.",
+  "seed_data_creation": "None — tests self-clean traveler vendor + tenant plan via session-scoped fixture. TREXIO Official system vendor is preserved.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Combined suite command: `cd /app/backend && python -m pytest tests/test_super_admin_tenants.py tests/test_vendor_phase2.py`. pytest-xdist runs 2 workers with loadscope: TestVendorLifecycle (class) contains the full sequential onboarding→verify→docs→moderation flow to avoid cross-worker state issues. TestPlanGating modifies default tenant plan (free→pro→enterprise); test_r_plan_endpoint has been made resilient to plan value racing. Do NOT restructure classes without preserving alphabetical test method naming (test_a_, test_b_, ...) which enforces execution order within a class.",
+  "verified_scenarios": [
+    "Health: GET /api/ returns platform=enterprise-marketplace",
+    "Seed: TREXIO Official vendor exists in default tenant with all 6 types, status=verified, all existing trips have vendor_id",
+    "GET /api/super/plans returns free/pro/enterprise with expected fields; 403 for non-super",
+    "POST /api/vendor/onboard happy path returns 200 status=pending, types intact",
+    "GET /api/vendor/me returns doc + stats={0,0,0}",
+    "Role sync: after onboard, /api/auth/me has 'vendor' + 'guide' roles",
+    "Duplicate onboard blocked with 400 'sudah memiliki'",
+    "Validation: invalid type → 400, empty types → 400, invalid phone → 400",
+    "GET /api/vendor/products & /api/vendor/bookings return 403 while status=pending",
+    "Super Admin verify → 200, ok:true; GET /api/vendor/me shows verified; /api/vendor/products returns []",
+    "Super Admin reject with reason persists rejection_reason in detail",
+    "Super Admin suspend sets status=suspended",
+    "Non-super cannot moderate (403); anonymous 401/403",
+    "GET /api/super/vendors?status=pending|verified filters correctly",
+    "PATCH /api/vendor/me updates brand_name + nested contact.email + payout.bank_name and persists",
+    "POST /api/vendor/me/documents/ktp with PNG → 200 {ok, url:/uploads/vendor_<id>_ktp.png}, GET /me shows documents.ktp_url",
+    "Invalid file type (.exe) → 400; oversized (>5MB) → 400",
+    "GET /api/vendor/plan returns {plan, limits, usage} with correct enterprise=unlimited limits",
+    "Plan gating: 2nd vendor blocked when plan=free (403); domain add blocked on free (403); pro allows 1 domain, 2nd returns 403",
+    "Phase 1 regression: /api/super/tenants, /api/super/stats, /api/tenant/current, PATCH branding — all pass"
+  ]
+}

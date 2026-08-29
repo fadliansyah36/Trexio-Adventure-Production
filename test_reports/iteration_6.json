@@ -1,0 +1,52 @@
+{
+  "summary": "Phase 1 (Multi-Tenant + Super Admin) backend testing. Created /app/backend/tests/test_super_admin_tenants.py with 32 tests covering all 18 review criteria. Result: 32/32 pass (100%). Full regression: 115/116 pass (the single failure is the pre-existing Karimunjawa seat-exhaustion issue on TestBookingValidation.test_booking_flat_coupon documented since iteration_1 through iteration_5 — NOT related to Phase 1). All Phase 1 endpoints work correctly: (a) /api/ returns platform=enterprise-marketplace; (b) /api/tenant/current returns default tenant with full branding keys (logo, favicon, primary_color, secondary_color, brand_name, tagline) and requires NO auth; (c) admin@trexio.id login gives roles=['admin','super_admin']; (d) /api/super/stats returns all 8 required fields and 403s for traveler + anon; (e) POST/GET/PATCH/DELETE /api/super/tenants full CRUD works with counts+domains enrichment on detail; (f) slug validation rejects too-short, reserved ('api'), duplicate; (g) branding PATCH persists across GETs; (h) POST /api/super/tenants/{id}/domains returns txt_token+txt_record_name='_trexio-verify'+txt_record_value='trexio-verify=<token>'; (i) invalid & duplicate domains → 400; (j) verify_domain against non-existent DNS returns HTTP 200 with {ok:false, verified:false, message, expected_host, expected_value, dns_error} — NO 500; (k) delete_domain works and removes from tenant detail; (l) delete non-default tenant works, delete default returns 400; (m) assign_user_tenant works with 404 on invalid user_id / invalid tenant_id; (n) X-Tenant header lookup + fallback to default on unknown slug works (no 500); (o) regression /api/trips, /api/communities, /api/rentals, /api/admin/stats all 200.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "N/A (test file)", "issue": "Class-scoped fixture defined as instance method triggers PytestRemovedIn10Warning — cosmetic, tests still work. Can be silenced by converting to @classmethod or using module-level fixture."},
+      {"endpoint": "Review request text vs actual routes", "issue": "Review criteria mentioned /api/catalog/trips, /api/catalog/communities, /api/catalog/rentals — actual routes are /api/trips, /api/communities, /api/rentals (routers/catalog.py has NO prefix, routers/community.py has NO prefix). Test corrected to hit real paths."},
+      {"endpoint": "POST /api/bookings — Karimunjawa featured trip (PRE-EXISTING from iter 1–5)", "issue": "TestBookingValidation.test_booking_flat_coupon fails 400 'Sisa kuota hanya 0'. Karimunjawa trip has booked_seats == max_participants. Not a Phase 1 regression. Fix: reset seat count in seed or use non-featured[0] trip in test."}
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_super_admin_tenants.py",
+    "/app/test_reports/pytest/iteration_6_super_admin.xml",
+    "/app/test_reports/pytest/iteration_6_full.xml"
+  ],
+  "action_items": [
+    "OPTIONAL — main agent may reset Karimunjawa booked_seats in seed.py to unblock the 1 pre-existing regression test.",
+    "OPTIONAL — silence class-scoped fixture deprecation warning by refactoring TestTenantCRUD.qa_slug to a @classmethod or module fixture (cosmetic).",
+    "NONE required for Phase 1 — all Phase 1 features working as specified."
+  ],
+  "critical_code_review_comments": [
+    "GOOD: routers/tenants.py verify_domain (line 269–316) correctly wraps dns.resolver.resolve in try/except so ANY dnspython exception (NXDOMAIN, Timeout, NoAnswer, NoNameservers) yields HTTP 200 with dns_error populated — NEVER 500. Confirmed by test_verify_domain_dns_fail_returns_ok_false.",
+    "GOOD: SLUG_RE ^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$ enforces 3–40 chars, hyphens allowed but not at boundaries. Reserved set {'api','www','app','admin','super'} correctly rejected with 400.",
+    "GOOD: /api/tenant/current has ZERO auth dependency (no Depends(get_current_user) chain) — confirmed with brand-new session with no cookies.",
+    "GOOD: core/tenant.py resolve_tenant falls back to default when slug not found (dev-friendly) — no 500 on unknown X-Tenant header. Only raises 500 if default tenant itself is missing (defensive).",
+    "GOOD: Domain add generates txt_token via secrets.token_urlsafe(24) — crypto-safe, ~32 chars URL-safe base64. txt_record_value is deterministic prefix + token, matching what DNS TXT lookup expects.",
+    "GOOD: routers/tenants.py delete_tenant guards against tenant.slug=='default' (line 219–220) with 400. Also cascades tenant_domains deletion.",
+    "GOOD: routers/tenants.py assign_user_tenant validates BOTH user_id and tenant_id via to_object_id (raises 400 on malformed) + explicit find_one for tenant + matched_count check for user → returns proper 404 in both cases.",
+    "GOOD: server.py migrate_legacy_data — iterates users WITHOUT roles field and elevates 'admin' to ['admin','super_admin']. Already-migrated admin (roles field present) is unchanged, so re-runs are safe/idempotent.",
+    "GOOD: DOMAIN_RE with 4–253 char length gate + strict label rules correctly rejects 'not a domain' (spaces). Unique index on tenant_domains.domain prevents duplicates at DB layer AND explicit find_one check for cleaner 400.",
+    "GOOD: to_object_id used consistently across all path params → invalid hex string returns 400 (Pydantic-style) rather than 500.",
+    "MINOR: routers/tenants.py update_branding always REPLACES entire branding dict (line 199–201) after merging — this correctly preserves keys not in payload. However BrandingIn defaults (primary_color='#CC5A3F' etc) with exclude_none=True works — only user-set fields are merged. Careful: passing null explicitly would still not override existing.",
+    "MINOR: routers/tenants.py list_tenants uses to_list(500) — no pagination. Fine for now, revisit at scale >500 tenants.",
+    "MINOR: core/tenant.py resolve_tenant.custom-domain-lookup (line 42–47) does find_one({'_id': cd['tenant_id']}) but tenant_domains stores tenant_id as STRING (see /super/tenants/{id}/domains add_domain line 252). This mismatch (string vs ObjectId lookup by _id) means the custom-domain resolution path may not work at runtime — needs ObjectId(cd['tenant_id']) to lookup by _id. Not covered by Phase 1 tests because no verified custom domain was set up, but this is a latent bug for Phase 1+ when a real custom domain gets verified. Recommend main agent fix: `t = await db.tenants.find_one({'_id': ObjectId(cd['tenant_id'])})`.",
+    "MINOR: routers/tenant_public.py is a thin passthrough of TenantCtx — good separation of concerns.",
+    "MINOR: /api/super/* endpoints do not have explicit rate limiting; global slowapi limiter still applies. Fine for MVP but consider tighter per-endpoint on domain verify (DNS lookups) to prevent abuse."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_super_admin_tenants.py (NEW — 32 tests: 6 health/tenant_current, 4 super_admin auth, 9 tenant CRUD, 6 custom domain, 5 delete+assign, 4 regression)"
+  ],
+  "success_rate": {
+    "backend": "100% (32/32) on Phase 1 tests; 99.1% (115/116) on full regression — the single failure pre-dates Phase 1 (Karimunjawa seat exhaustion, documented in iter 1–5)",
+    "frontend": "N/A — testing_type = backend only"
+  },
+  "test_credentials": "admin@trexio.id / admin123 (has roles=['admin','super_admin']) ; traveler@trexio.id / traveler123 (roles=['user'])",
+  "seed_data_creation": "Ephemeral: each TestTenantCRUD run creates qatest<uuid6> tenant; TestCustomDomain creates dom<uuid6> tenant + shop-<uuid6>.example.com domain (cleaned up via DELETE tenant which cascades domains); TestTenantDeleteAndAssign creates+deletes del<uuid6> tenant. No permanent test data leaked.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase 1 (Multi-Tenant + Super Admin) is FULLY WORKING. Test file: /app/backend/tests/test_super_admin_tenants.py — 32 tests, all pass. Key latent bug found in code review (NOT covered by tests): core/tenant.py resolve_tenant line 45 does db.tenants.find_one({'_id': cd['tenant_id']}) but tenant_domains stores tenant_id as STRING. Needs ObjectId(cd['tenant_id']) wrap — will bite when Phase 2+ actually uses verified custom domain routing. Test infrastructure: cookies via requests.Session; login POST /api/auth/login sets httpOnly cookies; admin_session/user_session/anon fixtures at session scope. All /api/super/* need admin_session cookie jar. Rate limiter is global slowapi — 32 tests in parallel pytest-xdist did not trigger 429. If future testing spams verify_domain, may hit DNS timeout budget (5s each). Karimunjawa seat exhaustion still fails 1 pre-existing test (TestBookingValidation.test_booking_flat_coupon) — unrelated to Phase 1, main agent should decide whether to fix seed or refactor test.",
+  "rca_of_the_issue": "No blocking issues found. One MINOR latent bug flagged in critical_code_review_comments (custom-domain-to-tenant lookup uses raw string _id where ObjectId is required) — will surface only when custom domain routing is actually exercised in Phase 2. Recommend a one-line fix: `t = await db.tenants.find_one({'_id': ObjectId(cd['tenant_id'])})` in core/tenant.py line 45."
+}

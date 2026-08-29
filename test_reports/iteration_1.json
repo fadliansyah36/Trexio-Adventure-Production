@@ -1,0 +1,52 @@
+{
+  "summary": "First E2E test of TREXIO. Backend: 34/34 pytest cases pass after fixing a P0 ObjectId serialization bug in /api/bookings (POST) and /api/admin/trips (POST). Frontend: all critical user + admin flows work — homepage/hero, explore search/filter/sort, trip detail with tabs, login, full 3-step booking + coupon TREXIO10 + terms + checkout, payment proof upload → awaiting_verification, MyBookings, admin dashboard KPIs, admin payments verify → confirmed, admin trips list + create dialog, navbar (desktop + mobile), registration auto-login, logout, protected route redirect.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/bookings", "issue": "FIXED. Response used `{'id': ..., **booking}` where insert_one had mutated `booking` to include raw ObjectId `_id`, causing 500 (jsonable_encoder ObjectId). Applied `booking.pop('_id', None)` before return. Same pattern fixed in POST /api/admin/trips."},
+      {"endpoint": "PUT /api/admin/trips/{id}", "issue": "Uses same TripIn schema; UPDATE doesn't return _id but if `title`+`slug` used together with unique constraint could conflict — non-blocking."},
+      {"endpoint": "GET /api/trips/{id}", "issue": "Invalid ObjectId hex strings are handled (returns 404). OK."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Admin Payments queue > review dialog", "issues": ["Payment proof image URL uses backend `/uploads/...` path; ensure absolute URL is constructed via ASSET_BASE — verified working (image loads)."]},
+      {"screen": "General", "issues": ["Seed trip 'Snorkeling Karimunjawa' seat count filled up during repeated test runs (now 25/25). Consider using a different seed trip for repeated runs or higher max_participants for automated testing environments."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "OPTIONAL: For any future endpoint that returns `{..., **doc}` right after `db.X.insert_one(doc)`, always `doc.pop('_id', None)` first (or `str(doc.pop('_id'))`).",
+    "OPTIONAL: Reset booked_seats on seed trips periodically or provide an admin endpoint to reset seat counts for testing.",
+    "No blocker actions required — the app is production-ready for MVP scope."
+  ],
+  "critical_code_review_comments": [
+    "server.py is 782 lines — consider splitting into routers (auth.py, trips.py, bookings.py, admin.py) if adding more features.",
+    "P0 fix applied: `create_booking` and `create_trip` were returning raw ObjectId in response body due to `insert_one` mutating the dict; both fixed.",
+    "CORS uses env FRONTEND_URL correctly with allow_credentials=True — cookies work cross-origin.",
+    "bcrypt hashes verified as $2b$ format via login/register flow (integration).",
+    "Admin re-seed logic updates password_hash if env password changes — good.",
+    "JWT stored in httpOnly, secure, samesite=none cookies — correctly configured.",
+    "Frontend api.js uses `withCredentials: true` — correct.",
+    "PaymentConfirmation upload uses FormData multipart — works end-to-end.",
+    "No hardcoded URLs / credentials — all from env.",
+    "data-testid coverage is excellent across all interactive elements."
+  ],
+  "updated_files": [
+    "/app/backend/server.py (bug fix: pop _id before returning in create_booking + create_trip)",
+    "/app/backend/tests/backend_test.py (new)",
+    "/app/backend/tests/__init__.py (new)"
+  ],
+  "success_rate": {"backend": "100% (34/34)", "frontend": "100% of tested flows"},
+  "test_credentials": "admin@trexio.id / admin123 ; traveler@trexio.id / traveler123 ; coupons TREXIO10 (10%), PETUALANG50K (Rp50000)",
+  "seed_data_creation": "During tests, ~7 bookings were created against 'Snorkeling Karimunjawa 3H2M' trip (id 6a5d8a13a301cc285bad3479). Booked_seats climbed from 18 → 25 (now full). Registered several TEST_ users (@trexio.io). One admin verify was triggered.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Karimunjawa trip is now booked_seats=25/25 (full). Any further booking creation on this trip will fail with 400 'Sisa kuota hanya 0'. Use a different trip for future booking creation tests (e.g., Rinjani, Semeru, Bromo, Baduy). Backend test suite is at /app/backend/tests/backend_test.py — runs 34 tests via pytest-xdist. Pytest config at /app/backend/pytest.ini enforces `-n 2 --dist loadscope` — leave it as is.",
+  "rca_of_the_issue": "POST /api/bookings returned 500 with `TypeError: 'ObjectId' object is not iterable` / `vars() argument must have __dict__ attribute` from FastAPI's jsonable_encoder. Root cause: `await db.bookings.insert_one(booking)` mutates the input dict in-place to add `_id: ObjectId(...)`. The subsequent `return {'id': ..., **booking}` therefore included both a string `id` and a raw ObjectId `_id` which is not JSON-serializable. Fix: pop `_id` from the mutated dict before returning. Identical pattern existed in POST /api/admin/trips and has been fixed as well. All 34 backend tests + full frontend booking → payment → admin verify flow now pass."
+}
