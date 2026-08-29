@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
-import trexioLogoImg from "@/assets/trexio-logo.png";
+
+const trexioLogoImg = "/trexio-logo.png";
 
 export function TrexioLogo({
   variant = "horizontal",

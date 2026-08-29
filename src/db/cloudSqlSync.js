@@ -574,6 +574,17 @@ const APP_DOC_TABLES = {
   announcements: 'app_announcements',
   conversations: 'app_conversations',
   messages: 'app_messages',
+  subscription_plans: 'app_subscription_plans',
+  tenant_subscriptions: 'app_tenant_subscriptions',
+  advertising_packages: 'app_advertising_packages',
+  advertising_campaigns: 'app_advertising_campaigns',
+  billing_transactions: 'app_billing_transactions',
+  audit_logs: 'app_audit_logs',
+  incidents: 'app_incidents',
+  homepage_config: 'app_homepage_config',
+  master_categories: 'app_master_categories',
+  master_locations: 'app_master_locations',
+  master_roles: 'app_master_roles',
 };
 
 function docKey(doc) {

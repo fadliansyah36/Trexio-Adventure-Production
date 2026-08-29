@@ -8,6 +8,8 @@
     "build": "cd frontend && ([ -f node_modules/.bin/craco ] || npm install --include=dev --legacy-peer-deps) && NODE_OPTIONS=--max-old-space-size=2048 CI=false GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true FAST_REFRESH=false npm run build",
     "start": "node server.js",
     "security-scan": "node scripts/security-scan.js",
+    "verify-integrity": "node scripts/verify-repo-integrity.js",
+    "pre-push": "npm run verify-integrity && npm run security-scan",
     "lint": "echo 'No lint issues'"
   },
   "dependencies": {

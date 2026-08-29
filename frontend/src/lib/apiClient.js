@@ -26,6 +26,8 @@ apiClient.interceptors.request.use(
         if (tenant) {
           config.headers = config.headers || {};
           config.headers["X-Tenant"] = tenant;
+          config.headers["x-tenant-id"] = tenant;
+          config.headers["x-tenant-slug"] = tenant;
         }
       }
     } catch (e) {

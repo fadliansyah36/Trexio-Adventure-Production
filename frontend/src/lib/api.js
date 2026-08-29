@@ -32,6 +32,8 @@ api.interceptors.request.use((config) => {
     if (hint) {
       config.headers = config.headers || {};
       config.headers["X-Tenant"] = hint;
+      config.headers["x-tenant-id"] = hint;
+      config.headers["x-tenant-slug"] = hint;
     }
   } catch (e) { /* ignore */ }
   return config;

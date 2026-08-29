@@ -5,7 +5,6 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { UserOrmEntity } from '../../database/entities/user.entity';
-import { adminAuth } from '../../lib/firebase-admin';
 
 @Injectable()
 export class AuthService {
@@ -15,44 +14,23 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async loginWithFirebase(idToken: string, fallbackEmail?: string, fallbackName?: string) {
-    let uid = '';
-    let email = (fallbackEmail || '').trim().toLowerCase();
-    let name = fallbackName || '';
-
-    if (idToken) {
-      try {
-        const decoded = await adminAuth.verifyIdToken(idToken);
-        uid = decoded.uid;
-        if (decoded.email) {
-          email = decoded.email.toLowerCase();
-        }
-        if (decoded.name) {
-          name = decoded.name;
-        }
-      } catch (err) {
-        console.warn('[Firebase Auth] Failed to verify ID token:', err.message);
-        if (!email) {
-          throw new UnauthorizedException({ detail: 'Token Firebase tidak valid atau telah kedaluwarsa.' });
-        }
-      }
-    }
+  async loginWithSupabase(payload: { email?: string; name?: string; supabase_uid?: string; idToken?: string }) {
+    const email = (payload.email || '').trim().toLowerCase();
+    const uid = payload.supabase_uid || '';
+    const name = payload.name || '';
 
     if (!email && !uid) {
-      throw new BadRequestException('Detail identitas pengguna Firebase tidak lengkap.');
+      throw new BadRequestException('Email atau Supabase UID diperlukan untuk autentikasi.');
     }
 
-    // 1. Search by UID
     let user: UserOrmEntity | null = null;
     if (uid) {
       user = await this.userRepository.findOne({ where: { uid } });
     }
 
-    // 2. Search by email if not found by UID (Account Linking)
     if (!user && email) {
       user = await this.userRepository.findOne({ where: { email } });
       if (user) {
-        // Link account
         user.uid = uid || user.uid;
         if (name && (!user.name || user.name.startsWith('User '))) {
           user.name = name;
@@ -61,10 +39,9 @@ export class AuthService {
       }
     }
 
-    // 3. Create user if still not found
     if (!user) {
       const newUser = this.userRepository.create({
-        id: `user_fb_${uuidv4().substring(0, 8)}`,
+        id: `user_sb_${uuidv4().substring(0, 8)}`,
         uid: uid || `uid_${uuidv4().substring(0, 8)}`,
         email: email || `user_${uuidv4().substring(0, 6)}@trexio.id`,
         name: name || (email ? email.split('@')[0] : 'Pengguna Trexio'),
@@ -76,6 +53,10 @@ export class AuthService {
     }
 
     return this.login(user);
+  }
+
+  async loginWithFirebase(idToken: string, fallbackEmail?: string, fallbackName?: string) {
+    return this.loginWithSupabase({ email: fallbackEmail, name: fallbackName, idToken });
   }
 
   async validateUser(emailOrShorthand: string, pass: string): Promise<UserOrmEntity | null> {

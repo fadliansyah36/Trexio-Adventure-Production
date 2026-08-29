@@ -26,6 +26,9 @@ jobs:
       - name: Install Dependencies
         run: npm ci --legacy-peer-deps
 
+      - name: Verify Architecture & Database Integrity (Anti-Mock Gate)
+        run: npm run verify-integrity
+
       - name: Run Automated SAST & Secret Scanner
         run: npm run security-scan
 

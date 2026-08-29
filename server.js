@@ -14,27 +14,6 @@ const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 const supabaseAuth = require('./src/auth/supabaseAuth');
 
-let adminAuth = null;
-try {
-  const admin = require('firebase-admin');
-  // [SECURITY] Prefer env config; fall back to local file only if it still exists (dev).
-  let projectId = process.env.FIREBASE_PROJECT_ID || null;
-  if (!projectId && fs.existsSync(path.join(__dirname, 'firebase-applet-config.json'))) {
-    try { projectId = require('./firebase-applet-config.json').projectId; } catch (_) {}
-  }
-  const apps = (admin && admin.apps) ? admin.apps : [];
-  if (!apps.length && projectId) {
-    admin.initializeApp({
-      projectId,
-    });
-  }
-  if (admin && typeof admin.auth === 'function') {
-    adminAuth = admin.auth();
-  }
-} catch (e) {
-  console.warn('[Firebase Admin] Notice initializing in server.js:', e.message);
-}
-
 const app = express();
 app.set('trust proxy', 1);
 const PORT = parseInt(process.env.PORT || '3000', 10);
@@ -174,12 +153,6 @@ app.use((req, res, next) => {
 
 const nowISO = () => new Date().toISOString();
 
-const DATA_DIR = path.join(__dirname, 'data');
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-const DB_USERS_FILE = path.join(DATA_DIR, 'db_users.json');
-
 // [CLEANUP] All hardcoded/demo/seed users removed. Users now live in Supabase
 // PostgreSQL and are hydrated on boot. A single admin is seeded from env vars
 // (SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD) into both Supabase Auth and the DB.
@@ -278,24 +251,19 @@ function requireDbConnection(req, res, next) {
   next();
 }
 
-function saveUsersToDisk() {
-  try {
-    fs.writeFileSync(DB_USERS_FILE, JSON.stringify(users, null, 2), 'utf8');
-    if (Array.isArray(users)) {
-      users.forEach(u => syncUserToCloudSql(u));
-    }
-  } catch (err) {
-    console.error('[DB] Gagal menyimpan data user ke disk:', err.message);
+function syncAllUsersToPostgres() {
+  if (Array.isArray(users)) {
+    users.forEach(u => syncUserToCloudSql(u));
   }
 }
 
-function loadUsersFromDisk() {
-  // [FASE 2] Supabase Postgres is the source of truth for users. The local JSON
-  // file is NO LONGER read on boot. Users are hydrated from Postgres in hydrateAndSeedUsers().
+function saveUsersToDisk(specificUser) {
+  if (specificUser) {
+    syncUserToCloudSql(specificUser);
+  } else {
+    syncAllUsersToPostgres();
+  }
 }
-
-// Load database on startup
-loadUsersFromDisk();
 
 // Conversations & Messages (User <-> Mitra & Support) - Hydrated strictly from Supabase Postgres
 const conversations = [];
@@ -374,15 +342,6 @@ const audit_logs = [];
 // ==========================================
 // TREXIO SUBSCRIPTION & ADVERTISING ENGINE
 // ==========================================
-
-const DB_SUB_PLANS_FILE = path.join(DATA_DIR, 'db_subscription_plans.json');
-const DB_TENANT_SUBS_FILE = path.join(DATA_DIR, 'db_tenant_subscriptions.json');
-const DB_AD_PACKAGES_FILE = path.join(DATA_DIR, 'db_ad_packages.json');
-const DB_AD_CAMPAIGNS_FILE = path.join(DATA_DIR, 'db_ad_campaigns.json');
-const DB_BILLING_TX_FILE = path.join(DATA_DIR, 'db_billing_transactions.json');
-const DB_AUDIT_LOGS_FILE = path.join(DATA_DIR, 'db_audit_logs.json');
-const DB_VENDORS_FILE = path.join(DATA_DIR, 'db_vendors.json');
-const DB_COMMUNICATIONS_FILE = path.join(DATA_DIR, 'db_communications.json');
 
 // Subscription Plans
 const subscription_plans = [
@@ -595,141 +554,34 @@ const advertising_campaigns = [];
 // Billing Transactions
 const billing_transactions = [];
 
-// Save & Load Disk Helpers
+// Save & Load Helpers - Persists directly to Supabase PostgreSQL source of truth
 function saveSubDataToDisk() {
-  try {
-    fs.writeFileSync(DB_SUB_PLANS_FILE, JSON.stringify(subscription_plans, null, 2), 'utf8');
-    fs.writeFileSync(DB_TENANT_SUBS_FILE, JSON.stringify(tenant_subscriptions, null, 2), 'utf8');
-    fs.writeFileSync(DB_AD_PACKAGES_FILE, JSON.stringify(advertising_packages, null, 2), 'utf8');
-    fs.writeFileSync(DB_AD_CAMPAIGNS_FILE, JSON.stringify(advertising_campaigns, null, 2), 'utf8');
-    fs.writeFileSync(DB_BILLING_TX_FILE, JSON.stringify(billing_transactions, null, 2), 'utf8');
-    fs.writeFileSync(DB_VENDORS_FILE, JSON.stringify(vendors, null, 2), 'utf8');
-    if (Array.isArray(vendors)) {
-      vendors.forEach(v => syncVendorToCloudSql(v));
-    }
-    persistCollection('vendors');
-  } catch (err) {
-    console.error('[Sub Engine] Gagal menyimpan data ke disk:', err.message);
-  }
+  persistCollection('subscription_plans');
+  persistCollection('tenant_subscriptions');
+  persistCollection('advertising_packages');
+  persistCollection('advertising_campaigns');
+  persistCollection('billing_transactions');
+  persistCollection('vendors');
 }
 
 function saveAuditLogsToDisk() {
-  try {
-    fs.writeFileSync(DB_AUDIT_LOGS_FILE, JSON.stringify(audit_logs, null, 2), 'utf8');
-  } catch (err) {
-    console.error('[Audit Logs] Gagal menyimpan audit log ke disk:', err.message);
-  }
+  persistCollection('audit_logs');
 }
 
 function loadSubDataFromDisk() {
-  try {
-    if (fs.existsSync(DB_SUB_PLANS_FILE)) {
-      const data = JSON.parse(fs.readFileSync(DB_SUB_PLANS_FILE, 'utf8'));
-      if (Array.isArray(data) && data.length > 0) {
-        subscription_plans.length = 0;
-        subscription_plans.push(...data);
-      }
-    }
-    if (fs.existsSync(DB_TENANT_SUBS_FILE)) {
-      const data = JSON.parse(fs.readFileSync(DB_TENANT_SUBS_FILE, 'utf8'));
-      if (Array.isArray(data) && data.length > 0) {
-        tenant_subscriptions.length = 0;
-        tenant_subscriptions.push(...data);
-      }
-    }
-    if (fs.existsSync(DB_AD_PACKAGES_FILE)) {
-      const data = JSON.parse(fs.readFileSync(DB_AD_PACKAGES_FILE, 'utf8'));
-      if (Array.isArray(data) && data.length > 0) {
-        advertising_packages.length = 0;
-        advertising_packages.push(...data);
-      }
-    }
-    if (fs.existsSync(DB_AD_CAMPAIGNS_FILE)) {
-      const data = JSON.parse(fs.readFileSync(DB_AD_CAMPAIGNS_FILE, 'utf8'));
-      if (Array.isArray(data) && data.length > 0) {
-        advertising_campaigns.length = 0;
-        advertising_campaigns.push(...data);
-      }
-    }
-    if (fs.existsSync(DB_BILLING_TX_FILE)) {
-      const data = JSON.parse(fs.readFileSync(DB_BILLING_TX_FILE, 'utf8'));
-      if (Array.isArray(data) && data.length > 0) {
-        billing_transactions.length = 0;
-        billing_transactions.push(...data);
-      }
-    }
-    if (fs.existsSync(DB_AUDIT_LOGS_FILE)) {
-      const data = JSON.parse(fs.readFileSync(DB_AUDIT_LOGS_FILE, 'utf8'));
-      if (Array.isArray(data) && data.length > 0) {
-        audit_logs.length = 0;
-        audit_logs.push(...data);
-      }
-    }
-    if (fs.existsSync(DB_VENDORS_FILE)) {
-      const data = JSON.parse(fs.readFileSync(DB_VENDORS_FILE, 'utf8'));
-      if (Array.isArray(data) && data.length > 0) {
-        vendors.length = 0;
-        vendors.push(...data);
-      }
-    }
-  } catch (err) {
-    console.error('[Sub Engine] Gagal memuat data dari disk:', err.message);
-  }
+  // [Supabase Postgres is Source of Truth]
+  // Collections are hydrated asynchronously on boot from Supabase PostgreSQL in hydrateCollections()
 }
 
 async function saveCommunicationsToDisk() {
-  try {
-    const payload = {
-      conversations,
-      messages,
-      notifications,
-      announcements
-    };
-    fs.writeFileSync(DB_COMMUNICATIONS_FILE, JSON.stringify(payload, null, 2), 'utf8');
-    if (Array.isArray(conversations)) {
-      for (const c of conversations) {
-        await syncConversationToCloudSql(c);
-      }
-    }
-    if (Array.isArray(messages)) {
-      for (const m of messages) {
-        await syncMessageToCloudSql(m);
-      }
-    }
-    if (Array.isArray(notifications)) {
-      for (const n of notifications) {
-        await syncNotificationToCloudSql(n);
-      }
-    }
-  } catch (err) {
-    console.error('[Communications] Gagal menyimpan komunikasi ke disk:', err.message);
-  }
+  persistCollection('conversations');
+  persistCollection('messages');
+  persistCollection('announcements');
 }
 
 function loadCommunicationsFromDisk() {
-  try {
-    if (fs.existsSync(DB_COMMUNICATIONS_FILE)) {
-      const data = JSON.parse(fs.readFileSync(DB_COMMUNICATIONS_FILE, 'utf8'));
-      if (Array.isArray(data.conversations) && data.conversations.length > 0) {
-        conversations.length = 0;
-        conversations.push(...data.conversations);
-      }
-      if (Array.isArray(data.messages) && data.messages.length > 0) {
-        messages.length = 0;
-        messages.push(...data.messages);
-      }
-      if (Array.isArray(data.notifications) && data.notifications.length > 0) {
-        notifications.length = 0;
-        notifications.push(...data.notifications);
-      }
-      if (Array.isArray(data.announcements) && data.announcements.length > 0) {
-        announcements.length = 0;
-        announcements.push(...data.announcements);
-      }
-    }
-  } catch (err) {
-    console.error('[Communications] Gagal memuat komunikasi dari disk:', err.message);
-  }
+  // [Supabase Postgres is Source of Truth]
+  // Communications are hydrated asynchronously on boot from Supabase PostgreSQL in hydrateCollections()
 }
 
 loadSubDataFromDisk();
@@ -1086,6 +938,40 @@ function getCurrentUser(req) {
   return user;
 }
 
+function getUserRoles(user) {
+  if (!user) return [];
+  const rawRoles = Array.isArray(user.roles) ? user.roles : (user.role ? [user.role] : []);
+  if (user.role_name && !rawRoles.includes(user.role_name)) {
+    rawRoles.push(user.role_name);
+  }
+  const set = new Set();
+  rawRoles.forEach(r => {
+    if (typeof r === 'string') {
+      const lower = r.toLowerCase().trim();
+      set.add(lower);
+      if (lower === 'super_admin' || lower === 'superadmin') { set.add('super_admin'); set.add('admin'); }
+      if (lower === 'platform_admin' || lower === 'admin') { set.add('admin'); }
+      if (lower === 'tenant_owner' || lower === 'tenant') { set.add('tenant_owner'); set.add('tenant_admin'); }
+      if (lower === 'tenant_admin') { set.add('tenant_admin'); }
+      if (lower === 'vendor' || lower === 'mitra' || lower === 'partner' || lower === 'vendor_partner') { set.add('vendor'); set.add('partner'); }
+      if (lower === 'guide' || lower === 'pemandu') { set.add('guide'); }
+      if (lower === 'porter') { set.add('porter'); }
+      if (lower === 'rental_operator' || lower === 'rental') { set.add('rental_operator'); }
+      if (lower === 'basecamp_operator' || lower === 'basecamp') { set.add('basecamp_operator'); }
+      if (lower === 'user' || lower === 'traveler' || lower === 'pendaki') { set.add('user'); }
+    }
+  });
+  return Array.from(set);
+}
+
+function hasAnyRole(user, ...requiredRoles) {
+  if (!user) return false;
+  const userRoles = getUserRoles(user);
+  if (userRoles.includes('super_admin')) return true; // Super Admin has global bypass
+  const targetRoles = requiredRoles.flat().map(r => String(r).toLowerCase().trim());
+  return targetRoles.some(r => userRoles.includes(r));
+}
+
 function requireAuth(req, res, next) {
   const user = getCurrentUser(req);
   if (!user) {
@@ -1095,15 +981,33 @@ function requireAuth(req, res, next) {
   next();
 }
 
-function requireVendor(req, res, next) {
+function requireRoles(...allowedRoles) {
+  return (req, res, next) => {
+    const user = getCurrentUser(req);
+    if (!user) {
+      return res.status(401).json({ detail: req._auth_error || 'Silakan login terlebih dahulu', code: 'UNAUTHORIZED_SESSION' });
+    }
+    if (!hasAnyRole(user, ...allowedRoles)) {
+      recordSecurityIncident('LOW', 'Akses Ditolak (RBAC Restriction)', `User ${user.email} (Roles: ${getUserRoles(user).join(', ')}) mencoba mengakses endpoint yang membutuhkan role: ${allowedRoles.join(', ')}`, req);
+      return res.status(403).json({
+        detail: `Akses Ditolak: Fitur ini membutuhkan salah satu role berikut: ${allowedRoles.join(', ')}.`,
+        code: 'FORBIDDEN_ROLE'
+      });
+    }
+    req.user = user;
+    next();
+  };
+}
+
+function requireSuperAdmin(req, res, next) {
   const user = getCurrentUser(req);
   if (!user) {
     return res.status(401).json({ detail: req._auth_error || 'Silakan login terlebih dahulu', code: 'UNAUTHORIZED_SESSION' });
   }
-  const roles = user.roles || [user.role];
-  const vendorRoles = ['vendor', 'mitra', 'tenant_admin', 'admin', 'super_admin'];
-  if (!roles.some(r => vendorRoles.includes(r))) {
-    return res.status(403).json({ detail: 'Akses Ditolak: Fitur ini khusus untuk Mitra / Vendor resmi.' });
+  const userRoles = getUserRoles(user);
+  if (!userRoles.includes('super_admin')) {
+    recordSecurityIncident('MEDIUM', 'Percobaan Akses Super Admin Terlarang', `User ${user.email} mencoba mengakses endpoint Super Admin.`, req);
+    return res.status(403).json({ detail: 'Akses Ditolak: Khusus Super Admin TREXIO.', code: 'FORBIDDEN_SUPER_ADMIN' });
   }
   req.user = user;
   next();
@@ -1114,24 +1018,94 @@ function requireAdmin(req, res, next) {
   if (!user) {
     return res.status(401).json({ detail: req._auth_error || 'Silakan login terlebih dahulu', code: 'UNAUTHORIZED_SESSION' });
   }
-  const roles = user.roles || [user.role];
-  if (!roles.includes('admin') && !roles.includes('super_admin')) {
-    return res.status(403).json({ detail: 'Akses khusus Admin' });
+  const userRoles = getUserRoles(user);
+  if (!userRoles.includes('admin') && !userRoles.includes('super_admin')) {
+    return res.status(403).json({ detail: 'Akses Ditolak: Khusus Admin Platform.', code: 'FORBIDDEN_ADMIN' });
   }
   req.user = user;
   next();
 }
 
-function requireSuperAdmin(req, res, next) {
+function requireTenantOwner(req, res, next) {
+  return requireRoles('tenant_owner', 'admin', 'super_admin')(req, res, next);
+}
+
+function requireTenantAdmin(req, res, next) {
+  return requireRoles('tenant_owner', 'tenant_admin', 'admin', 'super_admin')(req, res, next);
+}
+
+function requireVendor(req, res, next) {
+  return requireRoles('vendor', 'partner', 'tenant_owner', 'tenant_admin', 'admin', 'super_admin')(req, res, next);
+}
+
+function requireGuide(req, res, next) {
+  return requireRoles('guide', 'vendor', 'partner', 'tenant_admin', 'admin', 'super_admin')(req, res, next);
+}
+
+function requirePorter(req, res, next) {
+  return requireRoles('porter', 'vendor', 'partner', 'tenant_admin', 'admin', 'super_admin')(req, res, next);
+}
+
+function requireRentalOperator(req, res, next) {
+  return requireRoles('rental_operator', 'vendor', 'partner', 'tenant_admin', 'admin', 'super_admin')(req, res, next);
+}
+
+function requireBasecampOperator(req, res, next) {
+  return requireRoles('basecamp_operator', 'vendor', 'partner', 'tenant_admin', 'admin', 'super_admin')(req, res, next);
+}
+
+// ==========================================
+// TENANT RESOLUTION & ISOLATION SCOPING
+// ==========================================
+function resolveTenantScope(req) {
+  const requestedTenantId = req.headers['x-tenant-id'] || req.query.tenant_id || req.params.tenant_id || req.body?.tenant_id;
+  const requestedTenantSlug = req.headers['x-tenant-slug'] || req.query.tenant_slug || req.params.tenant_slug;
+
+  let tenant = null;
+  if (requestedTenantId) {
+    tenant = tenants.find(t => t.id === requestedTenantId);
+  }
+  if (!tenant && requestedTenantSlug) {
+    tenant = tenants.find(t => t.slug?.toLowerCase() === String(requestedTenantSlug).toLowerCase());
+  }
+  if (!tenant && req.user?.tenant_id) {
+    tenant = tenants.find(t => t.id === req.user.tenant_id || t.owner_user_id === req.user.id);
+  }
+  if (!tenant) {
+    tenant = getDefaultTenant();
+  }
+  return tenant;
+}
+
+function requireTenantAccess(req, res, next) {
   const user = getCurrentUser(req);
   if (!user) {
     return res.status(401).json({ detail: req._auth_error || 'Silakan login terlebih dahulu', code: 'UNAUTHORIZED_SESSION' });
   }
-  const roles = user.roles || [user.role];
-  if (!roles.includes('super_admin')) {
-    return res.status(403).json({ detail: 'Akses khusus Super Admin' });
-  }
   req.user = user;
+  const userRoles = getUserRoles(user);
+  
+  // Super Admin and Platform Admin have global access across all tenants
+  if (userRoles.includes('super_admin') || userRoles.includes('admin')) {
+    req.tenant = resolveTenantScope(req);
+    return next();
+  }
+
+  // Tenant Owner / Admin / Staff must only access their own tenant
+  const targetTenant = resolveTenantScope(req);
+  const userTenantId = user.tenant_id;
+  const isOwner = targetTenant.owner_user_id === user.id;
+  const isAssigned = userTenantId && (targetTenant.id === userTenantId);
+
+  if (!isOwner && !isAssigned) {
+    recordSecurityIncident('HIGH', 'Percobaan Pelanggaran Isolasi Tenant (Cross-Tenant Access Attempt)', `User ${user.email} (Tenant: ${userTenantId || 'None'}) mencoba mengakses Tenant ${targetTenant.id} (${targetTenant.name})`, req);
+    return res.status(403).json({
+      detail: 'Akses Ditolak: Anda tidak memiliki izin untuk mengakses atau memodifikasi data tenant ini.',
+      code: 'FORBIDDEN_TENANT_ISOLATION'
+    });
+  }
+
+  req.tenant = targetTenant;
   next();
 }
 
@@ -2686,29 +2660,14 @@ async function handleSupabaseSession(req, res) {
 api.post('/auth/supabase-session', authLimiter, (req, res) => handleSupabaseSession(req, res));
 
 async function handleSocialAuth(provider, req, res) {
-  if (provider !== 'google' && provider !== 'supabase' && provider !== 'firebase') {
+  if (provider !== 'google' && provider !== 'supabase') {
     return res.status(400).json({ detail: `Autentikasi sosial ${provider} telah dinonaktifkan. Trexio hanya mendukung Google / Supabase untuk autentikasi sosial.` });
   }
 
-  const { idToken, email, name, phone, supabase_uid } = req.body || req.query || {};
+  const { email, name, phone, supabase_uid } = req.body || req.query || {};
   let targetEmail = (email || '').trim().toLowerCase();
   let uidVal = supabase_uid || '';
   let displayName = name || '';
-
-  if (idToken && adminAuth) {
-    try {
-      const decoded = await adminAuth.verifyIdToken(idToken);
-      uidVal = decoded.uid;
-      if (decoded.email) {
-        targetEmail = decoded.email.toLowerCase();
-      }
-      if (decoded.name) {
-        displayName = decoded.name;
-      }
-    } catch (err) {
-      console.warn('[Firebase Auth] Notice verifying token:', err.message);
-    }
-  }
 
   if (!targetEmail && !uidVal) {
     return res.status(400).json({ detail: 'Email atau token autentikasi diperlukan' });
@@ -2764,13 +2723,64 @@ async function handleSocialAuth(provider, req, res) {
   return res.json({ ...cleaned, user: cleaned, access_token: token, provider });
 }
 
-api.post('/auth/firebase', authLimiter, (req, res) => handleSocialAuth('firebase', req, res));
 api.post('/auth/google', authLimiter, (req, res) => handleSocialAuth('google', req, res));
 api.get('/auth/google', (req, res) => handleSocialAuth('google', req, res));
 api.get('/auth/google/callback', (req, res) => handleSocialAuth('google', req, res));
 
 api.all(['/auth/apple', '/auth/apple/callback', '/auth/facebook', '/auth/facebook/callback'], (req, res) => {
   return res.status(400).json({ detail: 'Autentikasi Facebook dan Apple telah dinonaktifkan. Silakan gunakan Google atau Email/Password.' });
+});
+
+api.get('/auth/status', (req, res) => {
+  res.json({
+    status: 'Auth module active',
+    provider: 'supabase',
+    supabase_auth_enabled: supabaseAuth.supabaseAuthEnabled,
+    database: systemHealth.database,
+    timestamp: nowISO()
+  });
+});
+
+api.get('/auth/diagnostics', async (req, res) => {
+  const token = req.cookies?.access_token || (req.headers.authorization ? req.headers.authorization.replace(/^Bearer\s+/i, '') : null);
+  let tokenValid = false;
+  let decodedPayload = null;
+  let tokenError = null;
+
+  if (token) {
+    try {
+      decodedPayload = jwt.verify(token, JWT_SECRET);
+      tokenValid = true;
+    } catch (err) {
+      tokenError = err.message;
+      try {
+        decodedPayload = jwt.decode(token);
+      } catch (_) {}
+    }
+  }
+
+  res.json({
+    timestamp: nowISO(),
+    database: {
+      status: systemHealth.database.connected ? 'healthy' : 'disconnected',
+      provider: 'Supabase PostgreSQL',
+      totalUsers: users.length
+    },
+    auth: {
+      provider: 'Supabase Auth',
+      configured: supabaseAuth.supabaseAuthEnabled,
+    },
+    jwt: {
+      tokenProvided: Boolean(token),
+      tokenValid,
+      tokenError,
+      decodedPayload
+    },
+    environment: {
+      nodeEnv: process.env.NODE_ENV || 'development',
+      jwtSecretConfigured: Boolean(JWT_SECRET)
+    }
+  });
 });
 
 // Real OTP Store in memory
@@ -4189,7 +4199,7 @@ function getDefaultTenant() {
 }
 
 api.get('/tenant/current', (req, res) => {
-  const tenant = getDefaultTenant();
+  const tenant = resolveTenantScope(req);
   res.json({
     id: tenant.id,
     slug: tenant.slug,
@@ -4201,17 +4211,18 @@ api.get('/tenant/current', (req, res) => {
 });
 
 api.get('/tenant/builder-config', (req, res) => {
-  const tenant = getDefaultTenant();
+  const tenant = resolveTenantScope(req);
   if (!tenant.landing_config) {
     return res.status(404).json({ detail: 'Belum ada konfigurasi builder tersimpan' });
   }
   res.json(tenant.landing_config);
 });
 
-api.post('/tenant/builder-config', (req, res) => {
-  const tenant = getDefaultTenant();
+api.post('/tenant/builder-config', requireTenantAccess, (req, res) => {
+  const tenant = req.tenant || resolveTenantScope(req);
   tenant.landing_config = req.body;
   tenant.updated_at = nowISO();
+  persistCollection('tenants');
   res.json({ message: 'Konfigurasi landing page tenant berhasil disimpan!', config: tenant.landing_config });
 });
 
@@ -4234,12 +4245,14 @@ api.post('/tenant/domain/validate-subdomain', (req, res) => {
   res.json({ valid: true, subdomain: `${slug}.trexio.id` });
 });
 
-api.post('/tenant/domain/save-custom-domain', (req, res) => {
+api.post('/tenant/domain/save-custom-domain', requireTenantAccess, (req, res) => {
   const { customDomain } = req.body;
-  const tenant = getDefaultTenant();
+  const tenant = req.tenant || resolveTenantScope(req);
   tenant.customDomain = customDomain;
   tenant.dnsStatus = 'verified';
   tenant.sslStatus = 'active';
+  tenant.updated_at = nowISO();
+  persistCollection('tenants');
   const cnameHost = process.env.PLATFORM_CNAME_HOST || 'cname.trexio.id';
   const edgeIp = process.env.PLATFORM_EDGE_IP || '127.0.0.1';
   res.json({ ok: true, customDomain, cname: cnameHost, ip: edgeIp, ssl: 'active' });
@@ -4261,8 +4274,6 @@ api.get('/super/website-platform', requireSuperAdmin, (req, res) => {
 });
 
 // Homepage Builder API Configuration (Marketplace PWA)
-const DB_HOMEPAGE_CONFIG_FILE = path.join(DATA_DIR, 'homepage_config.json');
-
 const DEFAULT_HOMEPAGE_CONFIG = {
   branding: {
     logoUrl: "/trexio-logo.png",
@@ -4378,42 +4389,10 @@ const DEFAULT_HOMEPAGE_CONFIG = {
   }
 };
 
-function loadHomepageConfigFromDisk() {
-  try {
-    if (fs.existsSync(DB_HOMEPAGE_CONFIG_FILE)) {
-      const data = fs.readFileSync(DB_HOMEPAGE_CONFIG_FILE, 'utf8');
-      const parsed = JSON.parse(data);
-      if (parsed && typeof parsed === 'object') {
-        return {
-          ...DEFAULT_HOMEPAGE_CONFIG,
-          ...parsed,
-          branding: { ...DEFAULT_HOMEPAGE_CONFIG.branding, ...(parsed.branding || {}) },
-          seo: { ...DEFAULT_HOMEPAGE_CONFIG.seo, ...(parsed.seo || {}) },
-          hero: { ...DEFAULT_HOMEPAGE_CONFIG.hero, ...(parsed.hero || {}) },
-          stats: { ...DEFAULT_HOMEPAGE_CONFIG.stats, ...(parsed.stats || {}) },
-          pwaInstall: { ...DEFAULT_HOMEPAGE_CONFIG.pwaInstall, ...(parsed.pwaInstall || {}) },
-          becomePartner: { ...DEFAULT_HOMEPAGE_CONFIG.becomePartner, ...(parsed.becomePartner || {}) },
-          faq: { ...DEFAULT_HOMEPAGE_CONFIG.faq, ...(parsed.faq || {}) },
-          ctaBanner: { ...DEFAULT_HOMEPAGE_CONFIG.ctaBanner, ...(parsed.ctaBanner || {}) },
-          banners: Array.isArray(parsed.banners) && parsed.banners.length ? parsed.banners : DEFAULT_HOMEPAGE_CONFIG.banners,
-          sections: Array.isArray(parsed.sections) && parsed.sections.length ? parsed.sections : DEFAULT_HOMEPAGE_CONFIG.sections,
-        };
-      }
-    }
-  } catch (e) {
-    console.error('[Homepage Config] Error loading from disk:', e.message);
-  }
-  return DEFAULT_HOMEPAGE_CONFIG;
-}
-
-let homepageConfig = loadHomepageConfigFromDisk();
+let homepageConfig = DEFAULT_HOMEPAGE_CONFIG;
 
 function saveHomepageConfigToDisk() {
-  try {
-    fs.writeFileSync(DB_HOMEPAGE_CONFIG_FILE, JSON.stringify(homepageConfig, null, 2), 'utf8');
-  } catch (e) {
-    console.error('[Homepage Config] Error saving to disk:', e.message);
-  }
+  persistCollection('homepage_config');
 }
 
 api.get('/homepage-config', (req, res) => {
@@ -4447,13 +4426,18 @@ api.post('/super/homepage-config', requireSuperAdmin, (req, res) => {
 // Tenant Storefront Analytics API
 api.get('/tenant/analytics', (req, res) => {
   const period = req.query.period || '30d';
+  const tenant = resolveTenantScope(req);
   
-  // Real calculation from bookings in server memory
-  const totalBookingsCount = bookings.length;
-  const verifiedBookingsCount = bookings.filter(b => b.payment_status === 'verified').length;
-  const totalRevenue = bookings.filter(b => b.payment_status === 'verified').reduce((sum, b) => sum + (b.total_amount || 0), 0);
+  // Real calculation scoped to tenant
+  const tenantTrips = trips.filter(t => t.tenant_id === tenant.id || (!t.tenant_id && tenant.id === 'tenant_default'));
+  const tenantTripIds = new Set(tenantTrips.map(t => t.id));
+  const tenantBookings = bookings.filter(b => tenantTripIds.has(b.trip_id) || b.tenant_id === tenant.id || (!b.tenant_id && tenant.id === 'tenant_default'));
+
+  const totalBookingsCount = tenantBookings.length;
+  const verifiedBookingsCount = tenantBookings.filter(b => b.payment_status === 'verified' || b.payment_status === 'paid' || b.payment_status === 'settlement').length;
+  const totalRevenue = tenantBookings.filter(b => b.payment_status === 'verified' || b.payment_status === 'paid' || b.payment_status === 'settlement').reduce((sum, b) => sum + (b.total_amount || 0), 0);
   
-  const totalPageViews = trips.reduce((sum, t) => sum + (t.views || 0), 0);
+  const totalPageViews = tenantTrips.reduce((sum, t) => sum + (t.views || 0), 0);
   const uniqueVisitors = Math.round(totalPageViews * 0.6);
   const verifiedBookings = verifiedBookingsCount;
   const conversionRate = totalPageViews > 0 ? ((verifiedBookings / totalPageViews) * 100).toFixed(2) : "0.00";
@@ -4475,9 +4459,9 @@ api.get('/tenant/analytics', (req, res) => {
   }
 
   // Top Performing Trips Analytics
-  const topTrips = trips.slice(0, 5).map(t => {
-    const tripBookings = bookings.filter(b => b.trip_id === t.id);
-    const paidCount = tripBookings.filter(b => b.payment_status === 'verified').length;
+  const topTrips = tenantTrips.slice(0, 5).map(t => {
+    const tripBookings = tenantBookings.filter(b => b.trip_id === t.id);
+    const paidCount = tripBookings.filter(b => b.payment_status === 'verified' || b.payment_status === 'paid' || b.payment_status === 'settlement').length;
     const views = t.views || 0;
     return {
       id: t.id,
@@ -9084,6 +9068,126 @@ api.get('/vendor/plan', requireAuth, (req, res) => {
   });
 });
 
+// ========================================================
+// UNIFIED OPERATOR DISPATCH & ROLES API (GUIDE/PORTER/RENTAL/BASECAMP)
+// ========================================================
+api.get('/api/v1/operator/profile', requireAuth, (req, res) => {
+  const userRoles = getUserRoles(req.user);
+  const v = vendors.find(item => item.user_id === req.user.id || item.id === req.user.vendor_id);
+  const tenant = resolveTenantScope(req);
+
+  res.json({
+    ok: true,
+    user: {
+      id: req.user.id,
+      name: req.user.name,
+      email: req.user.email,
+      phone: req.user.phone,
+      roles: userRoles,
+      tenant_id: tenant.id,
+      tenant_name: tenant.name,
+      vendor_id: v ? v.id : null,
+      vendor_name: v ? v.brand_name : null,
+      certifications: {
+        apgi_number: req.user.apgi_number || v?.documents?.apgi_number || null,
+        bnsp_number: req.user.bnsp_number || v?.documents?.bnsp_number || null,
+        status: v?.bnsp_status || 'verified'
+      }
+    }
+  });
+});
+
+api.get('/api/v1/operator/assignments', requireAuth, (req, res) => {
+  const userRoles = getUserRoles(req.user);
+  const v = vendors.find(item => item.user_id === req.user.id || item.id === req.user.vendor_id);
+  const tenant = resolveTenantScope(req);
+
+  let assignedBookings = [];
+  if (userRoles.includes('super_admin') || userRoles.includes('admin')) {
+    assignedBookings = bookings;
+  } else if (v) {
+    const myTripIds = trips.filter(t => t.vendor_id === v.id).map(t => t.id);
+    assignedBookings = bookings.filter(b => myTripIds.includes(b.trip_id) || b.vendor_id === v.id || b.assigned_guide_id === req.user.id || b.assigned_porter_id === req.user.id);
+  } else {
+    assignedBookings = bookings.filter(b => b.assigned_guide_id === req.user.id || b.assigned_porter_id === req.user.id || b.user_id === req.user.id);
+  }
+
+  res.json({
+    ok: true,
+    count: assignedBookings.length,
+    assignments: assignedBookings
+  });
+});
+
+api.patch('/api/v1/operator/assignments/:id/status', requireAuth, (req, res) => {
+  const { status, notes } = req.body;
+  const targetBooking = bookings.find(b => b.id === req.params.id || b.code === req.params.id);
+  if (!targetBooking) {
+    return res.status(404).json({ detail: 'Penugasan atau booking tidak ditemukan' });
+  }
+
+  targetBooking.operational_status = status || targetBooking.operational_status || 'in_progress';
+  if (notes) targetBooking.operational_notes = notes;
+  targetBooking.updated_at = nowISO();
+
+  recordAuditLog(req.user.email, 'Updated Operator Assignment Status', `Booking #${targetBooking.code || targetBooking.id}`, targetBooking.status, status, req);
+  saveBookingsToDisk();
+
+  res.json({
+    ok: true,
+    message: 'Status penugasan operasional berhasil diperbarui.',
+    booking: targetBooking
+  });
+});
+
+api.get('/api/v1/operator/manifest', requireBasecampOperator, (req, res) => {
+  const { mountain, date } = req.query;
+  const tenant = resolveTenantScope(req);
+
+  let manifest = bookings.filter(b => b.payment_status === 'verified' || b.payment_status === 'paid' || b.payment_status === 'settlement');
+  if (mountain) {
+    manifest = manifest.filter(b => (b.trip_title || '').toLowerCase().includes(mountain.toLowerCase()) || (b.destination || '').toLowerCase().includes(mountain.toLowerCase()));
+  }
+  if (date) {
+    manifest = manifest.filter(b => (b.trip_date || '').startsWith(date));
+  }
+
+  res.json({
+    ok: true,
+    total_hikers: manifest.reduce((sum, b) => sum + (b.participants_count || b.quantity || 1), 0),
+    manifest: manifest.map(b => ({
+      booking_code: b.code,
+      lead_hiker: b.user_name || b.contact_name || 'Pendaki',
+      participants_count: b.participants_count || b.quantity || 1,
+      mountain: b.trip_title || b.destination,
+      trip_date: b.trip_date,
+      simaksi_status: b.simaksi_status || 'VERIFIED_ACTIVE',
+      emergency_contact: b.emergency_phone || 'Tersedia di profil'
+    }))
+  });
+});
+
+api.post('/api/v1/operator/checkin/verify', requireVendor, (req, res) => {
+  const { code } = req.body;
+  if (!code) return res.status(400).json({ detail: 'Kode QR Booking wajib disertakan' });
+
+  const targetBooking = bookings.find(b => b.code === code || b.id === code);
+  if (!targetBooking) {
+    return res.status(404).json({ detail: 'Tiket/Booking pendakian tidak valid atau tidak ditemukan' });
+  }
+
+  targetBooking.checkin_status = 'CHECKED_IN';
+  targetBooking.checkin_time = nowISO();
+  targetBooking.checkin_by = req.user.email;
+  saveBookingsToDisk();
+
+  res.json({
+    ok: true,
+    message: `Check-in berhasil diverifikasi untuk ${targetBooking.user_name || 'Pendaki'} (${targetBooking.code})`,
+    booking: targetBooking
+  });
+});
+
 // --- Storefront ---
 const handleGetPublicStorefront = (req, res) => {
   const identifier = (req.params.slug || req.params.identifier || req.params.handle || '').toLowerCase().replace(/^@/, '');
@@ -10996,31 +11100,10 @@ function sanitizeAuditValue(val) {
   return maskSensitiveString(String(val));
 }
 
-function loadAuditLogsFromDisk() {
-  try {
-    if (fs.existsSync(DB_AUDIT_LOGS_FILE)) {
-      const data = fs.readFileSync(DB_AUDIT_LOGS_FILE, 'utf8');
-      const parsed = JSON.parse(data);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch (e) {
-    console.error('[Centralized Audit Logger] Failed loading audit logs from disk:', e.message);
-  }
-  return [
-    { id: 'log_01', user: 'superadmin@trexio.id', actor_email: 'superadmin@trexio.id', actor_ip: '127.0.0.1', actor_user_agent: 'Web Chrome / MacOS', actor_role: 'super_admin', action: 'Approved Payout', resource: 'Payout #payout_01', old_val: 'pending', new_val: 'approved', status: 'SUCCESS', timestamp: nowISO() },
-    { id: 'log_02', user: 'superadmin@trexio.id', actor_email: 'superadmin@trexio.id', actor_ip: '127.0.0.1', actor_user_agent: 'Web Chrome / MacOS', actor_role: 'super_admin', action: 'Updated Midtrans Config', resource: 'Midtrans Gateway', old_val: 'sandbox', new_val: 'sandbox', status: 'SUCCESS', timestamp: nowISO() },
-    { id: 'log_03', user: 'superadmin@trexio.id', actor_email: 'superadmin@trexio.id', actor_ip: '127.0.0.1', actor_user_agent: 'Web Chrome / MacOS', actor_role: 'super_admin', action: 'Verified Vendor', resource: 'Vendor #vendor_official', old_val: 'unverified', new_val: 'verified', status: 'SUCCESS', timestamp: nowISO() },
-  ];
-}
-
-let auditLogs = loadAuditLogsFromDisk();
+let auditLogs = [];
 
 function saveAuditLogsToDisk() {
-  try {
-    fs.writeFileSync(DB_AUDIT_LOGS_FILE, JSON.stringify(auditLogs, null, 2), 'utf8');
-  } catch (e) {
-    console.error('[Centralized Audit Logger] Failed saving audit logs to disk:', e.message);
-  }
+  persistCollection('audit_logs');
 }
 
 function recordAuditLog(userEmail, action, resource, oldVal, newVal, req = null, extraMeta = {}) {
@@ -11245,7 +11328,6 @@ api.get('/super/security/audit-logs', requireSuperAdmin, (req, res) => {
 // TREXIO SYSTEM SECURITY ARCHITECTURE & CONTROL CENTER
 // ==========================================
 
-const DB_INCIDENTS_FILE = path.join(DATA_DIR, 'db_incidents.json');
 let securityIncidents = [
   {
     id: 'inc_01',
@@ -11288,22 +11370,8 @@ let securityIncidents = [
   }
 ];
 
-if (fs.existsSync(DB_INCIDENTS_FILE)) {
-  try {
-    const raw = fs.readFileSync(DB_INCIDENTS_FILE, 'utf-8');
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0) securityIncidents = parsed;
-  } catch (err) {
-    console.error("Error loading db_incidents.json:", err);
-  }
-}
-
 function saveIncidentsToDisk() {
-  try {
-    fs.writeFileSync(DB_INCIDENTS_FILE, JSON.stringify(securityIncidents, null, 2));
-  } catch (err) {
-    console.error("Error saving db_incidents.json:", err);
-  }
+  persistCollection('incidents');
 }
 
 function recordSecurityIncident(severity, title, description, req = null, resource = 'system') {
@@ -11328,25 +11396,37 @@ function recordSecurityIncident(severity, title, description, req = null, resour
 
 const defaultRolePermissions = {
   super_admin: ['*'],
-  platform_admin: ['tenant.view', 'tenant.manage', 'partner.view', 'partner.verify', 'product.view', 'product.manage', 'booking.view', 'booking.manage', 'cms.edit', 'cms.publish', 'security.view'],
+  admin: ['tenant.view', 'tenant.manage', 'partner.view', 'partner.verify', 'product.view', 'product.manage', 'booking.view', 'booking.manage', 'cms.edit', 'cms.publish', 'security.view', 'payment.view', 'audit.view', 'roles.view', 'master.manage'],
+  platform_admin: ['tenant.view', 'tenant.manage', 'partner.view', 'partner.verify', 'product.view', 'product.manage', 'booking.view', 'booking.manage', 'cms.edit', 'cms.publish', 'security.view', 'payment.view', 'audit.view', 'roles.view'],
   finance_admin: ['payment.view', 'payment.manage', 'refund.view', 'refund.approve', 'withdrawal.view', 'withdrawal.approve', 'ledger.view', 'tenant.view', 'partner.view'],
   operations_admin: ['product.view', 'product.manage', 'booking.view', 'booking.manage', 'partner.view', 'partner.verify'],
   customer_support: ['booking.view', 'booking.manage', 'partner.view', 'product.view', 'ticket.manage'],
   moderator: ['product.view', 'product.manage', 'review.manage', 'content.moderate'],
-  tenant_owner: ['tenant.view', 'tenant.manage', 'product.view', 'product.create', 'product.update', 'booking.view', 'booking.manage', 'payment.view'],
+  tenant_owner: ['tenant.view', 'tenant.manage', 'tenant.settings', 'product.view', 'product.create', 'product.update', 'product.delete', 'booking.view', 'booking.manage', 'payment.view', 'staff.manage', 'analytics.view', 'storefront.edit'],
+  tenant_admin: ['tenant.view', 'tenant.manage', 'product.view', 'product.create', 'product.update', 'booking.view', 'booking.manage', 'payment.view', 'analytics.view', 'storefront.edit'],
+  vendor: ['partner.view', 'partner.manage', 'product.view', 'product.create', 'product.update', 'product.delete', 'booking.view', 'booking.manage', 'payment.view', 'guide.manage', 'schedule.manage', 'advertising.manage', 'analytics.view'],
+  partner: ['partner.view', 'partner.manage', 'product.view', 'product.create', 'product.update', 'product.delete', 'booking.view', 'booking.manage', 'payment.view', 'guide.manage', 'schedule.manage', 'advertising.manage', 'analytics.view'],
   partner_owner: ['partner.view', 'partner.manage', 'product.view', 'product.create', 'product.update', 'booking.view'],
-  user: ['profile.view', 'profile.edit', 'booking.own_view', 'booking.own_create', 'review.own_create']
+  guide: ['guide.view', 'guide.schedule', 'booking.view', 'trip.view', 'trip.status_update', 'chat.access', 'checkin.verify'],
+  porter: ['porter.view', 'porter.schedule', 'booking.view', 'trip.view', 'trip.status_update', 'chat.access', 'equipment.carry'],
+  rental_operator: ['rental.view', 'rental.manage', 'inventory.manage', 'booking.view', 'booking.manage', 'equipment.status_update', 'handover.process'],
+  basecamp_operator: ['basecamp.view', 'basecamp.manage', 'checkin.manage', 'booking.view', 'slot.manage', 'safety.report', 'hiker.manifest'],
+  user: ['profile.view', 'profile.edit', 'booking.own_view', 'booking.own_create', 'review.own_create', 'chat.access']
 };
 
 let rolePermissions = { ...defaultRolePermissions };
 
 function hasPermission(userObj, requiredPermission) {
   if (!userObj) return false;
-  const userRole = userObj.role || 'user';
-  if (userRole === 'super_admin') return true;
-  const perms = rolePermissions[userRole] || [];
-  if (perms.includes('*')) return true;
-  return perms.includes(requiredPermission);
+  const userRoles = getUserRoles(userObj);
+  if (userRoles.includes('super_admin')) return true;
+  for (const role of userRoles) {
+    const perms = rolePermissions[role] || [];
+    if (perms.includes('*') || perms.includes(requiredPermission)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function requirePermission(permissionName) {
@@ -11622,88 +11702,39 @@ let midtransConfig = {
   ],
 };
 
-const DB_BOOKINGS_FILE = path.join(DATA_DIR, 'db_bookings.json');
-const DB_PAYMENTS_FILE = path.join(DATA_DIR, 'db_payments.json');
-const DB_WEBHOOK_LOGS_FILE = path.join(DATA_DIR, 'db_webhook_logs.json');
-
 const payment_transactions = [];
 const webhook_logs = [];
 
 function saveBookingsToDisk() {
-  try {
-    fs.writeFileSync(DB_BOOKINGS_FILE, JSON.stringify(bookings, null, 2), 'utf8');
-    if (Array.isArray(bookings)) {
-      bookings.forEach(b => syncBookingToCloudSql(b));
-    }
-    persistCollection('bookings');
-  } catch (err) {
-    console.error('[DB] Gagal menyimpan bookings:', err.message);
+  if (Array.isArray(bookings)) {
+    bookings.forEach(b => syncBookingToCloudSql(b));
   }
+  persistCollection('bookings');
 }
 
 function loadBookingsFromDisk() {
-  try {
-    if (fs.existsSync(DB_BOOKINGS_FILE)) {
-      const raw = fs.readFileSync(DB_BOOKINGS_FILE, 'utf8');
-      const loaded = JSON.parse(raw);
-      if (Array.isArray(loaded)) {
-        bookings.length = 0;
-        bookings.push(...loaded);
-      }
-    }
-  } catch (err) {
-    console.error('[DB] Gagal memuat bookings:', err.message);
-  }
+  // [Supabase Postgres is Source of Truth]
+  // Bookings are hydrated on boot from Supabase PostgreSQL in hydrateCollections()
 }
 
 function savePaymentsDataToDisk() {
-  try {
-    fs.writeFileSync(DB_PAYMENTS_FILE, JSON.stringify(payment_transactions, null, 2), 'utf8');
-    if (Array.isArray(payment_transactions)) {
-      payment_transactions.forEach(p => syncPaymentToCloudSql(p));
-    }
-    persistCollection('payments');
-  } catch (err) {
-    console.error('[DB] Gagal menyimpan payments:', err.message);
+  if (Array.isArray(payment_transactions)) {
+    payment_transactions.forEach(p => syncPaymentToCloudSql(p));
   }
+  persistCollection('payments');
 }
 
 function loadPaymentsFromDisk() {
-  try {
-    if (fs.existsSync(DB_PAYMENTS_FILE)) {
-      const raw = fs.readFileSync(DB_PAYMENTS_FILE, 'utf8');
-      const loaded = JSON.parse(raw);
-      if (Array.isArray(loaded)) {
-        payment_transactions.length = 0;
-        payment_transactions.push(...loaded);
-      }
-    }
-  } catch (err) {
-    console.error('[DB] Gagal memuat payments:', err.message);
-  }
+  // [Supabase Postgres is Source of Truth]
+  // Payments are hydrated on boot from Supabase PostgreSQL in hydrateCollections()
 }
 
 function saveWebhookLogsToDisk() {
-  try {
-    fs.writeFileSync(DB_WEBHOOK_LOGS_FILE, JSON.stringify(webhook_logs, null, 2), 'utf8');
-  } catch (err) {
-    console.error('[DB] Gagal menyimpan webhook logs:', err.message);
-  }
+  persistCollection('audit_logs');
 }
 
 function loadWebhookLogsFromDisk() {
-  try {
-    if (fs.existsSync(DB_WEBHOOK_LOGS_FILE)) {
-      const raw = fs.readFileSync(DB_WEBHOOK_LOGS_FILE, 'utf8');
-      const loaded = JSON.parse(raw);
-      if (Array.isArray(loaded)) {
-        webhook_logs.length = 0;
-        webhook_logs.push(...loaded);
-      }
-    }
-  } catch (err) {
-    console.error('[DB] Gagal memuat webhook logs:', err.message);
-  }
+  // [Supabase Postgres is Source of Truth]
 }
 
 // Load persisted data
@@ -12612,9 +12643,6 @@ api.post('/push/test', requireAuth, (req, res) => {
 // ==================================================
 // CENTRALIZED MASTER DATA MANAGEMENT API & ENGINE
 // ==================================================
-const DB_MASTER_CATEGORIES_FILE = path.join(DATA_DIR, 'db_master_categories.json');
-const DB_MASTER_LOCATIONS_FILE = path.join(DATA_DIR, 'db_master_locations.json');
-const DB_MASTER_ROLES_FILE = path.join(DATA_DIR, 'db_master_roles.json');
 
 // 1. Default Master Categories
 let masterCategories = [
@@ -12631,22 +12659,8 @@ let masterCategories = [
   { id: 'cat_community', slug: 'community', name: 'Komunitas & Event', icon: 'Users', type: 'community', description: 'Jambore, event bersih gunung, & gathering hiker', active: true, order: 11 }
 ];
 
-if (fs.existsSync(DB_MASTER_CATEGORIES_FILE)) {
-  try {
-    const raw = fs.readFileSync(DB_MASTER_CATEGORIES_FILE, 'utf8');
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0) masterCategories = parsed;
-  } catch (e) {
-    console.error('[Master Data] Error loading categories:', e.message);
-  }
-}
-
 function saveMasterCategoriesToDisk() {
-  try {
-    fs.writeFileSync(DB_MASTER_CATEGORIES_FILE, JSON.stringify(masterCategories, null, 2), 'utf8');
-  } catch (e) {
-    console.error('[Master Data] Error saving categories:', e.message);
-  }
+  persistCollection('master_categories');
 }
 
 // 2. Default Master Locations Hierarchy
@@ -12696,31 +12710,23 @@ let masterLocations = {
   ]
 };
 
-if (fs.existsSync(DB_MASTER_LOCATIONS_FILE)) {
-  try {
-    const raw = fs.readFileSync(DB_MASTER_LOCATIONS_FILE, 'utf8');
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === 'object') masterLocations = parsed;
-  } catch (e) {
-    console.error('[Master Data] Error loading locations:', e.message);
-  }
-}
-
 function saveMasterLocationsToDisk() {
-  try {
-    fs.writeFileSync(DB_MASTER_LOCATIONS_FILE, JSON.stringify(masterLocations, null, 2), 'utf8');
-  } catch (e) {
-    console.error('[Master Data] Error saving locations:', e.message);
-  }
+  persistCollection('master_locations');
 }
 
 // 3. Default Master Roles & RBAC Matrix
 let masterRolesPermissions = {
   roles: [
     { key: 'SUPER_ADMIN', name: 'Super Admin', description: 'Hak akses penuh untuk mengelola seluruh ekosistem TREXIO', system: true },
-    { key: 'TENANT', name: 'Tenant Administrator', description: 'Pengelola storefront & domain tenant terisolasi', system: true },
-    { key: 'VENDOR_PARTNER', name: 'Vendor / Partner', description: 'Penyedia jasa Open Trip, Guide, Porter, Basecamp & Rental', system: true },
-    { key: 'USER_TRAVELER', name: 'User / Pendaki', description: 'Pengguna traveler pemesan trip & peralatan', system: true }
+    { key: 'ADMIN', name: 'Platform Admin', description: 'Administrator operasional platform dan verifikasi mitra', system: true },
+    { key: 'TENANT_OWNER', name: 'Tenant Owner', description: 'Pemilik lisensi tenant & domain storefront outdoor mandiri', system: true },
+    { key: 'TENANT_ADMIN', name: 'Tenant Admin', description: 'Administrator manajemen katalog & pesanan storefront tenant', system: true },
+    { key: 'VENDOR_PARTNER', name: 'Vendor / Partner Operator', description: 'Penyedia jasa Open Trip, Tour, & Perlengkapan', system: true },
+    { key: 'GUIDE', name: 'Certified Mountain Guide', description: 'Pemandu gunung APGI/BNSP pengelola jadwal & briefing pendaki', system: true },
+    { key: 'PORTER', name: 'Porter & Logistics Crew', description: 'Penyedia jasa porter, angkut logistik & tim masak basecamp', system: true },
+    { key: 'RENTAL_OPERATOR', name: 'Rental Equipment Operator', description: 'Operator persewaan alat outdoor, inventaris & serah-terima alat', system: true },
+    { key: 'BASECAMP_OPERATOR', name: 'Basecamp & SIMAKSI Operator', description: 'Pengelola pos perizinan, manifest pendaki, & check-in kuota', system: true },
+    { key: 'USER_TRAVELER', name: 'User / Pendaki', description: 'Pengguna traveler pemesan trip, sewa alat & komunitas', system: true }
   ],
   modules: [
     { key: 'users', label: 'Master Users & Admin' },
@@ -12751,16 +12757,55 @@ let masterRolesPermissions = {
       platform_config: { create: true, read: true, update: true, delete: true, approve: true, export: true },
       audit_logs: { create: false, read: true, update: false, delete: false, approve: false, export: true }
     },
-    TENANT: {
-      users: { create: false, read: true, update: false, delete: false, approve: false, export: false },
+    ADMIN: {
+      users: { create: true, read: true, update: true, delete: false, approve: true, export: true },
+      roles_rbac: { create: false, read: true, update: false, delete: false, approve: false, export: true },
+      vendors: { create: true, read: true, update: true, delete: false, approve: true, export: true },
+      tenants: { create: true, read: true, update: true, delete: false, approve: true, export: true },
+      marketplace_categories: { create: true, read: true, update: true, delete: false, approve: true, export: true },
+      destinations_locations: { create: true, read: true, update: true, delete: false, approve: true, export: true },
+      products_services: { create: true, read: true, update: true, delete: true, approve: true, export: true },
+      subscriptions: { create: false, read: true, update: false, delete: false, approve: false, export: true },
+      advertising: { create: true, read: true, update: true, delete: true, approve: true, export: true },
+      payments: { create: false, read: true, update: true, delete: false, approve: true, export: true },
+      platform_config: { create: false, read: true, update: true, delete: false, approve: false, export: true },
+      audit_logs: { create: false, read: true, update: false, delete: false, approve: false, export: true }
+    },
+    TENANT_OWNER: {
+      users: { create: true, read: true, update: true, delete: false, approve: false, export: false },
       vendors: { create: true, read: true, update: true, delete: false, approve: true, export: true },
       tenants: { create: false, read: true, update: true, delete: false, approve: false, export: false },
       products_services: { create: true, read: true, update: true, delete: true, approve: true, export: true },
-      subscriptions: { create: false, read: true, update: true, delete: false, approve: false, export: false }
+      subscriptions: { create: false, read: true, update: true, delete: false, approve: false, export: false },
+      payments: { create: false, read: true, update: false, delete: false, approve: false, export: true },
+      audit_logs: { create: false, read: true, update: false, delete: false, approve: false, export: false }
+    },
+    TENANT_ADMIN: {
+      users: { create: false, read: true, update: false, delete: false, approve: false, export: false },
+      vendors: { create: false, read: true, update: false, delete: false, approve: false, export: false },
+      tenants: { create: false, read: true, update: false, delete: false, approve: false, export: false },
+      products_services: { create: true, read: true, update: true, delete: true, approve: false, export: true },
+      subscriptions: { create: false, read: true, update: false, delete: false, approve: false, export: false },
+      payments: { create: false, read: true, update: false, delete: false, approve: false, export: false }
     },
     VENDOR_PARTNER: {
       products_services: { create: true, read: true, update: true, delete: true, approve: false, export: true },
-      advertising: { create: true, read: true, update: true, delete: false, approve: false, export: false }
+      advertising: { create: true, read: true, update: true, delete: false, approve: false, export: false },
+      payments: { create: false, read: true, update: false, delete: false, approve: false, export: true }
+    },
+    GUIDE: {
+      products_services: { create: false, read: true, update: true, delete: false, approve: false, export: false },
+      destinations_locations: { create: false, read: true, update: false, delete: false, approve: false, export: false }
+    },
+    PORTER: {
+      products_services: { create: false, read: true, update: true, delete: false, approve: false, export: false }
+    },
+    RENTAL_OPERATOR: {
+      products_services: { create: true, read: true, update: true, delete: true, approve: false, export: true }
+    },
+    BASECAMP_OPERATOR: {
+      destinations_locations: { create: false, read: true, update: true, delete: false, approve: false, export: false },
+      products_services: { create: false, read: true, update: true, delete: false, approve: false, export: false }
     },
     USER_TRAVELER: {
       products_services: { create: false, read: true, update: false, delete: false, approve: false, export: false }
@@ -12768,22 +12813,8 @@ let masterRolesPermissions = {
   }
 };
 
-if (fs.existsSync(DB_MASTER_ROLES_FILE)) {
-  try {
-    const raw = fs.readFileSync(DB_MASTER_ROLES_FILE, 'utf8');
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === 'object') masterRolesPermissions = parsed;
-  } catch (e) {
-    console.error('[Master Data] Error loading roles:', e.message);
-  }
-}
-
 function saveMasterRolesToDisk() {
-  try {
-    fs.writeFileSync(DB_MASTER_ROLES_FILE, JSON.stringify(masterRolesPermissions, null, 2), 'utf8');
-  } catch (e) {
-    console.error('[Master Data] Error saving roles:', e.message);
-  }
+  persistCollection('master_roles');
 }
 
 // Public API for Master Categories
@@ -13588,7 +13619,7 @@ async function hydrateAndSeedUsers() {
     }
     // Persist admin (and hydrated changes) durably to Postgres.
     if (typeof syncUserToCloudSql === 'function') await syncUserToCloudSql(admin);
-    saveUsersToDisk();
+    syncAllUsersToPostgres();
   } catch (e) {
     console.error('[Seed] Failed to seed admin:', e.message);
   }
@@ -13617,6 +13648,17 @@ function __collectionArray(name) {
     case 'announcements': return announcements;
     case 'conversations': return conversations;
     case 'messages': return messages;
+    case 'subscription_plans': return subscription_plans;
+    case 'tenant_subscriptions': return tenant_subscriptions;
+    case 'advertising_packages': return advertising_packages;
+    case 'advertising_campaigns': return advertising_campaigns;
+    case 'billing_transactions': return billing_transactions;
+    case 'audit_logs': return audit_logs;
+    case 'incidents': return securityIncidents;
+    case 'master_categories': return masterCategories;
+    case 'master_locations': return [masterLocations];
+    case 'master_roles': return [masterRolesPermissions];
+    case 'homepage_config': return [homepageConfig];
     default: return null;
   }
 }
@@ -13636,6 +13678,17 @@ const ALL_SYNC_COLLECTIONS = [
   'announcements',
   'conversations',
   'messages',
+  'subscription_plans',
+  'tenant_subscriptions',
+  'advertising_packages',
+  'advertising_campaigns',
+  'billing_transactions',
+  'audit_logs',
+  'incidents',
+  'master_categories',
+  'master_locations',
+  'master_roles',
+  'homepage_config',
 ];
 
 let __hydrationComplete = false;
