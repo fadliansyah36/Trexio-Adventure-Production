@@ -18,26 +18,28 @@ const app = express();
 app.set('trust proxy', 1);
 const PORT = 3000;
 
-// [C-4] JWT secret from environment with safe fallback in dev
-let JWT_SECRET = process.env.JWT_SECRET || 'd8ab311e-c809-45d4-8139-ecddbdc5fa0c';
+// [SECURITY] Secrets must never be embedded in source code.
+// Production always requires an explicit strong JWT secret.
+let JWT_SECRET = process.env.JWT_SECRET || '';
 if (!JWT_SECRET || JWT_SECRET.length < 32) {
-  if (process.env.NODE_ENV === 'production' && process.env.STRICT_SECRETS === 'true') {
+  if (process.env.NODE_ENV === 'production') {
     console.error('[FATAL] JWT_SECRET must be set to a strong value (>= 32 chars). Refusing to start.');
     process.exit(1);
   }
-  JWT_SECRET = process.env.JWT_SECRET || 'd8ab311e-c809-45d4-8139-ecddbdc5fa0c';
+  JWT_SECRET = require('crypto').randomBytes(32).toString('base64url');
+  console.warn('[SECURITY] JWT_SECRET not configured; generated an ephemeral development secret.');
 }
 
-// [C-5] Admin seed credentials come from environment (never hardcoded weak defaults).
+// [SECURITY] Initial admin credentials are environment-only.
 const SEED_ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL || process.env.ADMIN_INITIAL_EMAIL || 'admin@trexio.id';
-let SEED_ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD || process.env.ADMIN_INITIAL_PASSWORD || 'Trexio#Adm1n_a3ea0991';
+let SEED_ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD || process.env.ADMIN_INITIAL_PASSWORD || '';
 if (!SEED_ADMIN_PASSWORD) {
   if (process.env.NODE_ENV === 'production') {
     console.error('[FATAL] SEED_ADMIN_PASSWORD must be set in production. Refusing to start.');
     process.exit(1);
   }
-  SEED_ADMIN_PASSWORD = require('crypto').randomBytes(12).toString('base64url');
-  console.warn(`[SEED] SEED_ADMIN_PASSWORD not set; generated temporary dev password: ${SEED_ADMIN_PASSWORD}`);
+  SEED_ADMIN_PASSWORD = require('crypto').randomBytes(24).toString('base64url');
+  console.warn('[SECURITY] SEED_ADMIN_PASSWORD not configured; generated an ephemeral development password.');
 }
 
 // Storage directories
