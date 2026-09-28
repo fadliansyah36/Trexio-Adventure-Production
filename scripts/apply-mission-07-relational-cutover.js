@@ -8,6 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const { getPool } = require('../src/db/supabasePostgres');
 
+const BASELINE_MIGRATION = '20260829000000_V3_trexio_migration.sql';
 const MIGRATION = '20260929000000_MISSION_07_relational_vendor_trip_cutover.sql';
 
 async function main() {
@@ -31,9 +32,17 @@ async function main() {
       throw new Error(`Required tables are missing: ${missing.join(', ')}`);
     }
 
-    const file = path.join(__dirname, '..', 'supabase', 'migrations', MIGRATION);
-    const sql = fs.readFileSync(file, 'utf8');
+    const baselineFile = path.join(__dirname, '..', 'supabase', 'migrations', BASELINE_MIGRATION);
+    const migrationFile = path.join(__dirname, '..', 'supabase', 'migrations', MIGRATION);
 
+    const relationalTables = await client.query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('vendors', 'trips')");
+    const relationalSet = new Set(relationalTables.rows.map((row) => row.table_name));
+    if (!relationalSet.has('vendors') || !relationalSet.has('trips')) {
+      console.log(`[Mission 07] Required relational baseline missing; applying ${BASELINE_MIGRATION} first`);
+      await client.query(fs.readFileSync(baselineFile, 'utf8'));
+    }
+
+    const sql = fs.readFileSync(migrationFile, 'utf8');
     console.log(`[Mission 07] Applying ${MIGRATION}`);
     await client.query(sql);
 
