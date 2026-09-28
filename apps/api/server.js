@@ -1523,7 +1523,7 @@ api.use(globalApiLimiter);
 api.use(validateInputParams);
 
 // Mount Trexio AI Engine Foundation Routes
-const { createAIRoutes } = require('../../src/ai');
+const { createAIRoutes } = require('./modules/ai');
 const aiRoutes = createAIRoutes(
   {
     get trips() { return trips; },
@@ -1547,7 +1547,7 @@ const aiRoutes = createAIRoutes(
 api.use('/ai', aiRoutes);
 
 // Mount Trexio Backpacker Journey Layer API Routes
-const { createBackpackerRouter } = require('../../src/backpacker/routes');
+const { createBackpackerRouter } = require('./modules/backpacker/routes');
 const backpackerRoutes = createBackpackerRouter({
   authenticateToken: requireAuth,
   get users() { return typeof users !== 'undefined' ? users : []; },
@@ -3982,7 +3982,7 @@ api.post('/chat/conversations/:id/messages', requireAuth, async (req, res) => {
   // Trigger CS Auto-Bot if CS is offline or Bot Mode is enabled (only for CS / Official conversations)
   if ((conv.vendor_id === 'vendor_official' || conv.vendor_id === 'super_admin') && (csConfig.cs_status === 'OFFLINE' || csConfig.bot_enabled)) {
     try {
-      const aiAssistantService = require('../../src/ai/services/ai-assistant.service');
+      const aiAssistantService = require('./modules/ai/services/ai-assistant.service');
       const aiRes = await aiAssistantService.processUserMessage({
         userMessage: text || 'Tanya bantuan CS',
         sessionId: conv.id,
@@ -5652,7 +5652,7 @@ function buildPublicVendorDTO(v) {
   };
 }
 
-const aiSmartSearchService = require('../../src/ai/services/ai-smart-search.service');
+const aiSmartSearchService = require('./modules/ai/services/ai-smart-search.service');
 
 api.get('/trips', async (req, res) => {
   try {
@@ -5841,7 +5841,7 @@ api.post('/super/ai/search/config', requireSuperAdmin, (req, res) => {
 // =========================================================================
 // PHASE 6 — AI SEO & CONTENT INTELLIGENCE ENDPOINTS
 // =========================================================================
-const aiSeoService = require('../../src/ai/services/ai-seo.service');
+const aiSeoService = require('./modules/ai/services/ai-seo.service');
 
 // Public Explore & Content Hub Endpoints
 api.get('/explore/articles', (req, res) => {
