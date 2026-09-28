@@ -20,6 +20,8 @@ const required = [
   'apps/api/modules/repositories/tripRepository.js',
   'apps/api/modules/repositories/bookingRepository.js',
   'apps/api/modules/repositories/paymentRepository.js',
+  'apps/api/modules/routes/authRoutes.js',
+  'apps/api/modules/routes/userRoutes.js',
 ];
 
 const retired = [
@@ -50,9 +52,26 @@ const forbiddenServerImports = [
   '../../src/repositories/vendorRepository',
   '../../src/repositories/bookingRepository',
   '../../src/repositories/paymentRepository',
+  "api.post('/auth/register'",
+  "api.post('/auth/login'",
+  "api.get('/auth/me'",
+  "api.get(['/profile'",
+  "api.patch('/users/me/preferences'",
 ];
 for (const dep of forbiddenServerImports) {
   if (apiServer.includes(dep)) failures.push(`apps/api/server.js still imports retired boundary: ${dep}`);
+}
+
+const routeModules = [
+  'apps/api/modules/routes/authRoutes.js',
+  'apps/api/modules/routes/userRoutes.js',
+];
+
+for (const rel of routeModules) {
+  const content = fs.readFileSync(path.join(root, rel), 'utf8');
+  if (!content.includes('module.exports = function register')) {
+    failures.push(`${rel} does not expose an explicit route registration function`);
+  }
 }
 
 const modules = [
@@ -79,4 +98,4 @@ if (failures.length) {
 }
 
 console.log('Mission 09C Phase 3 API module graph verification PASSED');
-console.log(`Verified ${required.length} extracted API modules and ${retired.length} retired legacy locations.`);
+console.log(`Verified ${required.length} extracted API modules, ${routeModules.length} route modules, and ${retired.length} retired legacy locations.`);
