@@ -18,6 +18,22 @@ function getPool() {
       return null;
     }
 
+    if (process.env.NODE_ENV === 'production') {
+      try {
+        const hostname = new URL(rawDbUrl).hostname.toLowerCase();
+        const isSupabaseHost =
+          hostname.endsWith('.supabase.co') ||
+          hostname.endsWith('.supabase.com');
+        if (!isSupabaseHost) {
+          console.error('[Supabase PostgreSQL] FATAL: production DATABASE_URL must point to Supabase PostgreSQL.');
+          return null;
+        }
+      } catch (err) {
+        console.error('[Supabase PostgreSQL] FATAL: DATABASE_URL is not a valid PostgreSQL URL.');
+        return null;
+      }
+    }
+
     const useSSL = true;
     const sslOption = { rejectUnauthorized: false };
 
