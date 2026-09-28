@@ -372,7 +372,10 @@ CREATE TABLE IF NOT EXISTS public.trips (
   status varchar(50) DEFAULT 'published'::character varying,
   cover_image text,
   description text,
+  external_id text UNIQUE,
+  data jsonb DEFAULT '{}'::jsonb NOT NULL,
   created_at timestamp DEFAULT now(),
+  updated_at timestamp DEFAULT now(),
   CONSTRAINT trips_pkey PRIMARY KEY (id)
 );
 
@@ -400,7 +403,9 @@ CREATE TABLE IF NOT EXISTS public.vendors (
   rating numeric DEFAULT 5.0,
   total_trips integer DEFAULT 0,
   documents jsonb DEFAULT '{}'::jsonb,
+  data jsonb DEFAULT '{}'::jsonb NOT NULL,
   created_at timestamp DEFAULT now(),
+  updated_at timestamp DEFAULT now(),
   CONSTRAINT vendors_pkey PRIMARY KEY (id)
 );
 
