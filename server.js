@@ -173,9 +173,6 @@ const {
   checkDbConnection,
   saveUserToSupabasePostgres,
   loadUsersFromSupabasePostgres,
-  syncConversationToCloudSql,
-  syncMessageToCloudSql,
-  syncNotificationToCloudSql,
   APP_DOC_TABLES
 } = require('./src/db/supabasePostgres');
 const appDocumentRepository = require('./src/repositories/appDocumentRepository');
