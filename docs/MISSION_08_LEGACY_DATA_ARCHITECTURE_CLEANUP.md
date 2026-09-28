@@ -112,3 +112,39 @@ Production reconciliation state after Mission 08B:
 ### Decision gate
 
 Mission 08C establishes the runtime dependency boundary. Retirement of the physical legacy tables remains a separate database-lifecycle operation and should only occur after the retained audit/rollback requirements are explicitly closed.
+
+
+## Mission 08D — Legacy Booking/Payment Table Retirement Gate
+
+The retirement gate was executed against production Supabase on 2026-09-29 using read-only dependency/parity checks plus a non-destructive gate record.
+
+### Gate evidence
+
+- `public.bookings`: 46 rows
+- `public.app_bookings`: 32 rows
+- All 32 legacy booking rows match the relational domain by booking code/external ID; unmatched legacy bookings: 0
+- `public.payment_transactions`: 37 rows
+- `public.app_payments`: 37 rows
+- All 37 legacy payment rows match the relational domain by transaction identity; unmatched legacy payments: 0
+- No public views or public routines were found whose definitions reference `app_bookings` or `app_payments`
+- PostgreSQL dependency inspection found only internal TOAST dependencies for the legacy tables; no external application object dependency was found
+
+### Gate decision
+
+**RETIREMENT STATUS: BLOCKED**
+
+The gate intentionally blocks physical table retirement because `app_bookings` and `app_payments` still contain retained legacy rows. The rows are fully matched to the relational stores, but they remain historical/rollback evidence and have not been explicitly archived or released for destruction.
+
+No legacy rows were deleted.
+
+A new audit table, `public.legacy_booking_payment_retirement_gate`, records the gate result and evidence. The migration is non-destructive and does not drop either legacy table.
+
+### Required conditions before physical retirement
+
+1. Confirm the retained legacy copies are no longer required for rollback/audit.
+2. Create an explicit archive/retention decision if the data must be preserved outside the live compatibility tables.
+3. Re-run parity verification immediately before retirement.
+4. Re-run repository/runtime dependency audit.
+5. Execute a separate versioned destructive migration only after the retirement decision is explicitly authorized.
+
+Mission 08D therefore closes the **runtime retirement gate**, but deliberately does not perform the physical table drop.
