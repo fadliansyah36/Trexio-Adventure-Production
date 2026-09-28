@@ -208,3 +208,29 @@ Verification command:
 ```bash
 npm run db:verify-legacy-retirement
 ```
+
+
+## Mission 08G — Physical Legacy Booking/Payment Retirement
+
+Physical retirement was executed after the Mission 08F gate was explicitly authorized.
+
+### Production result
+
+- `public.app_bookings`: **DROPPED**
+- `public.app_payments`: **DROPPED**
+- `public.archive_app_bookings`: 32 rows retained
+- `public.archive_app_payments`: 37 rows retained
+- `public.bookings`: 46 rows retained as canonical relational booking data
+- `public.payment_transactions`: 37 rows retained as canonical relational payment data
+- Retirement audit: `public.legacy_physical_retirement_audit`
+- Retirement status: **RETIRED**
+
+The destructive migration contains pre-drop parity and dependency checks and aborts before dropping the legacy tables if those checks fail.
+
+Migration:
+
+```
+supabase/migrations/20260929060000_MISSION_08G_physical_legacy_booking_payment_retirement.sql
+```
+
+The archive is now the retained historical copy; the relational booking/payment tables are the active canonical runtime source.
