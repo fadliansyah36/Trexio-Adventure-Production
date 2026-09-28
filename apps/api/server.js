@@ -2126,10 +2126,37 @@ function assignRoleToUser(userObj, requestedRole) {
   return userObj;
 }
 
-// --- Auth ---
+// Mission 09C Phase 5B: auth routes are registered at their original route-order boundary
+registerAuthRoutes({
+  api, users, bcrypt, jwt, JWT_SECRET, supabaseAuth, authLimiter,
+  signAuthToken, getCurrentUser, requireAuth, requireRoles, requireSuperAdmin,
+  requireAdmin, requireVendor, getUserRoles, hasAnyRole,
+  getVerificationStatusForUser, saveUserToSupabasePostgres,
+  loadUsersFromSupabasePostgres, recordAuditLog, recordSecurityIncident,
+  logActivity, nowISO, uuidv4, speakeasy, QRCode,
+  syncAllUsersToPostgres, saveUsersToDisk, tenants, vendors,
+  conversations, messages, auditLogs, systemHealth, persistCollection,
+  sanitizeHeaders, createNotification
+});
+
 // Mission 09C Phase 5B: authentication routes extracted to modules/routes/authRoutes.js
 
 // Mission 09C Phase 5B: user/profile routes extracted to modules/routes/userRoutes.js
+
+// Mission 09C Phase 5B: user routes are registered at their original route-order boundary
+registerUserRoutes({
+  api, users, bcrypt, jwt, JWT_SECRET, supabaseAuth, authLimiter,
+  signAuthToken, getCurrentUser, requireAuth, requireRoles, requireSuperAdmin,
+  requireAdmin, requireVendor, getUserRoles, hasAnyRole,
+  getVerificationStatusForUser, saveUserToSupabasePostgres,
+  loadUsersFromSupabasePostgres, recordAuditLog, recordSecurityIncident,
+  logActivity, nowISO, uuidv4, speakeasy, QRCode,
+  syncAllUsersToPostgres, saveUsersToDisk, tenants, vendors,
+  conversations, messages, auditLogs, systemHealth, persistCollection,
+  createNotification, cleanUser, calculateUserDashboardStats,
+  bookings, trips, payment_transactions,
+  formatBookingWithChecklist
+});
 
   const userId = req.user.id;
   const userVendor = vendors.find(v => v.user_id === userId || v.id === userId);
@@ -11968,34 +11995,6 @@ api.get('/admin/payouts', requireSuperAdmin, (req, res) => {
 
 registerUploadRoutes({ api, requireAuth, upload });
 registerBackpackerRoutes({ api, requireAuth, trips });
-
-
-// Mission 09C Phase 5B — Authentication & User Route Extraction
-// Registration occurs after runtime dependencies are initialized.
-registerAuthRoutes({
-  api, users, bcrypt, jwt, JWT_SECRET, supabaseAuth, authLimiter,
-  signAuthToken, getCurrentUser, requireAuth, requireRoles, requireSuperAdmin,
-  requireAdmin, requireVendor, getUserRoles, hasAnyRole,
-  getVerificationStatusForUser, saveUserToSupabasePostgres,
-  loadUsersFromSupabasePostgres, recordAuditLog, recordSecurityIncident,
-  logActivity, nowISO, uuidv4, speakeasy, QRCode,
-  syncAllUsersToPostgres, saveUsersToDisk, tenants, vendors,
-  conversations, messages, auditLogs, systemHealth, persistCollection,
-  sanitizeHeaders, createNotification
-});
-registerUserRoutes({
-  api, users, bcrypt, jwt, JWT_SECRET, supabaseAuth, authLimiter,
-  signAuthToken, getCurrentUser, requireAuth, requireRoles, requireSuperAdmin,
-  requireAdmin, requireVendor, getUserRoles, hasAnyRole,
-  getVerificationStatusForUser, saveUserToSupabasePostgres,
-  loadUsersFromSupabasePostgres, recordAuditLog, recordSecurityIncident,
-  logActivity, nowISO, uuidv4, speakeasy, QRCode,
-  syncAllUsersToPostgres, saveUsersToDisk, tenants, vendors,
-  conversations, messages, auditLogs, systemHealth, persistCollection,
-  createNotification, cleanUser, calculateUserDashboardStats,
-  bookings, trips, payment_transactions,
-  formatBookingWithChecklist
-});
 
 // API 404 Catch-All to prevent falling through to static SPA HTML
 api.use((req, res) => {
