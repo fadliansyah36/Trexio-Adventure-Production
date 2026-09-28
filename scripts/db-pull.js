@@ -5,7 +5,7 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { getPool } = require('../src/db/cloudSqlSync');
+const { getPool } = require('../src/db/supabasePostgres');
 
 async function pullDatabase() {
   const pool = getPool();
