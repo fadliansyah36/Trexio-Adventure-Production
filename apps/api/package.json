@@ -1,0 +1,12 @@
+{
+  "name": "@trexio/api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "description": "Trexio API runtime boundary. Transitional extraction; source modules and dependency installation remain repository-root owned until later monorepo phases."
+}
