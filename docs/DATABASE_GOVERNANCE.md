@@ -1,8 +1,8 @@
 # TREXIO DATABASE GOVERNANCE & CHANGE MANAGEMENT POLICY
 
 ## 1. ARCHITECTURE & SOURCE OF TRUTH PRINCIPLE
-- **Primary Business Database & Single Source of Truth**: Google Cloud SQL PostgreSQL (`cloud_sql_development_database`).
-- **Identity & Authentication**: Firebase Auth.
+- **Primary Business Database & Single Source of Truth**: Supabase PostgreSQL.
+- **Identity & Authentication**: Supabase Auth.
 - **Backend**: Business Logic, RBAC, Authorization, Transaction Management, Database Access.
 - **JSON Usage**: Strictly limited to static config, seeds, translation files, and legacy cache fallback. **NO JSON FILE MAY SERVE AS A PRODUCTION BUSINESS DATABASE.**
 
@@ -39,7 +39,7 @@
 ---
 
 ## 5. AUTOMATED GUARDS
-- **JSON Regression Guard**: Automatically checks that no mutation endpoints persist purely to local JSON without syncing to Cloud SQL.
+- **JSON Regression Guard**: Automatically checks that no mutation endpoints persist purely to local JSON without persisting to Supabase PostgreSQL.
 - **Schema Drift Guard**: Continuously verifies PostgreSQL actual tables against expected schema definition.
 - **Migration Conflict Guard**: Prevents duplicate or conflicting migration executions.
 - **Production Safety Guard**: Blocks unauthorized destructive SQL operations (`DROP TABLE`, `TRUNCATE`).
@@ -47,7 +47,7 @@
 ---
 
 ## 6. BACKUP, RECOVERY & PITR POLICY
-- **Automated Backup**: Nightly Cloud SQL snapshots retained for 30 days.
+- **Automated Backup**: Nightly Supabase PostgreSQL snapshots retained for 30 days.
 - **Point-in-Time Recovery (PITR)**: Enabled with Write-Ahead Logging (WAL).
 - **RPO Target**: < 5 Minutes
 - **RTO Target**: < 15 Minutes
