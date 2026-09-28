@@ -13573,7 +13573,8 @@ app.get('/robots.txt', (req, res) => {
   res.send(aiSeoService.generateRobotsTxt());
 });
 
-// Backpacker routes extracted in Mission 09C Phase 5.\n// Admin aliases with strict authorization guards
+// Backpacker routes extracted in Mission 09C Phase 5.
+// Admin aliases with strict authorization guards
 api.get(['/admin/audit-logs', '/admin/security/audit-logs'], requireSuperAdmin, (req, res) => {
   res.json(auditLogs);
 });
