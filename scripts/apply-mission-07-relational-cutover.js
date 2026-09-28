@@ -38,6 +38,40 @@ async function main() {
       throw new Error(`Required tables are missing after baseline: ${missingAfterBaseline.join(', ')}`);
     }
 
+    // Existing production tables may predate the V3 baseline. CREATE TABLE IF NOT EXISTS
+    // does not repair an existing table, so ensure the columns required by Mission 07 exist.
+    const vendorColumns = [
+      ['user_id', 'VARCHAR(100)'],
+      ['brand_name', "TEXT NOT NULL DEFAULT 'Mitra TREXIO'"],
+      ['slug', 'TEXT'],
+      ['status', "VARCHAR(50) DEFAULT 'active'"],
+      ['rating', 'NUMERIC DEFAULT 5.0'],
+      ['total_trips', 'INT DEFAULT 0'],
+      ['documents', "JSONB DEFAULT '{}'::jsonb"],
+      ['updated_at', 'TIMESTAMP WITH TIME ZONE DEFAULT NOW()']
+    ];
+    const tripColumns = [
+      ['title', "TEXT NOT NULL DEFAULT 'Trip TREXIO'"],
+      ['destination', "TEXT NOT NULL DEFAULT 'Indonesia'"],
+      ['price', 'NUMERIC NOT NULL DEFAULT 0'],
+      ['duration_days', 'INT DEFAULT 1'],
+      ['available_seats', 'INT DEFAULT 10'],
+      ['category', 'TEXT'],
+      ['vendor_id', 'VARCHAR(100)'],
+      ['slug', 'TEXT'],
+      ['status', "VARCHAR(50) DEFAULT 'published'"],
+      ['cover_image', 'TEXT'],
+      ['description', 'TEXT'],
+      ['updated_at', 'TIMESTAMP WITH TIME ZONE DEFAULT NOW()']
+    ];
+
+    for (const [column, definition] of vendorColumns) {
+      await client.query('ALTER TABLE public.vendors ADD COLUMN IF NOT EXISTS ' + column + ' ' + definition);
+    }
+    for (const [column, definition] of tripColumns) {
+      await client.query('ALTER TABLE public.trips ADD COLUMN IF NOT EXISTS ' + column + ' ' + definition);
+    }
+
     const sql = fs.readFileSync(migrationFile, 'utf8');
     console.log(`[Mission 07] Applying ${MIGRATION}`);
     await client.query(sql);
