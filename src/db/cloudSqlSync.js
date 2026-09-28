@@ -13,40 +13,24 @@ function getResolvedDatabaseUrl() {
 function getPool() {
   if (!pool) {
     const rawDbUrl = getResolvedDatabaseUrl();
-    const hasUrl = !!rawDbUrl;
-    const hasDiscrete = !!process.env.SQL_HOST;
-    if (!hasUrl && !hasDiscrete) {
-      console.error('[CloudSQL] FATAL: No DATABASE_URL or SQL_HOST configured.');
+    if (!rawDbUrl) {
+      console.error('[Supabase PostgreSQL] FATAL: DATABASE_URL is not configured.');
       return null;
     }
-    // Supabase requires SSL. Enable when using a connection string or when SQL_SSL=true.
-    const useSSL = hasUrl || process.env.SQL_SSL === 'true' || process.env.PGSSLMODE === 'require';
-    const sslOption = useSSL ? { rejectUnauthorized: false } : false;
 
-    pool = new Pool(
-      hasUrl
-        ? {
-            connectionString: rawDbUrl,
-            ssl: sslOption,
-            max: parseInt(process.env.SQL_POOL_MAX || '10'),
-            connectionTimeoutMillis: 10000,
-            idleTimeoutMillis: 30000,
-          }
-        : {
-            host: process.env.SQL_HOST,
-            port: parseInt(process.env.SQL_PORT || '5432'),
-            user: process.env.SQL_USER,
-            password: process.env.SQL_PASSWORD,
-            database: process.env.SQL_DB_NAME,
-            ssl: sslOption,
-            max: parseInt(process.env.SQL_POOL_MAX || '10'),
-            connectionTimeoutMillis: 10000,
-            idleTimeoutMillis: 30000,
-          }
-    );
+    const useSSL = true;
+    const sslOption = { rejectUnauthorized: false };
+
+    pool = new Pool({
+      connectionString: rawDbUrl,
+      ssl: sslOption,
+      max: parseInt(process.env.SQL_POOL_MAX || '10', 10),
+      connectionTimeoutMillis: 10000,
+      idleTimeoutMillis: 30000,
+    });
 
     pool.on('error', (err) => {
-      console.error('[CloudSQL] Pool client error:', err.message);
+      console.error('[Supabase PostgreSQL] Pool client error:', err.message);
     });
   }
   return pool;
@@ -284,10 +268,10 @@ async function initCloudSqlSchema() {
     }
 
     await client.query('COMMIT');
-    console.log('[CloudSQL Sync] Schema verified and initialized in Cloud SQL / Supabase PostgreSQL.');
+    console.log('[Supabase PostgreSQL] Schema verified and initialized in Cloud SQL / Supabase PostgreSQL.');
   } catch (err) {
     await client.query('ROLLBACK');
-    console.error('[CloudSQL Sync] Failed to initialize schema:', err.message);
+    console.error('[Supabase PostgreSQL] Failed to initialize schema:', err.message);
     throw err;
   } finally {
     client.release();
@@ -314,7 +298,7 @@ async function syncUserToCloudSql(user) {
       [uid, email, name, role, supabaseUid, JSON.stringify(user)]
     );
   } catch (err) {
-    console.error('[CloudSQL Sync] Error syncing user:', err.message);
+    console.error('[Supabase PostgreSQL] Error syncing user:', err.message);
   }
 }
 
@@ -336,130 +320,14 @@ async function loadUsersFromCloudSql() {
       };
     });
   } catch (err) {
-    console.error('[CloudSQL Sync] Error loading users:', err.message);
+    console.error('[Supabase PostgreSQL] Error loading users:', err.message);
     return [];
   }
 }
 
-async function syncVendorToCloudSql(vendor) {
-  if (!vendor || !vendor.id) return;
-  const p = getPool();
-  if (!p) return;
-  try {
-    await p.query(
-      `INSERT INTO vendors (id, user_id, brand_name, slug, status, rating, total_trips, documents)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       ON CONFLICT (id) DO UPDATE
-       SET brand_name = EXCLUDED.brand_name, status = EXCLUDED.status, rating = EXCLUDED.rating, documents = EXCLUDED.documents;`,
-      [
-        String(vendor.id),
-        String(vendor.user_id || vendor.owner_id || ''),
-        String(vendor.brand_name || vendor.name || 'Mitra TREXIO'),
-        String(vendor.slug || ''),
-        String(vendor.status || 'active'),
-        parseFloat(vendor.rating || 5.0),
-        parseInt(vendor.total_trips || 0),
-        JSON.stringify(vendor.documents || {})
-      ]
-    );
-  } catch (err) {
-    console.error('[CloudSQL Sync] Error syncing vendor:', err.message);
-  }
-}
 
-async function syncTripToCloudSql(trip) {
-  if (!trip || !trip.title) return;
-  const p = getPool();
-  if (!p) return;
-  try {
-    const priceNum = parseFloat(trip.price || trip.price_per_person || 0);
-    await p.query(
-      `INSERT INTO trips (title, destination, price, duration_days, available_seats, category, vendor_id, slug, status, cover_image, description)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);`,
-      [
-        String(trip.title),
-        String(trip.destination || trip.location || 'Indonesia'),
-        priceNum,
-        parseInt(trip.duration_days || trip.duration || 1),
-        parseInt(trip.available_seats || trip.quota || 10),
-        String(trip.category || 'Open Trip'),
-        String(trip.vendor_id || ''),
-        String(trip.slug || ''),
-        String(trip.status || 'published'),
-        String(trip.cover_image || trip.image || ''),
-        String(trip.description || '')
-      ]
-    );
-  } catch (err) {
-    console.error('[CloudSQL Sync] Error syncing trip:', err.message);
-  }
-}
 
-async function syncBookingToCloudSql(booking) {
-  if (!booking || !booking.booking_code) return;
-  const p = getPool();
-  if (!p) return;
-  try {
-    const totalAmount = parseFloat(booking.total_price || booking.total_amount || booking.amount || 0);
-    const userIdNum = parseInt(booking.user_id) || null;
-    const tripIdNum = parseInt(booking.trip_id || booking.product_id) || null;
 
-    await p.query(
-      `INSERT INTO bookings (booking_code, user_id, vendor_id, trip_id, total_amount, payment_status, booking_status, payment_method, payment_channel, midtrans_order_id, midtrans_token, paid_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
-       ON CONFLICT (booking_code) DO UPDATE
-       SET payment_status = EXCLUDED.payment_status,
-           booking_status = EXCLUDED.booking_status,
-           payment_method = EXCLUDED.payment_method,
-           payment_channel = EXCLUDED.payment_channel,
-           midtrans_order_id = EXCLUDED.midtrans_order_id,
-           midtrans_token = EXCLUDED.midtrans_token,
-           paid_at = EXCLUDED.paid_at,
-           updated_at = NOW();`,
-      [
-        String(booking.booking_code),
-        userIdNum,
-        String(booking.vendor_id || ''),
-        tripIdNum,
-        totalAmount,
-        String(booking.payment_status || 'pending').toLowerCase(),
-        String(booking.booking_status || 'pending_payment').toLowerCase(),
-        String(booking.payment_method || ''),
-        String(booking.payment_channel || ''),
-        String(booking.midtrans_order_id || booking.order_id || ''),
-        String(booking.midtrans_token || ''),
-        booking.paid_at ? new Date(booking.paid_at) : null
-      ]
-    );
-  } catch (err) {
-    console.error('[CloudSQL Sync] Error syncing booking:', err.message);
-  }
-}
-
-async function syncPaymentToCloudSql(payment) {
-  if (!payment || !payment.tx_id) return;
-  const p = getPool();
-  if (!p) return;
-  try {
-    await p.query(
-      `INSERT INTO payment_transactions (tx_id, booking_code, order_id, amount, status, payment_type, transaction_id, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-       ON CONFLICT (tx_id) DO UPDATE
-       SET status = EXCLUDED.status, updated_at = NOW();`,
-      [
-        String(payment.tx_id),
-        String(payment.booking_code || ''),
-        String(payment.order_id || ''),
-        parseFloat(payment.amount || 0),
-        String(payment.status || 'pending'),
-        String(payment.payment_type || ''),
-        String(payment.transaction_id || '')
-      ]
-    );
-  } catch (err) {
-    console.error('[CloudSQL Sync] Error syncing payment:', err.message);
-  }
-}
 
 async function syncConversationToCloudSql(conv) {
   if (!conv || !conv.id) return;
@@ -492,7 +360,7 @@ async function syncConversationToCloudSql(conv) {
       ]
     );
   } catch (err) {
-    console.error('[CloudSQL Sync] Error syncing conversation:', err.message);
+    console.error('[Supabase PostgreSQL] Error syncing conversation:', err.message);
   }
 }
 
@@ -526,7 +394,7 @@ async function syncMessageToCloudSql(msg) {
       ]
     );
   } catch (err) {
-    console.error('[CloudSQL Sync] Error syncing message:', err.message);
+    console.error('[Supabase PostgreSQL] Error syncing message:', err.message);
   }
 }
 
@@ -552,7 +420,7 @@ async function syncNotificationToCloudSql(notif) {
       ]
     );
   } catch (err) {
-    console.error('[CloudSQL Sync] Error syncing notification:', err.message);
+    console.error('[Supabase PostgreSQL] Error syncing notification:', err.message);
   }
 }
 
@@ -599,7 +467,7 @@ async function loadAppDocs(collection) {
     const r = await p.query(`SELECT data FROM ${table}`);
     return r.rows.map((x) => x.data).filter((d) => d && typeof d === 'object');
   } catch (err) {
-    console.error(`[CloudSQL Sync] Error loading ${collection}:`, err.message);
+    console.error(`[Supabase PostgreSQL] Error loading ${collection}:`, err.message);
     return [];
   }
 }
@@ -617,7 +485,7 @@ async function upsertAppDoc(collection, doc) {
       [String(id), JSON.stringify(doc)]
     );
   } catch (err) {
-    console.error(`[CloudSQL Sync] Error upserting ${collection}:`, err.message);
+    console.error(`[Supabase PostgreSQL] Error upserting ${collection}:`, err.message);
   }
 }
 
@@ -628,7 +496,7 @@ async function deleteAppDoc(collection, id) {
   try {
     await p.query(`DELETE FROM ${table} WHERE id = $1`, [String(id)]);
   } catch (err) {
-    console.error(`[CloudSQL Sync] Error deleting ${collection}:`, err.message);
+    console.error(`[Supabase PostgreSQL] Error deleting ${collection}:`, err.message);
   }
 }
 
@@ -660,7 +528,7 @@ async function replaceAppCollection(collection, docs) {
     await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK');
-    console.error(`[CloudSQL Sync] Error mirroring ${collection}:`, err.message);
+    console.error(`[Supabase PostgreSQL] Error mirroring ${collection}:`, err.message);
   } finally {
     client.release();
   }
@@ -676,10 +544,6 @@ module.exports = {
   upsertAppDoc,
   deleteAppDoc,
   replaceAppCollection,
-  syncVendorToCloudSql,
-  syncTripToCloudSql,
-  syncBookingToCloudSql,
-  syncPaymentToCloudSql,
   syncConversationToCloudSql,
   syncMessageToCloudSql,
   syncNotificationToCloudSql,
