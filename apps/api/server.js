@@ -11993,7 +11993,7 @@ registerUserRoutes({
   syncAllUsersToPostgres, saveUsersToDisk, tenants, vendors,
   conversations, messages, auditLogs, systemHealth, persistCollection,
   createNotification, cleanUser, calculateUserDashboardStats,
-  handleProfileUpdate, bookings, trips, payment_transactions,
+  bookings, trips, payment_transactions,
   formatBookingWithChecklist
 });
 
