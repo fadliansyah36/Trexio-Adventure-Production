@@ -177,7 +177,7 @@ const {
   syncMessageToCloudSql,
   syncNotificationToCloudSql,
   APP_DOC_TABLES
-} = require('./src/db/cloudSqlSync');
+} = require('./src/db/supabasePostgres');
 const appDocumentRepository = require('./src/repositories/appDocumentRepository');
 const tripRepository = require('./src/repositories/tripRepository');
 const vendorRepository = require('./src/repositories/vendorRepository');
