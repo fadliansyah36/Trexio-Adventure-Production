@@ -18,7 +18,7 @@ const rateLimit = require('express-rate-limit');
 const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 const ROOT_DIR = path.resolve(__dirname, '..', '..');
-const supabaseAuth = require('../../src/auth/supabaseAuth');
+const supabaseAuth = require('./modules/auth/supabaseAuth');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -180,12 +180,12 @@ const {
   saveUserToSupabasePostgres,
   loadUsersFromSupabasePostgres,
   APP_DOC_TABLES
-} = require('../../src/db/supabasePostgres');
-const appDocumentRepository = require('../../src/repositories/appDocumentRepository');
-const tripRepository = require('../../src/repositories/tripRepository');
-const vendorRepository = require('../../src/repositories/vendorRepository');
-const bookingRepository = require('../../src/repositories/bookingRepository');
-const paymentRepository = require('../../src/repositories/paymentRepository');
+} = require('./modules/persistence/supabasePostgres');
+const appDocumentRepository = require('./modules/repositories/appDocumentRepository');
+const tripRepository = require('./modules/repositories/tripRepository');
+const vendorRepository = require('./modules/repositories/vendorRepository');
+const bookingRepository = require('./modules/repositories/bookingRepository');
+const paymentRepository = require('./modules/repositories/paymentRepository');
 
 // System Live Health & Strict Connection Status
 const systemHealth = {
