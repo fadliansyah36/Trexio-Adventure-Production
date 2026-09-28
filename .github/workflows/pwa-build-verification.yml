@@ -1,0 +1,64 @@
+name: PWA Build Verification
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+# Build/test verification only needs to read the repository.
+# Do not grant write access to the GITHUB_TOKEN for this workflow.
+permissions:
+  contents: read
+
+jobs:
+  pwa-build-verification:
+    name: Trexio PWA Build Verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: npm install
+        run: npm install
+
+      - name: Backend dependency install verification
+        run: |
+          node -e "for (const p of ['express','jsonwebtoken','pg','@supabase/supabase-js']) require.resolve(p); console.log('Backend dependencies: PASS')"
+
+      - name: JWT security tests
+        run: npm run test:jwt-security
+
+      - name: Backend compile / syntax check
+        run: npm run check:backend-syntax
+
+      - name: Client TypeScript compiler check
+        run: npx tsc -p frontend/tsconfig.ci.json --noEmit
+
+      - name: Client PWA production build
+        run: npm --prefix frontend run build
+
+      - name: Admin TypeScript compiler check
+        run: npx tsc -p frontend/tsconfig.admin-ci.json --noEmit
+
+      - name: Admin PWA production build (shared PWA bundle)
+        run: |
+          test -d frontend/src/pages/admin
+          npm --prefix frontend run build
+
+      - name: PWA build output verification
+        run: |
+          test -f frontend/build/index.html
+          test -d frontend/build/static
+          echo "PWA production output: PASS"
+
+      - name: PWA BUILD VERIFIED
+        run: echo "TREXIO PWA BUILD VERIFIED — all required CI gates passed"
