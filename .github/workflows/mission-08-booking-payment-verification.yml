@@ -1,0 +1,30 @@
+name: Mission 08 - Booking Payment Verification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify Booking & Payment Relational Cutover
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install
+      - name: Verify booking payment parity
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npm run db:verify-booking-payment-cutover
+      - name: Verify repository integrity
+        run: npm run verify-integrity
+      - name: Security scan
+        run: npm run security-scan
