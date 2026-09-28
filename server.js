@@ -166,8 +166,6 @@ const {
   checkDbConnection,
   syncUserToCloudSql,
   loadUsersFromCloudSql,
-  loadAppDocs,
-  replaceAppCollection,
   syncVendorToCloudSql,
   syncTripToCloudSql,
   syncBookingToCloudSql,
@@ -177,6 +175,7 @@ const {
   syncNotificationToCloudSql,
   APP_DOC_TABLES
 } = require('./src/db/cloudSqlSync');
+const appDocumentRepository = require('./src/repositories/appDocumentRepository');
 
 // System Live Health & Strict Connection Status
 const systemHealth = {
@@ -13823,7 +13822,7 @@ let __hydrationComplete = false;
 async function hydrateCollections() {
   for (const name of ALL_SYNC_COLLECTIONS) {
     try {
-      const docs = await loadAppDocs(name);
+      const docs = await appDocumentRepository.list(name);
       const arr = __collectionArray(name);
       if (arr && Array.isArray(docs)) {
         arr.length = 0;
@@ -13844,7 +13843,7 @@ function persistCollection(name) {
   if (!__hydrationComplete) return;
   const arr = __collectionArray(name);
   if (!arr) return;
-  Promise.resolve(replaceAppCollection(name, arr)).catch((err) => {
+  Promise.resolve(appDocumentRepository.replace(name, arr)).catch((err) => {
     console.error(`[Persistence] Failed to persist ${name}:`, err.message);
   });
 }
