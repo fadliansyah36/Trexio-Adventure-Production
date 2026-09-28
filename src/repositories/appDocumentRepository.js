@@ -11,7 +11,7 @@ const {
   deleteAppDoc,
   replaceAppCollection,
   APP_DOC_TABLES,
-} = require('../db/cloudSqlSync');
+} = require('../db/supabasePostgres');
 
 function assertCollection(collection) {
   if (!APP_DOC_TABLES[collection]) {
