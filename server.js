@@ -13756,7 +13756,6 @@ async function hydrateAndSeedUsers() {
   // then start the periodic mirror so Postgres stays an exact copy of memory.
   await hydrateCollections();
   __hydrationComplete = true;
-  startPostgresMirror();
 }
 
 // Maps a logical collection name to its in-memory array (read model).
@@ -13820,7 +13819,6 @@ const ALL_SYNC_COLLECTIONS = [
 ];
 
 let __hydrationComplete = false;
-let __mirrorTimer = null;
 
 async function hydrateCollections() {
   for (const name of ALL_SYNC_COLLECTIONS) {
@@ -13838,27 +13836,18 @@ async function hydrateCollections() {
   }
 }
 
-// Immediately mirror one collection to Postgres (fire-and-forget). Called right
-// after create/update/delete so writes are durable without waiting for the timer.
+// Explicit persistence boundary. Mutations call this after changing a collection.
+// There is intentionally no periodic memory -> database reconciliation: PostgreSQL
+// is durable storage, while the in-memory arrays are a transitional read/write
+// compatibility layer until each domain is moved to repositories.
 function persistCollection(name) {
   if (!__hydrationComplete) return;
   const arr = __collectionArray(name);
   if (!arr) return;
-  Promise.resolve(replaceAppCollection(name, arr)).catch(() => {});
+  Promise.resolve(replaceAppCollection(name, arr)).catch((err) => {
+    console.error(`[Persistence] Failed to persist ${name}:`, err.message);
+  });
 }
-
-// Safety-net: periodically mirror all collections (also reconciles deletes).
-function startPostgresMirror() {
-  if (__mirrorTimer) return;
-  __mirrorTimer = setInterval(async () => {
-    if (!__hydrationComplete) return;
-    for (const name of ALL_SYNC_COLLECTIONS) {
-      try { await replaceAppCollection(name, __collectionArray(name)); } catch (_) {}
-    }
-  }, 20000);
-  if (__mirrorTimer.unref) __mirrorTimer.unref();
-}
-
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
     console.error(`[AI Studio] Port ${PORT} is already in use. Retrying or shutting down stale process...`);
