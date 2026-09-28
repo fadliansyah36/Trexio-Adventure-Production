@@ -11861,12 +11861,8 @@ const webhook_logs = [];
 
 function saveBookingsToDisk() {
   if (!Array.isArray(bookings)) return;
-  bookings.forEach((booking) => {
-    if (booking?.id) {
-      bookingRepository.save(booking).catch((err) => {
-        console.error('[Persistence] Failed to persist booking:', err.message);
-      });
-    }
+  bookingRepository.replaceAll(bookings).catch((err) => {
+    console.error('[Persistence] Failed to persist bookings:', err.message);
   });
 }
 
@@ -11877,12 +11873,8 @@ function loadBookingsFromDisk() {
 
 function savePaymentsDataToDisk() {
   if (!Array.isArray(payment_transactions)) return;
-  payment_transactions.forEach((payment) => {
-    if (payment?.tx_id) {
-      paymentRepository.save(payment).catch((err) => {
-        console.error('[Persistence] Failed to persist payment:', err.message);
-      });
-    }
+  paymentRepository.replaceAll(payment_transactions).catch((err) => {
+    console.error('[Persistence] Failed to persist payments:', err.message);
   });
 }
 
@@ -13828,8 +13820,6 @@ function __collectionArray(name) {
 }
 
 const ALL_SYNC_COLLECTIONS = [
-  'bookings',
-  'payments',
   'rentals',
   'destinations',
   'communities',
@@ -13857,9 +13847,11 @@ let __hydrationComplete = false;
 
 async function hydrateRelationalCoreCollections() {
   try {
-    const [relationalVendors, relationalTrips] = await Promise.all([
+    const [relationalVendors, relationalTrips, relationalBookings, relationalPayments] = await Promise.all([
       vendorRepository.list(),
       tripRepository.list(),
+      bookingRepository.list(),
+      paymentRepository.list(),
     ]);
 
     vendors.length = 0;
@@ -13868,10 +13860,18 @@ async function hydrateRelationalCoreCollections() {
     trips.length = 0;
     relationalTrips.forEach((trip) => trips.push(trip));
 
+    bookings.length = 0;
+    relationalBookings.forEach((booking) => bookings.push(booking));
+
+    payment_transactions.length = 0;
+    relationalPayments.forEach((payment) => payment_transactions.push(payment));
+
     console.log(`[Hydrate] Loaded ${relationalVendors.length} vendor(s) from relational PostgreSQL.`);
     console.log(`[Hydrate] Loaded ${relationalTrips.length} trip(s) from relational PostgreSQL.`);
+    console.log(`[Hydrate] Loaded ${relationalBookings.length} booking(s) from relational PostgreSQL.`);
+    console.log(`[Hydrate] Loaded ${relationalPayments.length} payment transaction(s) from relational PostgreSQL.`);
   } catch (e) {
-    console.error('[Hydrate] Failed to hydrate relational vendor/trip domains:', e.message);
+    console.error('[Hydrate] Failed to hydrate relational core domains:', e.message);
     throw e;
   }
 }
