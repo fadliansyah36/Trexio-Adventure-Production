@@ -4,6 +4,8 @@
  * Extracted from apps/api/server.js during Mission 09C Phase 5B.
  * Dependencies are injected explicitly to keep the extraction dependency-safe.
  */
+const crypto = require('crypto');
+
 module.exports = function registerUserRoutes(ctx) {
   const {
     api, users, bcrypt, jwt, JWT_SECRET, supabaseAuth, authLimiter,
