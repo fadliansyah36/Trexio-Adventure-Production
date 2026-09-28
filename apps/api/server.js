@@ -19,6 +19,8 @@ const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 const ROOT_DIR = path.resolve(__dirname, '..', '..');
 const supabaseAuth = require('./modules/auth/supabaseAuth');
+const { registerUploadRoutes } = require('./modules/routes/uploadRoutes');
+const { registerBackpackerRoutes } = require('./modules/routes/backpackerRoutes');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -3042,35 +3044,7 @@ api.post(['/auth/forgot-password/reset', '/auth/reset-password/reset', '/auth/re
   });
 });
 
-// --- File Upload API Endpoint ---
-api.post('/upload', requireAuth, upload.single('file'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ detail: 'File foto tidak ditemukan atau tidak diunggah' });
-  }
-  const fileUrl = `/uploads/${req.file.filename}`;
-  res.json({
-    ok: true,
-    url: fileUrl,
-    filename: req.file.filename,
-    original_name: req.file.originalname,
-    size: req.file.size,
-    mimetype: req.file.mimetype,
-  });
-});
-
-api.post('/upload/avatar', requireAuth, upload.single('avatar'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ detail: 'File foto profil tidak ditemukan' });
-  }
-  const fileUrl = `/uploads/${req.file.filename}`;
-  res.json({
-    ok: true,
-    url: fileUrl,
-    filename: req.file.filename,
-  });
-});
-
-// --- User Profile & Comprehensive Role Update Features ---
+// Upload routes extracted in Mission 09C Phase 5.\n// --- User Profile & Comprehensive Role Update Features ---
 api.get(['/profile', '/users/me/profile', '/auth/profile'], requireAuth, (req, res) => {
   const u = users.find(item => item.id === req.user.id);
   if (!u) return res.status(404).json({ detail: 'User tidak ditemukan' });
@@ -13599,21 +13573,7 @@ app.get('/robots.txt', (req, res) => {
   res.send(aiSeoService.generateRobotsTxt());
 });
 
-// Backpacker community routes aliases
-api.get(['/backpacker/routes', '/backpacker/routes/search'], requireAuth, (req, res) => {
-  const routes = trips.filter(t => t.category === 'open-trip' || t.category === 'private-trip' || t.category === 'hiking').map(t => ({
-    id: t.id,
-    title: t.title,
-    destination: t.destination || t.location,
-    difficulty: t.difficulty || 'Medium',
-    duration: t.duration || '2D1N',
-    price: t.price || 0,
-    cover_image: t.cover_image
-  }));
-  res.json(routes);
-});
-
-// Admin aliases with strict authorization guards
+// Backpacker routes extracted in Mission 09C Phase 5.\n// Admin aliases with strict authorization guards
 api.get(['/admin/audit-logs', '/admin/security/audit-logs'], requireSuperAdmin, (req, res) => {
   res.json(auditLogs);
 });
@@ -13621,6 +13581,9 @@ api.get(['/admin/audit-logs', '/admin/security/audit-logs'], requireSuperAdmin, 
 api.get('/admin/payouts', requireSuperAdmin, (req, res) => {
   res.json(payouts);
 });
+
+registerUploadRoutes({ api, requireAuth, upload });
+registerBackpackerRoutes({ api, requireAuth, trips });
 
 // API 404 Catch-All to prevent falling through to static SPA HTML
 api.use((req, res) => {
