@@ -173,8 +173,6 @@ const {
   checkDbConnection,
   syncUserToCloudSql,
   loadUsersFromCloudSql,
-  syncVendorToCloudSql,
-  syncTripToCloudSql,
   syncBookingToCloudSql,
   syncPaymentToCloudSql,
   syncConversationToCloudSql,
@@ -183,6 +181,8 @@ const {
   APP_DOC_TABLES
 } = require('./src/db/cloudSqlSync');
 const appDocumentRepository = require('./src/repositories/appDocumentRepository');
+const tripRepository = require('./src/repositories/tripRepository');
+const vendorRepository = require('./src/repositories/vendorRepository');
 
 // System Live Health & Strict Connection Status
 const systemHealth = {
@@ -563,13 +563,41 @@ const advertising_campaigns = [];
 const billing_transactions = [];
 
 // Save & Load Helpers - Persists directly to Supabase PostgreSQL source of truth
+function persistVendorRecord(vendor) {
+  if (!vendor || !vendor.id) return;
+  vendorRepository.save(vendor).catch((err) => {
+    console.error('[Persistence] Failed to persist vendor:', err.message);
+  });
+}
+
+function removeVendorRecord(vendorId) {
+  if (!vendorId) return;
+  vendorRepository.remove(vendorId).catch((err) => {
+    console.error('[Persistence] Failed to remove vendor:', err.message);
+  });
+}
+
+function persistTripRecord(trip) {
+  if (!trip || !trip.id) return;
+  tripRepository.save(trip).catch((err) => {
+    console.error('[Persistence] Failed to persist trip:', err.message);
+  });
+}
+
+function removeTripRecord(tripId) {
+  if (!tripId) return;
+  tripRepository.remove(tripId).catch((err) => {
+    console.error('[Persistence] Failed to remove trip:', err.message);
+  });
+}
+
 function saveSubDataToDisk() {
   persistCollection('subscription_plans');
   persistCollection('tenant_subscriptions');
   persistCollection('advertising_packages');
   persistCollection('advertising_campaigns');
   persistCollection('billing_transactions');
-  persistCollection('vendors');
+  vendors.forEach(persistVendorRecord);
 }
 
 function saveAuditLogsToDisk() {
@@ -2185,7 +2213,7 @@ api.post('/auth/register', authLimiter, async (req, res) => {
       created_at: nowISO(),
       updated_at: nowISO(),
     });
-    persistCollection('vendors');
+    persistVendorRecord(vendors[vendors.length - 1]);
   }
 
   saveUsersToDisk();
@@ -7830,7 +7858,7 @@ api.post('/admin/trips', requireAdmin, (req, res) => {
     ...req.body
   };
   trips.push(newTrip);
-  persistCollection('trips');
+  persistTripRecord(newTrip);
   res.json(newTrip);
 });
 
@@ -7838,14 +7866,17 @@ api.put('/admin/trips/:trip_id', requireAdmin, (req, res) => {
   const idx = trips.findIndex(t => t.id === req.params.trip_id);
   if (idx === -1) return res.status(404).json({ detail: 'Trip tidak ditemukan' });
   trips[idx] = { ...trips[idx], ...req.body };
-  persistCollection('trips');
+  persistTripRecord(trips[idx]);
   res.json(trips[idx]);
 });
 
 api.delete('/admin/trips/:trip_id', requireAdmin, (req, res) => {
   const idx = trips.findIndex(t => t.id === req.params.trip_id);
-  if (idx !== -1) trips.splice(idx, 1);
-  persistCollection('trips');
+  if (idx !== -1) {
+    const removedTripId = trips[idx].id;
+    trips.splice(idx, 1);
+    removeTripRecord(removedTripId);
+  }
   res.json({ ok: true });
 });
 
@@ -8663,7 +8694,7 @@ api.post('/vendor/products', requireVendor, (req, res) => {
   };
 
   trips.push(newTrip);
-  persistCollection('trips');
+  persistTripRecord(newTrip);
   res.json(newTrip);
 });
 
@@ -8677,7 +8708,7 @@ api.patch('/vendor/products/:id', requireVendor, (req, res) => {
     req.body.departure_dates = req.body.available_dates.map(d => typeof d === 'object' ? (d.date || d.label || String(d)) : String(d));
   }
   Object.assign(trip, req.body, { updated_at: nowISO() });
-  persistCollection('trips');
+  persistTripRecord(trip);
   res.json(trip);
 });
 
@@ -8688,7 +8719,7 @@ api.delete('/vendor/products/:id', requireVendor, (req, res) => {
   if (index === -1) return res.status(404).json({ detail: 'Produk tidak ditemukan' });
 
   trips.splice(index, 1);
-  persistCollection('trips');
+  removeTripRecord(req.params.id);
   res.json({ message: 'Produk berhasil dihapus' });
 });
 
