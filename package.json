@@ -20,7 +20,9 @@
     "supabase:pull": "node scripts/db-pull.js",
     "pre-push": "npm run verify-integrity && npm run security-scan",
     "lint": "echo 'No lint issues'",
-    "db:verify-relational-cutover": "node scripts/verify-relational-cutover.js"
+    "db:verify-relational-cutover": "node scripts/verify-relational-cutover.js",
+    "test:jwt-security": "node scripts/test-jwt-security.js",
+    "check:backend-syntax": "node scripts/check-backend-syntax.js"
   },
   "dependencies": {
     "@google/genai": "^2.15.0",
