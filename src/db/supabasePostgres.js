@@ -160,8 +160,6 @@ async function loadUsersFromSupabasePostgres() {
 // Their app_* tables remain preserved as legacy data for verification/rollback,
 // but they are intentionally excluded from the runtime compatibility registry.
 const APP_DOC_TABLES = {
-  bookings: 'app_bookings',
-  payments: 'app_payments',
   rentals: 'app_rentals',
   destinations: 'app_destinations',
   communities: 'app_communities',
