@@ -81,3 +81,34 @@ A table can be removed only after:
 ## Next cleanup phase
 
 The next phase should migrate the remaining highest-value domains away from `replaceAppCollection` and the in-memory read/write compatibility layer, then retire their corresponding `app_*` tables through explicit versioned migrations.
+
+
+## Mission 08C — Legacy Booking/Payment Runtime Dependency Audit
+
+Audit completed against the active Express runtime on 2026-09-29.
+
+### Findings
+
+- `bookings` and `payment_transactions` hydrate directly through their relational repositories.
+- `bookingRepository` reads/writes `public.bookings`; `paymentRepository` reads/writes `public.payment_transactions`.
+- `bookings` and `payments` are not members of `ALL_SYNC_COLLECTIONS`.
+- No active runtime calls were found for `appDocumentRepository.list/save/remove/replace` against the booking or payment collections.
+- `saveBookingsToDisk()` and `savePaymentsDataToDisk()` retain their historical names, but their implementations now delegate to the relational repositories rather than legacy `app_*` tables.
+- The generic `APP_DOC_TABLES` registry no longer exposes `app_bookings` or `app_payments`, preventing accidental future runtime use through the compatibility repository.
+
+### Legacy data disposition
+
+The physical `app_bookings` and `app_payments` tables are preserved for reconciliation, audit, and rollback evidence. They are not runtime sources of truth and were not dropped during Mission 08C.
+
+Production reconciliation state after Mission 08B:
+
+- relational bookings: 46
+- legacy app_bookings: 32
+- relational payment transactions: 37
+- legacy app_payments: 37
+- booking reconciliation audit: 46 rows
+- destructive deletes performed: 0
+
+### Decision gate
+
+Mission 08C establishes the runtime dependency boundary. Retirement of the physical legacy tables remains a separate database-lifecycle operation and should only occur after the retained audit/rollback requirements are explicitly closed.
