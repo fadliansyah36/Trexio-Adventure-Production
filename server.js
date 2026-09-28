@@ -13788,8 +13788,9 @@ async function hydrateAndSeedUsers() {
     console.error('[Seed] Failed to seed admin:', e.message);
   }
 
-  // [FASE 2] Hydrate core collections from Supabase Postgres (source of truth),
-  // then start the periodic mirror so Postgres stays an exact copy of memory.
+  // Relational Vendor/Trip repositories are now canonical for these domains.
+  await hydrateRelationalCoreCollections();
+  // Remaining domains still use the transitional JSONB compatibility store.
   await hydrateCollections();
   __hydrationComplete = true;
 }
@@ -13827,8 +13828,6 @@ function __collectionArray(name) {
 }
 
 const ALL_SYNC_COLLECTIONS = [
-  'trips',
-  'vendors',
   'bookings',
   'payments',
   'rentals',
@@ -13855,6 +13854,27 @@ const ALL_SYNC_COLLECTIONS = [
 ];
 
 let __hydrationComplete = false;
+
+async function hydrateRelationalCoreCollections() {
+  try {
+    const [relationalVendors, relationalTrips] = await Promise.all([
+      vendorRepository.list(),
+      tripRepository.list(),
+    ]);
+
+    vendors.length = 0;
+    relationalVendors.forEach((vendor) => vendors.push(vendor));
+
+    trips.length = 0;
+    relationalTrips.forEach((trip) => trips.push(trip));
+
+    console.log(`[Hydrate] Loaded ${relationalVendors.length} vendor(s) from relational PostgreSQL.`);
+    console.log(`[Hydrate] Loaded ${relationalTrips.length} trip(s) from relational PostgreSQL.`);
+  } catch (e) {
+    console.error('[Hydrate] Failed to hydrate relational vendor/trip domains:', e.message);
+    throw e;
+  }
+}
 
 async function hydrateCollections() {
   for (const name of ALL_SYNC_COLLECTIONS) {
