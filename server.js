@@ -169,10 +169,10 @@ const users = [];
 
 
 const {
-  initCloudSqlSchema,
+  initSupabasePostgresSchema,
   checkDbConnection,
-  syncUserToCloudSql,
-  loadUsersFromCloudSql,
+  saveUserToSupabasePostgres,
+  loadUsersFromSupabasePostgres,
   syncConversationToCloudSql,
   syncMessageToCloudSql,
   syncNotificationToCloudSql,
@@ -261,13 +261,13 @@ function requireDbConnection(req, res, next) {
 
 function syncAllUsersToPostgres() {
   if (Array.isArray(users)) {
-    users.forEach(u => syncUserToCloudSql(u));
+    users.forEach(u => saveUserToSupabasePostgres(u));
   }
 }
 
 function saveUsersToDisk(specificUser) {
   if (specificUser) {
-    syncUserToCloudSql(specificUser);
+    saveUserToSupabasePostgres(specificUser);
   } else {
     syncAllUsersToPostgres();
   }
@@ -2238,9 +2238,9 @@ api.post('/auth/login', authLimiter, async (req, res) => {
     u.id === cleanEmail
   );
 
-  if (!user && typeof loadUsersFromCloudSql === 'function') {
+  if (!user && typeof loadUsersFromSupabasePostgres === 'function') {
     try {
-      const dbUsers = await loadUsersFromCloudSql();
+      const dbUsers = await loadUsersFromSupabasePostgres();
       user = dbUsers.find(u =>
         (u.email && u.email.toLowerCase() === cleanEmail) ||
         u.id === cleanEmail
@@ -2293,9 +2293,9 @@ api.post('/auth/login', authLimiter, async (req, res) => {
   }
 
   // If memory had a stale hash, refresh from Supabase Postgres and retry bcrypt comparison
-  if (!isValid && typeof loadUsersFromCloudSql === 'function') {
+  if (!isValid && typeof loadUsersFromSupabasePostgres === 'function') {
     try {
-      const dbUsers = await loadUsersFromCloudSql();
+      const dbUsers = await loadUsersFromSupabasePostgres();
       const freshUser = dbUsers.find(u => (u.email && u.email.toLowerCase() === cleanEmail) || u.id === cleanEmail);
       if (freshUser && freshUser.password_hash) {
         if (bcrypt.compareSync(cleanPassword, freshUser.password_hash)) {
@@ -13714,9 +13714,9 @@ app.get('*', (req, res) => {
 // Start server
 const server = app.listen(PORT, '0.0.0.0', async () => {
   console.log(`[AI Studio] Server running on http://0.0.0.0:${PORT}`);
-  if (typeof initCloudSqlSchema === 'function') {
+  if (typeof initSupabasePostgresSchema === 'function') {
     try {
-      await initCloudSqlSchema();
+      await initSupabasePostgresSchema();
       console.log('[CloudSQL Sync] Initialization & Schema Check complete on startup.');
       const health = await performDbHealthCheck();
       if (health.connected) {
@@ -13737,7 +13737,7 @@ const server = app.listen(PORT, '0.0.0.0', async () => {
 // the env-defined admin exists in Supabase Auth and is persisted durably.
 async function hydrateAndSeedUsers() {
   try {
-    const dbUsers = await loadUsersFromCloudSql();
+    const dbUsers = await loadUsersFromSupabasePostgres();
     if (Array.isArray(dbUsers) && dbUsers.length) {
       dbUsers.forEach((u) => {
         if (!u || !u.email) return;
@@ -13791,7 +13791,7 @@ async function hydrateAndSeedUsers() {
       }
     }
     // Persist admin (and hydrated changes) durably to Postgres.
-    if (typeof syncUserToCloudSql === 'function') await syncUserToCloudSql(admin);
+    if (typeof saveUserToSupabasePostgres === 'function') await saveUserToSupabasePostgres(admin);
     syncAllUsersToPostgres();
   } catch (e) {
     console.error('[Seed] Failed to seed admin:', e.message);
