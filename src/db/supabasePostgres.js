@@ -34,7 +34,6 @@ function getPool() {
       }
     }
 
-    const useSSL = true;
     const sslOption = { rejectUnauthorized: false };
 
     pool = new Pool({
@@ -68,229 +67,35 @@ async function checkDbConnection() {
 async function initSupabasePostgresSchema() {
   const p = getPool();
   if (!p) return;
-  const client = await p.connect();
+
+  const requiredTables = [
+    'users', 'vendors', 'trips', 'bookings', 'payment_transactions',
+    'conversations', 'messages', 'notifications', 'news', 'travel_intents',
+    'journeys', 'rides', '_supabase_migrations',
+    ...Object.values(APP_DOC_TABLES),
+  ];
+
   try {
-    await client.query('BEGIN');
+    const result = await p.query(
+      `SELECT table_name
+       FROM information_schema.tables
+       WHERE table_schema = 'public'
+         AND table_name = ANY($1::text[])`,
+      [requiredTables]
+    );
+    const existing = new Set(result.rows.map((row) => row.table_name));
+    const missing = requiredTables.filter((table) => !existing.has(table));
 
-    // Users
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        uid TEXT UNIQUE NOT NULL,
-        email TEXT NOT NULL,
-        name TEXT,
-        role TEXT DEFAULT 'user',
-        created_at TIMESTAMP DEFAULT NOW()
+    if (missing.length > 0) {
+      throw new Error(
+        `Supabase PostgreSQL schema is incomplete. Missing table(s): ${missing.join(', ')}. Run "npm run db:push" before starting the application.`
       );
-    `);
-    // [DURABILITY] Persist the full user record so Supabase Postgres is the
-    // durable source of truth (in-memory model is hydrated from here on boot).
-    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS supabase_uid TEXT;`);
-    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS data JSONB DEFAULT '{}'::jsonb;`);
-    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();`);
-
-    // Vendors
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS vendors (
-        id VARCHAR(100) PRIMARY KEY,
-        user_id VARCHAR(100),
-        brand_name TEXT NOT NULL,
-        slug TEXT,
-        status VARCHAR(50) DEFAULT 'active',
-        rating NUMERIC DEFAULT 5.0,
-        total_trips INT DEFAULT 0,
-        documents JSONB DEFAULT '{}'::jsonb,
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
-
-    // Trips / Products
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS trips (
-        id SERIAL PRIMARY KEY,
-        title TEXT NOT NULL,
-        destination TEXT NOT NULL,
-        price NUMERIC NOT NULL,
-        duration_days INT DEFAULT 1,
-        available_seats INT DEFAULT 10,
-        category TEXT,
-        vendor_id VARCHAR(100),
-        slug TEXT,
-        status VARCHAR(50) DEFAULT 'published',
-        cover_image TEXT,
-        description TEXT,
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
-
-    // Bookings
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS bookings (
-        id SERIAL PRIMARY KEY,
-        booking_code TEXT UNIQUE NOT NULL,
-        user_id INT,
-        vendor_id VARCHAR(100),
-        trip_id INT,
-        total_amount NUMERIC NOT NULL,
-        payment_status TEXT DEFAULT 'pending',
-        booking_status TEXT DEFAULT 'pending_payment',
-        payment_method TEXT,
-        payment_channel TEXT,
-        midtrans_order_id TEXT,
-        midtrans_token TEXT,
-        paid_at TIMESTAMP,
-        created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
-
-    // Payment Transactions
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS payment_transactions (
-        id SERIAL PRIMARY KEY,
-        tx_id TEXT UNIQUE NOT NULL,
-        booking_code TEXT NOT NULL,
-        order_id TEXT NOT NULL,
-        amount NUMERIC NOT NULL,
-        status TEXT DEFAULT 'pending',
-        payment_type TEXT,
-        transaction_id TEXT,
-        created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
-
-    // Conversations
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS conversations (
-        id VARCHAR(100) PRIMARY KEY,
-        user_id VARCHAR(100) NOT NULL,
-        user_name TEXT,
-        vendor_id VARCHAR(100) NOT NULL,
-        vendor_name TEXT,
-        product_id TEXT,
-        product_title TEXT,
-        booking_id TEXT,
-        booking_code TEXT,
-        last_message TEXT,
-        status VARCHAR(50) DEFAULT 'active',
-        unread_user_count INT DEFAULT 0,
-        unread_vendor_count INT DEFAULT 0,
-        created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
-
-    // Messages
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS messages (
-        id VARCHAR(100) PRIMARY KEY,
-        conversation_id VARCHAR(100) NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
-        sender_id VARCHAR(100) NOT NULL,
-        sender_role VARCHAR(50) DEFAULT 'user',
-        sender_name TEXT,
-        text TEXT NOT NULL,
-        read BOOLEAN DEFAULT FALSE,
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
-
-    // Notifications
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS notifications (
-        id VARCHAR(100) PRIMARY KEY,
-        recipient_id VARCHAR(100) NOT NULL,
-        recipient_role VARCHAR(50) DEFAULT 'user',
-        title TEXT NOT NULL,
-        message TEXT NOT NULL,
-        type VARCHAR(50) DEFAULT 'info',
-        read BOOLEAN DEFAULT FALSE,
-        link TEXT,
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
-
-    // News
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS news (
-        id VARCHAR(100) PRIMARY KEY,
-        title TEXT NOT NULL,
-        slug TEXT,
-        content TEXT NOT NULL,
-        author TEXT DEFAULT 'Admin TREXIO',
-        category VARCHAR(50) DEFAULT 'Umum',
-        published BOOLEAN DEFAULT TRUE,
-        published_at TIMESTAMP DEFAULT NOW(),
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
-
-    // Travel Intents
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS travel_intents (
-        id VARCHAR(100) PRIMARY KEY,
-        user_id VARCHAR(100) NOT NULL,
-        destination TEXT NOT NULL,
-        travel_date DATE,
-        budget NUMERIC,
-        activities TEXT[],
-        status VARCHAR(50) DEFAULT 'active',
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
-
-    // Journeys
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS journeys (
-        id VARCHAR(100) PRIMARY KEY,
-        creator_id VARCHAR(100) NOT NULL,
-        title TEXT NOT NULL,
-        destination TEXT NOT NULL,
-        start_date DATE,
-        end_date DATE,
-        status VARCHAR(50) DEFAULT 'active',
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
-
-    // Rides
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS rides (
-        id VARCHAR(100) PRIMARY KEY,
-        creator_id VARCHAR(100) NOT NULL,
-        origin TEXT NOT NULL,
-        destination TEXT NOT NULL,
-        departure_time TIMESTAMP,
-        total_seats INT DEFAULT 4,
-        available_seats INT DEFAULT 4,
-        price_per_seat NUMERIC DEFAULT 0,
-        status VARCHAR(50) DEFAULT 'active',
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
-
-    // [FASE 2 — SOURCE OF TRUTH] Document tables that store the FULL application
-    // object as JSONB keyed by the app's string id. Postgres is kept as an exact
-    // mirror of the in-memory model (hydrated on boot), making it the durable
-    // source of truth for all core entities.
-    for (const t of Object.values(APP_DOC_TABLES)) {
-      await client.query(`
-        CREATE TABLE IF NOT EXISTS ${t} (
-          id TEXT PRIMARY KEY,
-          data JSONB NOT NULL DEFAULT '{}'::jsonb,
-          updated_at TIMESTAMP DEFAULT NOW()
-        );
-      `);
     }
 
-    await client.query('COMMIT');
-    console.log('[Supabase PostgreSQL] Schema verified and initialized in Supabase PostgreSQL.');
+    console.log('[Supabase PostgreSQL] Schema verification passed. Runtime DDL is disabled; migrations are authoritative.');
   } catch (err) {
-    await client.query('ROLLBACK');
-    console.error('[Supabase PostgreSQL] Failed to initialize schema:', err.message);
+    console.error('[Supabase PostgreSQL] Schema verification failed:', err.message);
     throw err;
-  } finally {
-    client.release();
   }
 }
 
@@ -349,7 +154,7 @@ async function loadUsersFromSupabasePostgres() {
 
 
 // ==========================================================
-// [FASE 2] Generic JSONB document store (source of truth mirror)
+// [FASE 2] Generic JSONB compatibility document store
 // ==========================================================
 const APP_DOC_TABLES = {
   trips: 'app_trips',
@@ -424,8 +229,8 @@ async function deleteAppDoc(collection, id) {
   }
 }
 
-// Make Postgres an EXACT mirror of the in-memory array: upsert all current docs
-// and delete rows that no longer exist in memory (handles create/update/delete).
+// Transitional bulk replacement for legacy compatibility collections only.
+// New domain code must use upsertAppDoc/deleteAppDoc instead.
 async function replaceAppCollection(collection, docs) {
   const table = APP_DOC_TABLES[collection];
   const p = getPool();
