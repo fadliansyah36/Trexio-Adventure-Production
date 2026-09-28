@@ -2143,6 +2143,7 @@ registerAuthRoutes({
 
 // Mission 09C Phase 5B: user/profile routes extracted to modules/routes/userRoutes.js
 
+
 // Mission 09C Phase 5B: user routes are registered at their original route-order boundary
 registerUserRoutes({
   api, users, bcrypt, jwt, JWT_SECRET, supabaseAuth, authLimiter,
@@ -2158,6 +2159,7 @@ registerUserRoutes({
   formatBookingWithChecklist
 });
 
+// --- Chat User ↔ Mitra & Vendor Communications ---
   const userId = req.user.id;
   const userVendor = vendors.find(v => v.user_id === userId || v.id === userId);
   const vendorId = userVendor ? userVendor.id : null;
