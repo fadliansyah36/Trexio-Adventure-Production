@@ -172,3 +172,39 @@ Completed as a non-destructive archive preparation step.
 Physical retirement of `app_bookings` and `app_payments` is still a separate destructive operation. Before that operation, the final gate must verify runtime dependency status, archive parity, relational parity, and any required retention/rollback approval. Mission 08E does not drop the source legacy tables.
 
 Production archive gate: `public.legacy_archive_retirement_gate`.
+
+
+## Mission 08F — Final Legacy Retirement Verification
+
+Final verification completed without dropping legacy tables.
+
+### Verification results
+
+- Runtime source audit: **PASS** — no `app_bookings` / `app_payments` references in the audited runtime/repository files.
+- Legacy booking archive parity: **PASS** — 32 legacy rows, 32 archive rows, 32 exact ID+JSON matches.
+- Legacy payment archive parity: **PASS** — 37 legacy rows, 37 archive rows, 37 exact ID+JSON matches.
+- Relational booking population: 46 rows.
+- Relational payment population: 37 rows.
+- External database dependency audit: **PASS** — remaining PostgreSQL dependencies are internal table-owned policies/constraints/defaults, not external application objects.
+- Public view references: **PASS** — none found.
+- Public function references: **PASS** — none found among ordinary functions.
+- Migration history: **PASS** — Mission 08E migrations are recorded in Supabase migration history.
+- Final gate: **READY_FOR_DESTRUCTIVE_RETIREMENT**.
+
+### Security hardening performed
+
+- Archive tables use RLS with service-role-only policies.
+- Final verification gate uses RLS with service-role-only policy.
+- `public.rls_auto_enable()` EXECUTE was explicitly revoked from `anon` and `authenticated` again during final verification.
+
+The remaining Supabase security advisory is the Auth leaked-password-protection setting, which is independent of the legacy booking/payment retirement path and remains a separate platform configuration item.
+
+### Important boundary
+
+**READY_FOR_DESTRUCTIVE_RETIREMENT does not itself execute destructive retirement.** The next destructive migration must be separately authorized and versioned. It should re-run the final verification immediately before dropping `public.app_bookings` and `public.app_payments`.
+
+Verification command:
+
+```bash
+npm run db:verify-legacy-retirement
+```
