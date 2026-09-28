@@ -268,7 +268,7 @@ async function initSupabasePostgresSchema() {
     }
 
     await client.query('COMMIT');
-    console.log('[Supabase PostgreSQL] Schema verified and initialized in Cloud SQL / Supabase PostgreSQL.');
+    console.log('[Supabase PostgreSQL] Schema verified and initialized in Supabase PostgreSQL.');
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('[Supabase PostgreSQL] Failed to initialize schema:', err.message);
@@ -329,100 +329,8 @@ async function loadUsersFromSupabasePostgres() {
 
 
 
-async function syncConversationToCloudSql(conv) {
-  if (!conv || !conv.id) return;
-  const p = getPool();
-  if (!p) return;
-  try {
-    await p.query(
-      `INSERT INTO conversations (id, user_id, user_name, vendor_id, vendor_name, product_id, product_title, booking_id, booking_code, last_message, status, unread_user_count, unread_vendor_count, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())
-       ON CONFLICT (id) DO UPDATE
-       SET last_message = EXCLUDED.last_message,
-           status = EXCLUDED.status,
-           unread_user_count = EXCLUDED.unread_user_count,
-           unread_vendor_count = EXCLUDED.unread_vendor_count,
-           updated_at = NOW();`,
-      [
-        String(conv.id),
-        String(conv.user_id || ''),
-        String(conv.user_name || ''),
-        String(conv.vendor_id || ''),
-        String(conv.vendor_name || ''),
-        String(conv.product_id || ''),
-        String(conv.product_title || ''),
-        String(conv.booking_id || ''),
-        String(conv.booking_code || ''),
-        String(conv.last_message || ''),
-        String(conv.status || 'active'),
-        parseInt(conv.unread_user_count || 0),
-        parseInt(conv.unread_vendor_count || 0)
-      ]
-    );
-  } catch (err) {
-    console.error('[Supabase PostgreSQL] Error syncing conversation:', err.message);
-  }
-}
 
-async function syncMessageToCloudSql(msg) {
-  if (!msg || !msg.id) return;
-  const p = getPool();
-  if (!p) return;
-  try {
-    if (msg.conversation_id) {
-      await p.query(
-        `INSERT INTO conversations (id, user_id, vendor_id, last_message)
-         VALUES ($1, 'unknown', 'unknown', '')
-         ON CONFLICT (id) DO NOTHING;`,
-        [String(msg.conversation_id)]
-      );
-    }
 
-    await p.query(
-      `INSERT INTO messages (id, conversation_id, sender_id, sender_role, sender_name, text, read)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       ON CONFLICT (id) DO UPDATE
-       SET read = EXCLUDED.read;`,
-      [
-        String(msg.id),
-        String(msg.conversation_id),
-        String(msg.sender_id),
-        String(msg.sender_role || 'user'),
-        String(msg.sender_name || ''),
-        String(msg.text || ''),
-        Boolean(msg.read)
-      ]
-    );
-  } catch (err) {
-    console.error('[Supabase PostgreSQL] Error syncing message:', err.message);
-  }
-}
-
-async function syncNotificationToCloudSql(notif) {
-  if (!notif || !notif.id) return;
-  const p = getPool();
-  if (!p) return;
-  try {
-    await p.query(
-      `INSERT INTO notifications (id, recipient_id, recipient_role, title, message, type, read, link)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       ON CONFLICT (id) DO UPDATE
-       SET read = EXCLUDED.read;`,
-      [
-        String(notif.id),
-        String(notif.recipient_id || notif.user_id || ''),
-        String(notif.recipient_role || 'user'),
-        String(notif.title || ''),
-        String(notif.message || notif.text || ''),
-        String(notif.type || 'info'),
-        Boolean(notif.read),
-        String(notif.link || '')
-      ]
-    );
-  } catch (err) {
-    console.error('[Supabase PostgreSQL] Error syncing notification:', err.message);
-  }
-}
 
 // ==========================================================
 // [FASE 2] Generic JSONB document store (source of truth mirror)
@@ -544,8 +452,5 @@ module.exports = {
   upsertAppDoc,
   deleteAppDoc,
   replaceAppCollection,
-  syncConversationToCloudSql,
-  syncMessageToCloudSql,
-  syncNotificationToCloudSql,
   APP_DOC_TABLES
 };
