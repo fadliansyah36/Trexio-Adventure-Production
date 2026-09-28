@@ -49,7 +49,7 @@ async function checkDbConnection() {
   }
 }
 
-async function initCloudSqlSchema() {
+async function initSupabasePostgresSchema() {
   const p = getPool();
   if (!p) return;
   const client = await p.connect();
@@ -278,7 +278,7 @@ async function initCloudSqlSchema() {
   }
 }
 
-async function syncUserToCloudSql(user) {
+async function saveUserToSupabasePostgres(user) {
   if (!user || (!user.uid && !user.id)) return;
   const p = getPool();
   if (!p) return;
@@ -303,7 +303,7 @@ async function syncUserToCloudSql(user) {
 }
 
 // [DURABILITY] Hydrate the full user list from Supabase Postgres on boot.
-async function loadUsersFromCloudSql() {
+async function loadUsersFromSupabasePostgres() {
   const p = getPool();
   if (!p) return [];
   try {
@@ -537,9 +537,9 @@ async function replaceAppCollection(collection, docs) {
 module.exports = {
   getPool,
   checkDbConnection,
-  initCloudSqlSchema,
-  syncUserToCloudSql,
-  loadUsersFromCloudSql,
+  initSupabasePostgresSchema,
+  saveUserToSupabasePostgres,
+  loadUsersFromSupabasePostgres,
   loadAppDocs,
   upsertAppDoc,
   deleteAppDoc,
