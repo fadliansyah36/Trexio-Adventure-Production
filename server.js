@@ -570,12 +570,6 @@ function persistVendorRecord(vendor) {
   });
 }
 
-function removeVendorRecord(vendorId) {
-  if (!vendorId) return;
-  vendorRepository.remove(vendorId).catch((err) => {
-    console.error('[Persistence] Failed to remove vendor:', err.message);
-  });
-}
 
 function persistTripRecord(trip) {
   if (!trip || !trip.id) return;
@@ -13717,18 +13711,18 @@ const server = app.listen(PORT, '0.0.0.0', async () => {
   if (typeof initSupabasePostgresSchema === 'function') {
     try {
       await initSupabasePostgresSchema();
-      console.log('[CloudSQL Sync] Initialization & Schema Check complete on startup.');
+      console.log('[Supabase PostgreSQL Sync] Initialization & Schema Check complete on startup.');
       const health = await performDbHealthCheck();
       if (health.connected) {
-        console.log('[CloudSQL Sync] Supabase PostgreSQL connection verified strictly.');
+        console.log('[Supabase PostgreSQL Sync] Supabase PostgreSQL connection verified strictly.');
         await hydrateAndSeedUsers();
       } else {
-        console.error('[CloudSQL Sync] STRICT ERROR: Supabase PostgreSQL unreachable at startup:', health.error);
+        console.error('[Supabase PostgreSQL Sync] STRICT ERROR: Supabase PostgreSQL unreachable at startup:', health.error);
       }
     } catch (err) {
       systemHealth.database.connected = false;
       systemHealth.database.error = err.message;
-      console.error('[CloudSQL Sync] STRICT ERROR: Failed to initialize schema on startup:', err.message);
+      console.error('[Supabase PostgreSQL Sync] STRICT ERROR: Failed to initialize schema on startup:', err.message);
     }
   }
 });
