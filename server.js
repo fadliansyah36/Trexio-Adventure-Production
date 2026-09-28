@@ -173,8 +173,6 @@ const {
   checkDbConnection,
   syncUserToCloudSql,
   loadUsersFromCloudSql,
-  syncBookingToCloudSql,
-  syncPaymentToCloudSql,
   syncConversationToCloudSql,
   syncMessageToCloudSql,
   syncNotificationToCloudSql,
@@ -183,6 +181,8 @@ const {
 const appDocumentRepository = require('./src/repositories/appDocumentRepository');
 const tripRepository = require('./src/repositories/tripRepository');
 const vendorRepository = require('./src/repositories/vendorRepository');
+const bookingRepository = require('./src/repositories/bookingRepository');
+const paymentRepository = require('./src/repositories/paymentRepository');
 
 // System Live Health & Strict Connection Status
 const systemHealth = {
@@ -11869,10 +11869,14 @@ const payment_transactions = [];
 const webhook_logs = [];
 
 function saveBookingsToDisk() {
-  if (Array.isArray(bookings)) {
-    bookings.forEach(b => syncBookingToCloudSql(b));
-  }
-  persistCollection('bookings');
+  if (!Array.isArray(bookings)) return;
+  bookings.forEach((booking) => {
+    if (booking?.id) {
+      bookingRepository.save(booking).catch((err) => {
+        console.error('[Persistence] Failed to persist booking:', err.message);
+      });
+    }
+  });
 }
 
 function loadBookingsFromDisk() {
@@ -11881,10 +11885,14 @@ function loadBookingsFromDisk() {
 }
 
 function savePaymentsDataToDisk() {
-  if (Array.isArray(payment_transactions)) {
-    payment_transactions.forEach(p => syncPaymentToCloudSql(p));
-  }
-  persistCollection('payments');
+  if (!Array.isArray(payment_transactions)) return;
+  payment_transactions.forEach((payment) => {
+    if (payment?.tx_id) {
+      paymentRepository.save(payment).catch((err) => {
+        console.error('[Persistence] Failed to persist payment:', err.message);
+      });
+    }
+  });
 }
 
 function loadPaymentsFromDisk() {
