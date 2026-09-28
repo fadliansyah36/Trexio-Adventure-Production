@@ -7,9 +7,9 @@
     "frontend"
   ],
   "scripts": {
-    "dev": "node server.js",
+    "dev": "node apps/api/server.js",
     "build": "npm --prefix frontend run build",
-    "start": "node server.js",
+    "start": "node apps/api/server.js",
     "test": "node scripts/tahap9-automated-test-suite.js",
     "test:tahap9": "node scripts/tahap9-automated-test-suite.js",
     "security-scan": "node scripts/security-scan.js",
