@@ -148,3 +148,27 @@ A new audit table, `public.legacy_booking_payment_retirement_gate`, records the 
 5. Execute a separate versioned destructive migration only after the retirement decision is explicitly authorized.
 
 Mission 08D therefore closes the **runtime retirement gate**, but deliberately does not perform the physical table drop.
+
+
+## Mission 08E — Legacy Archive & Final Retirement Preparation
+
+Completed as a non-destructive archive preparation step.
+
+### Production archive evidence
+
+- `archive_app_bookings`: 32 rows
+- `app_bookings`: 32 rows
+- Exact booking ID + JSON payload matches: 32/32
+- `archive_app_payments`: 37 rows
+- `app_payments`: 37 rows
+- Exact payment ID + JSON payload matches: 37/37
+- Archive tables have RLS enabled.
+- Live legacy tables were not deleted or modified destructively.
+
+### Retirement preparation status
+
+**ARCHIVE_READY** — the retained legacy copies have a verified archive representation.
+
+Physical retirement of `app_bookings` and `app_payments` is still a separate destructive operation. Before that operation, the final gate must verify runtime dependency status, archive parity, relational parity, and any required retention/rollback approval. Mission 08E does not drop the source legacy tables.
+
+Production archive gate: `public.legacy_archive_retirement_gate`.
