@@ -133,7 +133,7 @@ passedChecks.push(`Scanned ${scannedCount} source files for unauthorized databas
 const envExamplePath = '.env.example';
 if (fs.existsSync(envExamplePath)) {
   const envContent = fs.readFileSync(envExamplePath, 'utf8');
-  const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'MIDTRANS_SERVER_KEY', 'GEMINI_API_KEY'];
+  const requiredEnvVars = ['DATABASE_URL', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'MIDTRANS_SERVER_KEY', 'GEMINI_API_KEY'];
   const missingEnvs = requiredEnvVars.filter(v => !envContent.includes(v));
 
   if (missingEnvs.length === 0) {
