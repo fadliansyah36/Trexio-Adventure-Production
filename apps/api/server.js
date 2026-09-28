@@ -2144,20 +2144,6 @@ registerAuthRoutes({
 // Mission 09C Phase 5B: user/profile routes extracted to modules/routes/userRoutes.js
 
 
-// Mission 09C Phase 5B: user routes are registered at their original route-order boundary
-registerUserRoutes({
-  api, users, bcrypt, jwt, JWT_SECRET, supabaseAuth, authLimiter,
-  signAuthToken, getCurrentUser, requireAuth, requireRoles, requireSuperAdmin,
-  requireAdmin, requireVendor, getUserRoles, hasAnyRole,
-  getVerificationStatusForUser, saveUserToSupabasePostgres,
-  loadUsersFromSupabasePostgres, recordAuditLog, recordSecurityIncident,
-  logActivity, nowISO, uuidv4, speakeasy, QRCode,
-  syncAllUsersToPostgres, saveUsersToDisk, tenants, vendors,
-  conversations, messages, auditLogs, systemHealth, persistCollection,
-  createNotification, cleanUser, calculateUserDashboardStats,
-  bookings, trips, payment_transactions,
-  formatBookingWithChecklist
-});
 
 // --- Chat User ↔ Mitra & Vendor Communications ---
   const userId = req.user.id;
@@ -2207,6 +2193,21 @@ registerUserRoutes({
   }
 
   res.json(userConvs);
+});
+
+// Mission 09C Phase 5B: user routes are registered after extracted user dependencies are initialized
+registerUserRoutes({
+  api, users, bcrypt, jwt, JWT_SECRET, supabaseAuth, authLimiter,
+  signAuthToken, getCurrentUser, requireAuth, requireRoles, requireSuperAdmin,
+  requireAdmin, requireVendor, getUserRoles, hasAnyRole,
+  getVerificationStatusForUser, saveUserToSupabasePostgres,
+  loadUsersFromSupabasePostgres, recordAuditLog, recordSecurityIncident,
+  logActivity, nowISO, uuidv4, speakeasy, QRCode,
+  syncAllUsersToPostgres, saveUsersToDisk, tenants, vendors,
+  conversations, messages, auditLogs, systemHealth, persistCollection,
+  createNotification, cleanUser, calculateUserDashboardStats,
+  bookings, trips, payment_transactions,
+  formatBookingWithChecklist
 });
 
 api.post('/chat/conversations', requireAuth, (req, res) => {
