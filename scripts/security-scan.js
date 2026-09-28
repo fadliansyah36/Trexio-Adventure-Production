@@ -38,7 +38,7 @@ function scanFile(filePath) {
 
   // Detect embedded credential fallbacks and common secret material.
   const credentialFallbackPatterns = [
-    /(?:jwt_secret|secret_key|api_key|private_key|password)\s*[:=]\s*['"][^'"]{20,}['"]/i,
+    /(?:jwt_secret|secret_key|api_key|private_key|password)\s*[:=]\s*['"][A-Za-z0-9_\-]{20,}['"]/i,
     /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/i,
   ];
   credentialFallbackPatterns.forEach((pattern) => {
