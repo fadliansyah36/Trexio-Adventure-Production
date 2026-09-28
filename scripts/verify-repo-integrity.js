@@ -22,7 +22,12 @@ const forbiddenPackages = [
   'lowdb',
   'leveldb',
   'pouchdb',
-  'lokijs'
+  'lokijs',
+  'typeorm',
+  '@nestjs/common',
+  '@nestjs/core',
+  '@nestjs/platform-express',
+  '@nestjs/typeorm'
 ];
 
 try {
@@ -65,7 +70,13 @@ const forbiddenCodePatterns = [
   { pattern: /require\(['"]nedb['"]\)/i, rule: 'NeDB driver import detected' },
   { pattern: /require\(['"]lowdb['"]\)/i, rule: 'LowDB driver import detected' },
   { pattern: /new\s+SQLiteDatabase/i, rule: 'Direct SQLite instance creation detected' },
-  { pattern: /sqlite:\/\//i, rule: 'SQLite connection URI detected in source' }
+  { pattern: /sqlite:\/\//i, rule: 'SQLite connection URI detected in source' },
+  { pattern: /DATABASE_FILE/i, rule: 'Local database file configuration detected' },
+  { pattern: /trexio_database\.sqlite/i, rule: 'Legacy SQLite database filename detected' },
+  { pattern: /from\s+['\"]@nestjs\//i, rule: 'Inactive NestJS backend import detected' },
+  { pattern: /require\(['\"]@nestjs\//i, rule: 'Inactive NestJS backend import detected' },
+  { pattern: /from\s+['\"]typeorm['\"]/i, rule: 'Inactive TypeORM import detected' },
+  { pattern: /require\(['\"]typeorm['\"]/i, rule: 'Inactive TypeORM import detected' }
 ];
 
 let scannedCount = 0;
