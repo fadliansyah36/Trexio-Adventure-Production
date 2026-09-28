@@ -36,6 +36,22 @@ function scanFile(filePath) {
     }
   });
 
+  // Detect embedded credential fallbacks and common secret material.
+  const credentialFallbackPatterns = [
+    /(?:jwt_secret|secret_key|api_key|private_key|password)\\s*[:=]\\s*['"][^'"]{20,}['"]/i,
+    /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/i,
+  ];
+  credentialFallbackPatterns.forEach((pattern) => {
+    if (pattern.test(content) && !filePath.includes('security-scan.js') && !filePath.includes('.env.example')) {
+      findings.secrets.push({ file: filePath, rule: 'Embedded credential or private-key material' });
+    }
+  });
+
+  // Client-side logging must never dump Axios configs or request/response bodies.
+  if (filePath.startsWith('frontend/') && /console\\.error\\([^\\n]*(?:fullConfig|requestDTO|requestData|serverResponseBody)/i.test(content)) {
+    findings.p1.push({ file: filePath, rule: 'Sensitive request configuration/body logged to browser console' });
+  }
+
   // Check for unsafe SQL concatenation in server.js or src
   if (filePath.endsWith('.js') || filePath.endsWith('.ts')) {
     if (/SELECT .* FROM .* \+ /i.test(content) || /INSERT INTO .* VALUES \(.*\+/i.test(content)) {
