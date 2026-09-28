@@ -23,7 +23,8 @@
     "db:verify-relational-cutover": "node scripts/verify-relational-cutover.js",
     "db:apply-mission-08-booking-payment": "node scripts/apply-mission-08-booking-payment-cutover.js",
     "db:verify-booking-payment-cutover": "node scripts/verify-booking-payment-cutover.js",
-    "db:verify-legacy-retirement": "node scripts/verify-legacy-retirement.js"
+    "db:verify-legacy-retirement": "node scripts/verify-legacy-retirement.js",
+    "verify:api-boundary": "node scripts/verify-api-boundary.js"
   },
   "dependencies": {
     "@google/genai": "^2.15.0",
