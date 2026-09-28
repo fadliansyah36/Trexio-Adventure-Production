@@ -12,11 +12,11 @@ TREXIO operates as a high-performance full-stack web application designed for cl
 - **Backend API Layer**: Node.js & Express Monolith (`server.js`) with modular service layers:
   - `src/ai/`: Google Gemini AI Multi-Service Intelligence Engine.
   - `src/backpacker/`: Multi-modal transit routing, buddy matching, and live journey tracking.
-  - `src/db/`: Database governance, monitoring, and Cloud SQL/Supabase connection management.
-- **Database Engine (Single Source of Truth)**: Supabase PostgreSQL (`db.fndxxiqojmhiepidrxio.supabase.co:5432/postgres`) via `pg` connection pool and `@supabase/supabase-js`.
+  - `src/db/`: Supabase PostgreSQL connection and database governance.
+- **Database Engine (Single Source of Truth)**: Supabase PostgreSQL via the `pg` connection pool and `@supabase/supabase-js`.
 - **Payment Gateway**: Midtrans Snap & Core API with SHA-512 notification signature verification.
 - **AI / LLM Engine**: Official `@google/genai` TypeScript/JavaScript SDK with PostgreSQL data grounding.
-- **Authentication & RBAC**: Supabase Auth + JWT with 10 discrete roles (`user`, `vendor`, `admin`, `super_admin`, `guide`, `driver`, `renter`, `backpacker`, `agent`, `staff`) with server-side middleware guards.
+- **Authentication & RBAC**: Supabase Auth + the active Express/JWT authorization runtime with 10 discrete roles (`user`, `vendor`, `admin`, `super_admin`, `guide`, `driver`, `renter`, `backpacker`, `agent`, `staff`) with server-side middleware guards.
 
 ---
 
@@ -26,7 +26,7 @@ Copy `.env.example` to `.env` and supply production values:
 
 ```env
 # Database (Supabase PostgreSQL)
-DATABASE_URL=postgresql://postgres:<PASSWORD>@db.<REF>.supabase.co:5432/postgres
+DATABASE_URL=<SUPABASE_POSTGRES_CONNECTION_STRING>
 SUPABASE_URL=https://<REF>.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY>
 SUPABASE_ANON_KEY=<ANON_KEY>
@@ -121,6 +121,5 @@ npm start
 
 ## 5. Disaster Recovery & Business Continuity
 
-- **RPO (Recovery Point Objective)**: < 5 Minutes (Supabase Continuous WAL Archival).
-- **RTO (Recovery Time Objective)**: < 15 Minutes (Automated database failover and instant schema initialization).
-- **Integrity Guarantee**: Zero local databases, zero JSON file fallbacks, zero synthetic dummy records.
+- Backup, PITR, and recovery targets are governed by the active Supabase project configuration and Trexio recovery runbooks.
+- **Integrity Guarantee**: Production business persistence uses Supabase PostgreSQL; local SQLite/JSON persistence is not a production source of truth.
