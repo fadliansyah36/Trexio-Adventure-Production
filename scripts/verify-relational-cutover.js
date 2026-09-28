@@ -13,6 +13,10 @@ function normalize(value) {
   return String(value);
 }
 
+function normalizeMatch(value) {
+  return normalize(value)?.trim().toLowerCase() || null;
+}
+
 function coreVendor(row) {
   return {
     id: normalize(row.id),
@@ -58,7 +62,45 @@ function compareById(name, legacyRows, relationalRows, mapper) {
     console.warn(`  Relational-only IDs: ${extra.slice(0, 20).join(', ')}`);
   }
 
-  return missing.length === 0 && changed.length === 0;
+  return { ok: missing.length === 0 && changed.length === 0, missing, extra, changed };
+}
+
+function printTripReconciliationDiagnostics(legacyRows, relationalRows, result) {
+  if (result.ok) return;
+
+  console.error('[Relational Cutover] Trip reconciliation diagnostics (read-only):');
+
+  const relational = relationalRows.map((row) => ({
+    id: normalize(row.external_id || row.id),
+    postgres_id: normalize(row.id),
+    title: normalize(row.title),
+    destination: normalize(row.destination),
+    slug: normalize(row.slug),
+  }));
+
+  for (const legacy of legacyRows) {
+    const title = normalizeMatch(legacy.title);
+    const destination = normalizeMatch(legacy.destination);
+    const slug = normalizeMatch(legacy.slug);
+
+    const candidates = relational.filter((row) => {
+      const sameSlug = slug && normalizeMatch(row.slug) === slug;
+      const sameTitleDestination =
+        title &&
+        destination &&
+        normalizeMatch(row.title) === title &&
+        normalizeMatch(row.destination) === destination;
+      return sameSlug || sameTitleDestination;
+    });
+
+    console.error(JSON.stringify({
+      legacy_id: normalize(legacy.id),
+      title: normalize(legacy.title),
+      destination: normalize(legacy.destination),
+      slug: normalize(legacy.slug),
+      candidates,
+    }));
+  }
 }
 
 async function main() {
@@ -79,30 +121,35 @@ async function main() {
       pool.query(`SELECT data->>'id' AS id, data->>'title' AS title,
                          data->>'destination' AS destination,
                          data->>'vendor_id' AS vendor_id,
+                         data->>'slug' AS slug,
                          CASE WHEN data->>'published' = 'false' THEN 'draft'
                               ELSE COALESCE(NULLIF(data->>'status', ''), 'published')
                          END AS status
                   FROM app_trips
                   WHERE NULLIF(data->>'id', '') IS NOT NULL`),
-      pool.query(`SELECT external_id, id, title, destination, vendor_id, status
+      pool.query(`SELECT external_id, id, title, destination, vendor_id, slug, status
                   FROM trips`),
     ]);
 
-    const vendorsOk = compareById(
+    const vendorsResult = compareById(
       'vendors',
       legacyVendors.rows,
       relationalVendors.rows,
       coreVendor
     );
 
-    const tripsOk = compareById(
+    const tripsResult = compareById(
       'trips',
       legacyTrips.rows,
       relationalTrips.rows,
       coreTrip
     );
 
-    if (!vendorsOk || !tripsOk) {
+    if (!tripsResult.ok) {
+      printTripReconciliationDiagnostics(legacyTrips.rows, relationalTrips.rows, tripsResult);
+    }
+
+    if (!vendorsResult.ok || !tripsResult.ok) {
       console.error('[Relational Cutover] FAILED — do not retire app_* compatibility tables yet.');
       process.exitCode = 1;
       return;
