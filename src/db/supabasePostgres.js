@@ -156,9 +156,10 @@ async function loadUsersFromSupabasePostgres() {
 // ==========================================================
 // [FASE 2] Generic JSONB compatibility document store
 // ==========================================================
+// Vendor and Trip were migrated to relational repositories in Mission 07.
+// Their app_* tables remain preserved as legacy data for verification/rollback,
+// but they are intentionally excluded from the runtime compatibility registry.
 const APP_DOC_TABLES = {
-  trips: 'app_trips',
-  vendors: 'app_vendors',
   bookings: 'app_bookings',
   payments: 'app_payments',
   rentals: 'app_rentals',
