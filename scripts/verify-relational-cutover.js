@@ -38,8 +38,14 @@ function coreTrip(row) {
 }
 
 function compareById(name, legacyRows, relationalRows, mapper) {
-  const legacy = new Map(legacyRows.map((row) => [normalize(row.id), mapper(row)]));
-  const relational = new Map(relationalRows.map((row) => [normalize(row.id), mapper(row)]));
+  const legacy = new Map(legacyRows.map((row) => {
+    const mapped = mapper(row);
+    return [mapped.id, mapped];
+  }));
+  const relational = new Map(relationalRows.map((row) => {
+    const mapped = mapper(row);
+    return [mapped.id, mapped];
+  }));
 
   const missing = [...legacy.keys()].filter((id) => !relational.has(id));
   const extra = [...relational.keys()].filter((id) => !legacy.has(id));
@@ -62,7 +68,7 @@ function compareById(name, legacyRows, relationalRows, mapper) {
     console.warn(`  Relational-only IDs: ${extra.slice(0, 20).join(', ')}`);
   }
 
-  return { ok: missing.length === 0 && changed.length === 0, missing, extra, changed };
+  return { ok: missing.length === 0 && extra.length === 0 && changed.length === 0, missing, extra, changed };
 }
 
 function printTripReconciliationDiagnostics(legacyRows, relationalRows, result) {
