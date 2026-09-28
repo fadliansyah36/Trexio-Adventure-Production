@@ -83,16 +83,23 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    // Allow trusted environment domains (*.run.app for Cloud Run previews, *.trexio.id)
+    // Production only accepts explicitly configured origins and TREXIO domains.
+    // Preview infrastructure domains are allowed only outside production.
     try {
       const parsedUrl = new URL(origin);
+      const hostname = parsedUrl.hostname;
       if (
-        parsedUrl.hostname === 'localhost' ||
-        parsedUrl.hostname === '127.0.0.1' ||
-        parsedUrl.hostname.endsWith('.run.app') ||
-        parsedUrl.hostname.endsWith('.trexio.id') ||
-        parsedUrl.hostname.endsWith('.emergentagent.com') ||
-        parsedUrl.hostname.endsWith('.emergent.host')
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname.endsWith('.trexio.id')
+      ) {
+        return callback(null, true);
+      }
+      if (
+        process.env.NODE_ENV !== 'production' &&
+        (hostname.endsWith('.run.app') ||
+          hostname.endsWith('.emergentagent.com') ||
+          hostname.endsWith('.emergent.host'))
       ) {
         return callback(null, true);
       }
