@@ -16,6 +16,10 @@ Mission 08 continues the Vendor/Trip relational cutover from Mission 07. The liv
 
 ## Phase B — Live-Gated Retirement
 
+### Mission 07 migration application
+
+The verification workflow is intentionally read-only. A separate manual GitHub Actions workflow, `Mission 07 - Apply Relational Cutover`, now applies only `20260929000000_MISSION_07_relational_vendor_trip_cutover.sql` inside a PostgreSQL transaction and verifies the three new columns before committing. This avoids using the generic migration runner for a high-risk production cutover.
+
 **Status: PENDING live Supabase verification**
 
 After `npm run db:verify-relational-cutover` passes against the active Supabase database, execute the remaining retirement work:
