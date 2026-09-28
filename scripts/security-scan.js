@@ -38,7 +38,7 @@ function scanFile(filePath) {
 
   // Detect embedded credential fallbacks and common secret material.
   const credentialFallbackPatterns = [
-    /(?:jwt_secret|secret_key|api_key|private_key|password)\\s*[:=]\\s*['"][^'"]{20,}['"]/i,
+    /(?:jwt_secret|secret_key|api_key|private_key|password)\s*[:=]\s*['"][^'"]{20,}['"]/i,
     /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/i,
   ];
   credentialFallbackPatterns.forEach((pattern) => {
@@ -48,7 +48,7 @@ function scanFile(filePath) {
   });
 
   // Client-side logging must never dump Axios configs or request/response bodies.
-  if (filePath.startsWith('frontend/') && /console\\.error\\([^\\n]*(?:fullConfig|requestDTO|requestData|serverResponseBody)/i.test(content)) {
+  if (filePath.startsWith('frontend/') && /console\.error\([^\n]*(?:fullConfig|requestDTO|requestData|serverResponseBody)/i.test(content)) {
     findings.p1.push({ file: filePath, rule: 'Sensitive request configuration/body logged to browser console' });
   }
 
