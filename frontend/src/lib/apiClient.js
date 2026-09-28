@@ -84,15 +84,14 @@ apiClient.interceptors.response.use(
 
       const errorMessage = formatErrorMessage(serverDetail);
 
-      // Log full config, request data, and error message to console for diagnostics
+      // Never log full Axios config or request bodies: they may contain
+      // Authorization headers, cookies, payment data, or personal information.
       console.error("❌ [API Client Booking Error]", {
         status: status || "NETWORK_ERROR",
         endpoint: url,
         method: config?.method?.toUpperCase(),
-        fullConfig: config,
-        requestData: requestData || null,
-        errorMessage: errorMessage,
-        serverResponseBody: rawErrorData || null,
+        errorMessage,
+        code: rawErrorData?.code || "UNKNOWN_ERROR",
       });
 
       // Trigger global toast notification system
