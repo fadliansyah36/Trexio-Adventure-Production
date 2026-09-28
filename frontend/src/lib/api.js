@@ -71,13 +71,14 @@ api.interceptors.response.use(
           error.message ||
           "Terjadi kesalahan saat memproses pesanan.";
 
+        // Do not log request DTOs or raw server responses: booking/payment
+        // payloads can contain personal or sensitive transaction data.
         console.error("❌ [Booking Attempt Failed]", {
           endpoint: url,
           method: method.toUpperCase(),
           status: statusCode,
           code: serverData?.code || "UNKNOWN_ERROR",
-          requestDTO: requestDTO || null,
-          serverError: serverData || rawMsg,
+          message: rawMsg,
         });
 
         const formattedError = formatApiError(rawMsg, "Gagal memproses transaksi. Silakan periksa data Anda.");
