@@ -7,8 +7,8 @@
 Mission 06 baseline:
 `07a0f744889ccf9fb91bfff6eb850c48148468d9`
 
-Current Mission 07 HEAD:
-to be resolved after this documentation commit.
+Current Mission 07 documentation HEAD:
+`63ae44dc5d1420cc9ad4f34050194e475ea096d1`
 
 ## Objective
 
