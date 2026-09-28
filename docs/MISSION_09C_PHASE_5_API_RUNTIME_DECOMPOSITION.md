@@ -1,6 +1,6 @@
 # Mission 09C Phase 5 — API Runtime Decomposition & Route Module Extraction
 
-**Status:** IN PROGRESS
+**Status:** IN PROGRESS — Phase 5B implemented
 
 ## Objective
 Continue the dependency-safe decomposition of the Trexio API runtime by moving route registration out of the monolithic `apps/api/server.js` into explicit module boundaries.
@@ -14,6 +14,10 @@ Continue the dependency-safe decomposition of the Trexio API runtime by moving r
   - `GET /api/backpacker/routes`
   - `GET /api/backpacker/routes/search`
   - dependencies are injected: `api`, `requireAuth`, `trips`
+- `apps/api/modules/routes/authRoutes.js`
+  - authentication, 2FA, OAuth/session, and password flows
+- `apps/api/modules/routes/userRoutes.js`
+  - profile, account security, sessions, verification, and user lifecycle flows
 
 The root `server.js` remains a compatibility entrypoint to `apps/api/server.js`.
 
@@ -35,13 +39,13 @@ Current direction:
 The API runtime still contains a large number of inline route families and shared mutable read models. Further extraction must be grouped by domain and dependency graph rather than by arbitrary file size.
 
 Priority candidates:
-1. Authentication/profile routes
-2. Marketplace/discovery routes
-3. Booking/payment routes
-4. Vendor routes
-5. Admin/super-admin routes
-6. SEO/public routes
-7. Community/backpacker domain routes
+1. Marketplace/discovery routes
+2. Booking/payment routes
+3. Vendor routes
+4. Admin/super-admin routes
+5. SEO/public routes
+6. Community/backpacker domain routes
+7. AI integration routes
 8. AI integration routes
 
 ## Gate
