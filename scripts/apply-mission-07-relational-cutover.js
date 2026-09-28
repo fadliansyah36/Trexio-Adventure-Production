@@ -19,27 +19,23 @@ async function main() {
     await client.query('BEGIN');
     await client.query("SELECT pg_advisory_xact_lock(hashtext('trexio:mission07:vendor-trip'))");
 
-    const required = await client.query(`
-      SELECT table_name
-      FROM information_schema.tables
-      WHERE table_schema = 'public'
-        AND table_name IN ('vendors', 'trips', 'app_vendors', 'app_trips')
-    `);
-
-    const found = new Set(required.rows.map((row) => row.table_name));
-    const missing = ['vendors', 'trips', 'app_vendors', 'app_trips'].filter((name) => !found.has(name));
-    if (missing.length) {
-      throw new Error(`Required tables are missing: ${missing.join(', ')}`);
-    }
-
     const baselineFile = path.join(__dirname, '..', 'supabase', 'migrations', BASELINE_MIGRATION);
     const migrationFile = path.join(__dirname, '..', 'supabase', 'migrations', MIGRATION);
 
-    const relationalTables = await client.query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('vendors', 'trips')");
-    const relationalSet = new Set(relationalTables.rows.map((row) => row.table_name));
-    if (!relationalSet.has('vendors') || !relationalSet.has('trips')) {
-      console.log(`[Mission 07] Required relational baseline missing; applying ${BASELINE_MIGRATION} first`);
+    const existingTables = await client.query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('vendors', 'trips', 'app_vendors', 'app_trips')");
+    const existingSet = new Set(existingTables.rows.map((row) => row.table_name));
+    const baselineNeeded = !existingSet.has('vendors') || !existingSet.has('trips') || !existingSet.has('app_vendors') || !existingSet.has('app_trips');
+
+    if (baselineNeeded) {
+      console.log(`[Mission 07] V3 relational/app baseline incomplete; applying ${BASELINE_MIGRATION} first`);
       await client.query(fs.readFileSync(baselineFile, 'utf8'));
+    }
+
+    const requiredAfterBaseline = await client.query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('vendors', 'trips', 'app_vendors', 'app_trips')");
+    const requiredSet = new Set(requiredAfterBaseline.rows.map((row) => row.table_name));
+    const missingAfterBaseline = ['vendors', 'trips', 'app_vendors', 'app_trips'].filter((name) => !requiredSet.has(name));
+    if (missingAfterBaseline.length) {
+      throw new Error(`Required tables are missing after baseline: ${missingAfterBaseline.join(', ')}`);
     }
 
     const sql = fs.readFileSync(migrationFile, 'utf8');
