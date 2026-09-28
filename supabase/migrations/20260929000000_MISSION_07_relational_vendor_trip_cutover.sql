@@ -16,8 +16,7 @@ ALTER TABLE public.trips
   ADD COLUMN IF NOT EXISTS data JSONB NOT NULL DEFAULT '{}'::jsonb;
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_trips_external_id
-  ON public.trips(external_id)
-  WHERE external_id IS NOT NULL;
+  ON public.trips(external_id);
 
 CREATE INDEX IF NOT EXISTS idx_vendors_data_gin
   ON public.vendors USING GIN (data);
