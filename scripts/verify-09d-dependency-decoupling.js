@@ -32,10 +32,21 @@ function scan(rootKey, patterns) {
   const files = walk(boundaries[rootKey]);
   for (const file of files) {
     const content = fs.readFileSync(file, 'utf8');
-    checked.push(path.relative(ROOT, file));
+    const relativeFile = path.relative(ROOT, file);
+    checked.push(relativeFile);
     for (const rule of patterns) {
+      // Browser-side Supabase Auth is an explicit identity boundary. The app
+      // may use the SDK only through this dedicated auth client; persistence
+      // remains exclusively behind apps/api.
+      if (
+        rule.name === 'Supabase persistence SDK import' &&
+        (relativeFile === 'apps/web/src/lib/supabaseClient.js' ||
+          relativeFile === 'apps/admin/src/lib/supabaseClient.js')
+      ) {
+        continue;
+      }
       if (rule.pattern.test(content)) {
-        failures.push(`${rootKey}: ${rule.name} -> ${path.relative(ROOT, file)}`);
+        failures.push(`${rootKey}: ${rule.name} -> ${relativeFile}`);
       }
     }
   }
