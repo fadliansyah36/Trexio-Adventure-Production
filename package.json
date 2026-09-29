@@ -4,7 +4,6 @@
   "private": true,
   "type": "commonjs",
   "workspaces": [
-    "frontend",
     "apps/web",
     "apps/admin",
     "apps/api",
