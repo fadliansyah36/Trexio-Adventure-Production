@@ -1,0 +1,96 @@
+name: 09E-09F Runtime and PWA Verification
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/api/**"
+      - "apps/web/**"
+      - "apps/admin/**"
+      - "packages/**"
+      - "scripts/verify-09c-post-extraction-integrity.js"
+      - "scripts/verify-09e-09f-pwa-runtime.js"
+      - ".github/workflows/09e-09f-runtime-pwa.yml"
+  workflow_dispatch:
+
+jobs:
+  structural:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/verify-09c-post-extraction-integrity.js
+      - run: node scripts/verify-09e-09f-pwa-runtime.js
+      - run: node scripts/verify-api-contracts.js
+      - run: node scripts/verify-09d-dependency-decoupling.js
+
+  api-runtime:
+    needs: structural
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: apps/api/package.json
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
+      - name: API runtime smoke
+        shell: bash
+        env:
+          NODE_ENV: test
+          JWT_SECRET: 09e_runtime_verification_secret_01234567890123456789
+          SEED_ADMIN_PASSWORD: 09e_runtime_test_password_0123456789
+        run: |
+          node server.js > /tmp/trexio-api.log 2>&1 &
+          PID=$!
+          trap 'kill $PID 2>/dev/null || true' EXIT
+          for i in {1..20}; do
+            if curl -fsS http://127.0.0.1:3000/api/does-not-exist > /tmp/api-response.json 2>/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          test -s /tmp/api-response.json
+          node -e "const r=require('/tmp/api-response.json'); if(r.code!=='API_NOT_FOUND') process.exit(1)"
+          kill $PID 2>/dev/null || true
+
+  web:
+    needs: structural
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: apps/web/package.json
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
+      - run: test -s build/index.html
+
+  admin:
+    needs: structural
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/admin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: apps/admin/package.json
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
+      - run: test -s build/index.html
