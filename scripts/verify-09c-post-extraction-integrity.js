@@ -67,7 +67,7 @@ scan('apps/admin', [
 
 const legacyFrontend = exists('frontend');
 if (legacyFrontend) {
-  warnings.push('legacy frontend/ is retained as rollback/reference copy; retirement remains gated by successful standalone builds and runtime verification');
+  failures.push('legacy frontend/ boundary still exists after 09E retirement');
 }
 
 const rootServer = path.join(ROOT, 'server.js');
