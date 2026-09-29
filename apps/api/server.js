@@ -27,7 +27,7 @@ const { registerMarketplaceDiscoveryRoutes } = require('./modules/routes/marketp
 
 const app = express();
 app.set('trust proxy', 1);
-const PORT = 3000;
+const PORT = Number(process.env.PORT || 3000);
 
 // [SECURITY] Secrets must never be embedded in source code.
 // Production always requires an explicit strong JWT secret.
