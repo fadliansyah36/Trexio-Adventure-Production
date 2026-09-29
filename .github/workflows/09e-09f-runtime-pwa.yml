@@ -51,8 +51,8 @@ jobs:
           node server.js > /tmp/trexio-api.log 2>&1 &
           PID=$!
           trap 'kill $PID 2>/dev/null || true' EXIT
-          for i in {1..20}; do
-            if curl -sS -o /tmp/api-response.json -w "%{http_code}" http://127.0.0.1:3000/api/does-not-exist > /tmp/api-status.txt 2>/dev/null; then
+          for i in {1..30}; do
+            if curl --max-time 3 -sS -o /tmp/api-response.json -w "%{http_code}" http://127.0.0.1:3000/api/does-not-exist > /tmp/api-status.txt 2>/dev/null; then
               break
             fi
             sleep 1
