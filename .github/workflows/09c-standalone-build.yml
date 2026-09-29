@@ -13,6 +13,7 @@ on:
       - ".github/workflows/09c-standalone-build.yml"
       - "package.json"
       - "scripts/verify-standalone-apps.js"
+      - "server.js"
   workflow_dispatch:
 
 jobs:
