@@ -155,3 +155,19 @@ The gate must pass before Mission 09C is declared complete.
 ### Legacy retirement rule
 
 The new `apps/web` and `apps/admin` source/build boundaries are physically materialized. The legacy `frontend/` boundary is intentionally retained temporarily as a rollback/reference copy until the standalone build gate passes; it must not be used by the API runtime.
+
+## Phase 8 — Post-Extraction Integrity & Retirement Gate
+
+**Status: GATE ACTIVE**
+
+Added:
+
+- `scripts/verify-09c-post-extraction-integrity.js`
+- `scripts/verify-09e-09f-pwa-runtime.js`
+- `.github/workflows/09e-09f-runtime-pwa.yml`
+
+The root build command now targets `apps/web`, not the legacy `frontend/` application.
+
+The legacy `frontend/` tree remains retained until the authoritative standalone/runtime CI gate is green. It is not permitted as an API runtime dependency.
+
+**Closure condition:** a successful GitHub Actions run on the current main revision, followed by a separate destructive retirement commit for the legacy `frontend/` tree.
