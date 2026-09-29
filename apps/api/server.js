@@ -11454,7 +11454,6 @@ api.get('/admin/payouts', requireSuperAdmin, (req, res) => {
 
 registerUploadRoutes({ api, requireAuth, upload });
 registerBackpackerRoutes({ api, requireAuth, trips });
-registerBackpackerRoutes({ api, requireAuth, trips });
 
 // Mission 09C Phase 5C — Marketplace & Discovery route boundary
 registerMarketplaceDiscoveryRoutes(api, {
