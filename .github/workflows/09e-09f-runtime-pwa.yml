@@ -78,9 +78,9 @@ jobs:
       - run: npm run build
       - name: Verify web build output
         run: |
-          test -d apps/web/build
-          test -s apps/web/build/index.html
-          test ! -e ../../frontend/build/index.html || test ! -d ../../frontend/build
+          test -d "$GITHUB_WORKSPACE/apps/web/build"
+          test -s "$GITHUB_WORKSPACE/apps/web/build/index.html"
+          test ! -e "$GITHUB_WORKSPACE/frontend/build/index.html"
 
   admin:
     needs: structural
@@ -99,5 +99,5 @@ jobs:
       - run: npm run build
       - name: Verify admin build output
         run: |
-          test -d apps/admin/build
-          test -s apps/admin/build/index.html
+          test -d "$GITHUB_WORKSPACE/apps/admin/build"
+          test -s "$GITHUB_WORKSPACE/apps/admin/build/index.html"
