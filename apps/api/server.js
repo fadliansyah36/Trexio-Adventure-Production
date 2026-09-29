@@ -3984,6 +3984,8 @@ function buildPublicVendorDTO(v) {
   };
 }
 
+const aiSmartSearchService = require('./modules/ai/services/ai-smart-search.service');
+
 // Super Admin AI Smart Search Controls
 api.get('/super/ai/search/overview', requireSuperAdmin, (req, res) => {
   try {
