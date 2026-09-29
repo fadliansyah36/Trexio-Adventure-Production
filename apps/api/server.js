@@ -1523,6 +1523,7 @@ const bookingLimiter = rateLimit({
 });
 
 const api = express.Router();
+const { registerMarketplaceDiscoveryRoutes } = require('./modules/routes/marketplaceDiscoveryRoutes');
 api.use(globalApiLimiter);
 api.use(validateInputParams);
 
@@ -2787,9 +2788,7 @@ function saveHomepageConfigToDisk() {
   persistCollection('homepage_config');
 }
 
-api.get('/homepage-config', (req, res) => {
-  res.json(homepageConfig);
-});
+;
 
 api.get('/super/homepage-config', requireSuperAdmin, (req, res) => {
   res.json(homepageConfig);
@@ -4052,59 +4051,11 @@ registerMarketplaceRoutes({
 const aiSeoService = require('./modules/ai/services/ai-seo.service');
 
 // Public Explore & Content Hub Endpoints
-api.get('/explore/articles', (req, res) => {
-  try {
-    const { category, status, q, limit, offset } = req.query;
-    const result = aiSeoService.getArticles({
-      category,
-      status: req.user?.role === 'super_admin' ? status : 'published',
-      q,
-      limit: limit ? Number(limit) : 20,
-      offset: offset ? Number(offset) : 0,
-    });
-    res.json({ ok: true, ...result });
-  } catch (err) {
-    res.status(500).json({ ok: false, error: 'Terjadi kesalahan internal. Silakan coba lagi nanti.' });
-  }
-});
+;
 
-api.get('/explore/articles/:slug', (req, res) => {
-  try {
-    const article = aiSeoService.getArticleBySlug(req.params.slug);
-    if (!article) return res.status(404).json({ ok: false, detail: 'Artikel tidak ditemukan' });
+;
 
-    // Find related marketplace products (trips & rentals matching article destination)
-    let relatedProducts = [];
-    if (article.related_destination) {
-      const destLower = article.related_destination.toLowerCase();
-      const matchingTrips = trips.filter(t => t.published !== false && (
-        (t.destination && t.destination.toLowerCase().includes(destLower)) ||
-        (t.title && t.title.toLowerCase().includes(destLower))
-      )).slice(0, 3).map(enrichTripWithVendor);
-
-      const matchingRentals = (rentals || []).filter(r => r.available !== false && (
-        (r.location && r.location.toLowerCase().includes(destLower)) ||
-        (r.name && r.name.toLowerCase().includes(destLower))
-      )).slice(0, 2);
-
-      relatedProducts = [...matchingTrips, ...matchingRentals];
-    }
-
-    const metadata = aiSeoService.generateMetadata({ pageType: 'article', entity: article, req });
-
-    res.json({ ok: true, article, related_products: relatedProducts, metadata });
-  } catch (err) {
-    res.status(500).json({ ok: false, error: 'Terjadi kesalahan internal. Silakan coba lagi nanti.' });
-  }
-});
-
-api.get('/explore/sources', (req, res) => {
-  try {
-    res.json({ ok: true, sources: aiSeoService.sources });
-  } catch (err) {
-    res.status(500).json({ ok: false, error: 'Terjadi kesalahan internal. Silakan coba lagi nanti.' });
-  }
-});
+;
 
 api.get('/seo/metadata', (req, res) => {
   try {
@@ -5964,13 +5915,7 @@ api.post('/super/community/users/:uid/suspend', requireSuperAdmin, (req, res) =>
 
 
 // --- Rentals ---
-api.get('/rentals', (req, res) => {
-  let result = [...rentals];
-  const { category, location } = req.query;
-  if (category) result = result.filter(r => r.category === category);
-  if (location) result = result.filter(r => r.pickup_locations && r.pickup_locations.includes(location));
-  res.json(result);
-});
+;
 
 api.get('/rentals/orders/mine', requireAuth, (req, res) => {
   const mine = rental_orders.filter(o => o.user_id === req.user.id).reverse();
@@ -6029,11 +5974,7 @@ api.post('/rentals/orders', requireAuth, (req, res) => {
   res.json(newOrder);
 });
 
-api.get('/rentals/:rid', (req, res) => {
-  const rental = rentals.find(r => r.id === req.params.rid || r.slug === req.params.rid);
-  if (!rental) return res.status(404).json({ detail: 'Alat outdoor tidak ditemukan' });
-  res.json(enrichRentalWithVendor(rental));
-});
+;
 
 // --- Admin ---
 api.get('/admin/stats', requireAdmin, (req, res) => {
@@ -7569,55 +7510,12 @@ const handleGetPublicStorefront = (req, res) => {
   res.json(publicData);
 };
 
-api.get('/storefront/:slug', handleGetPublicStorefront);
+;
 api.get('/vendor/public/:slug', handleGetPublicStorefront);
-api.get('/public/vendors/:identifier', handleGetPublicStorefront);
+;
 api.get('/api/public/vendors/:identifier', handleGetPublicStorefront);
 
-api.get('/public/vendors/:identifier/products', (req, res) => {
-  const identifier = (req.params.identifier || '').toLowerCase().replace(/^@/, '');
-  const v = vendors.find(item => item.slug?.toLowerCase() === identifier || item.id === identifier);
-  if (!v || v.status === 'rejected' || v.status === 'suspended') {
-    return res.status(404).json({ detail: 'Vendor tidak ditemukan' });
-  }
-
-  const dto = buildPublicVendorDTO(v);
-  let products = dto.products || [];
-
-  const { q, category, type, sort } = req.query;
-
-  if (q) {
-    const qLower = q.toLowerCase();
-    products = products.filter(p => 
-      (p.title || '').toLowerCase().includes(qLower) ||
-      (p.destination || '').toLowerCase().includes(qLower) ||
-      (p.category || '').toLowerCase().includes(qLower)
-    );
-  }
-
-  if (category && category !== 'all' && category !== 'Semua') {
-    products = products.filter(p => (p.category || '').toLowerCase() === category.toLowerCase());
-  }
-
-  if (type && type !== 'all') {
-    products = products.filter(p => p.product_type === type);
-  }
-
-  if (sort === 'price_low') {
-    products.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
-  } else if (sort === 'price_high') {
-    products.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
-  } else if (sort === 'rating') {
-    products.sort((a, b) => (Number(b.rating) || 5) - (Number(a.rating) || 5));
-  } else if (sort === 'newest') {
-    products.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-  }
-
-  res.json({
-    total: products.length,
-    products
-  });
-});
+;
 
 const handleGetPublicReviews = (req, res) => {
   const identifier = (req.params.identifier || '').toLowerCase().replace(/^@/, '');
@@ -7634,7 +7532,7 @@ const handleGetPublicReviews = (req, res) => {
   });
 };
 
-api.get('/public/vendors/:identifier/reviews', handleGetPublicReviews);
+;
 api.get('/api/public/vendors/:identifier/reviews', handleGetPublicReviews);
 
 api.get('/vendor/slug/check', requireAuth, (req, res) => {
@@ -7809,9 +7707,7 @@ api.post(['/subscriptions/subscribe', '/tenant/subscription/subscribe'], require
 // ==========================================
 
 // List available ad packages for vendors
-api.get('/ads/packages', (req, res) => {
-  res.json(advertising_packages.filter(p => p.is_active));
-});
+;
 
 // List Vendor's own ad campaigns
 api.get('/vendor/ads/campaigns', requireVendor, (req, res) => {
@@ -7981,44 +7877,7 @@ api.post(['/ads/campaigns/create', '/vendor/ad-campaigns'], requireVendor, async
 });
 
 // Active Placements (Promoted/Sponsored Items for Homepage & Search)
-api.get('/ads/active-placements', (req, res) => {
-  syncAdCampaignsStatus();
-  const { placement } = req.query;
-
-  const activeCamps = advertising_campaigns.filter(c => {
-    if (c.campaign_status !== 'active') return false;
-    if (placement && c.placement !== placement) return false;
-    const now = new Date();
-    if (c.start_date && new Date(c.start_date) > now) return false;
-    if (c.end_date && new Date(c.end_date) < now) return false;
-    return true;
-  });
-
-  const promotedItems = activeCamps.map(c => {
-    let prod = null;
-    if (c.product_type === 'trip') {
-      prod = trips.find(t => t.id === c.product_id);
-    } else {
-      prod = rentals.find(r => r.id === c.product_id);
-    }
-    return {
-      campaign_id: c.id,
-      placement: c.placement,
-      package_name: c.package_name,
-      vendor_id: c.vendor_id,
-      vendor_name: c.vendor_name,
-      is_sponsored: true,
-      product: prod || {
-        id: c.product_id,
-        title: c.product_title,
-        cover_image: c.product_image,
-        price: 0
-      }
-    };
-  }).filter(item => item.product);
-
-  res.json(promotedItems);
-});
+;
 
 // Track Ad Impression
 api.post('/ads/campaigns/:id/impression', (req, res) => {
@@ -8053,19 +7912,7 @@ api.get('/vendor/ad-campaigns', requireVendor, (req, res) => {
   res.json(myCampaigns);
 });
 
-api.get('/ad-campaigns/active', (req, res) => {
-  syncAdCampaignsStatus();
-  const { placement } = req.query;
-  const activeCamps = advertising_campaigns.filter(c => {
-    if (c.campaign_status !== 'active') return false;
-    if (placement && c.placement !== placement) return false;
-    const now = new Date();
-    if (c.start_date && new Date(c.start_date) > now) return false;
-    if (c.end_date && new Date(c.end_date) < now) return false;
-    return true;
-  });
-  res.json(activeCamps);
-});
+;
 
 api.post('/ad-campaigns/:id/impression', (req, res) => {
   const camp = advertising_campaigns.find(c => c.id === req.params.id);
@@ -11813,7 +11660,25 @@ api.get('/admin/payouts', requireSuperAdmin, (req, res) => {
   res.json(payouts);
 });
 
-registerUploadRoutes({ api, requireAuth, upload });
+regis
+// Mission 09C Phase 5C — Marketplace & Discovery route boundary
+registerMarketplaceDiscoveryRoutes(api, {
+  homepageConfig,
+  aiSeoService,
+  trips,
+  rentals,
+  enrichTripWithVendor,
+  enrichRentalWithVendor,
+  handleGetPublicStorefront,
+  vendors,
+  buildPublicVendorDTO,
+  handleGetPublicReviews,
+  advertising_packages,
+  syncAdCampaignsStatus,
+  advertising_campaigns,
+});
+
+terUploadRoutes({ api, requireAuth, upload });
 registerBackpackerRoutes({ api, requireAuth, trips });
 
 // API 404 Catch-All to prevent falling through to static SPA HTML
