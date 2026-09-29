@@ -7511,10 +7511,6 @@ const handleGetPublicStorefront = (req, res) => {
   res.json(publicData);
 };
 
-;
-api.get('/vendor/public/:slug', handleGetPublicStorefront);
-;
-api.get('/api/public/vendors/:identifier', handleGetPublicStorefront);
 
 ;
 
@@ -7533,8 +7529,6 @@ const handleGetPublicReviews = (req, res) => {
   });
 };
 
-;
-api.get('/api/public/vendors/:identifier/reviews', handleGetPublicReviews);
 
 api.get('/vendor/slug/check', requireAuth, (req, res) => {
   const { slug } = req.query;
