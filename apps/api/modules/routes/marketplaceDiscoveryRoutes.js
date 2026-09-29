@@ -96,7 +96,11 @@ function registerMarketplaceDiscoveryRoutes(api, deps) {
 
   api.get('/storefront/:slug', handleGetPublicStorefront)
 
+  api.get('/vendor/public/:slug', handleGetPublicStorefront)
+
   api.get('/public/vendors/:identifier', handleGetPublicStorefront)
+
+  api.get('/api/public/vendors/:identifier', handleGetPublicStorefront)
 
   api.get('/public/vendors/:identifier/products', (req, res) => {
     const identifier = (req.params.identifier || '').toLowerCase().replace(/^@/, '');
@@ -144,6 +148,8 @@ function registerMarketplaceDiscoveryRoutes(api, deps) {
   })
 
   api.get('/public/vendors/:identifier/reviews', handleGetPublicReviews)
+
+  api.get('/api/public/vendors/:identifier/reviews', handleGetPublicReviews)
 
   api.get('/ads/packages', (req, res) => {
     res.json(advertising_packages.filter(p => p.is_active));
