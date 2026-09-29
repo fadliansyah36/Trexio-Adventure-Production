@@ -2146,6 +2146,7 @@ registerAuthRoutes({
 
 
 // --- Chat User ↔ Mitra & Vendor Communications ---
+api.get('/chat/conversations', requireAuth, (req, res) => {
   const userId = req.user.id;
   const userVendor = vendors.find(v => v.user_id === userId || v.id === userId);
   const vendorId = userVendor ? userVendor.id : null;
