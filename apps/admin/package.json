@@ -1,0 +1,12 @@
+{
+  "name": "@trexio/admin",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "craco start",
+    "build": "CI=false GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true FAST_REFRESH=false craco build",
+    "test": "craco test"
+  },
+  "description": "Trexio tenant/admin application. Standalone source extraction target."
+}
