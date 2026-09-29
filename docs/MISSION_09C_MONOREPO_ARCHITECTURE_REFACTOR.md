@@ -125,3 +125,33 @@ Current direction remains:
 - Marketplace/discovery route registration is now physically isolated from the API composition root
 
 Next logical step: **Mission 09C Phase 6 — Shared Contracts / API Contract Isolation & Standalone Build Verification**.
+
+
+## Phase 7 — Physical Web/Admin Extraction & Standalone Build Gate
+
+**Status:** BUILD VERIFICATION IN PROGRESS
+
+### Extraction completed
+
+- `frontend/src` storefront/runtime source was physically extracted to `apps/web/src`.
+- `frontend/src/pages/admin` and `frontend/src/pages/super` were physically extracted to `apps/admin/src/pages`.
+- Shared frontend runtime dependencies required by the admin/super surfaces were copied into `apps/admin/src` so the admin application has an independent source boundary.
+- `frontend/public` and CRA/CRACO build configuration were extracted into both application boundaries.
+- `apps/web` and `apps/admin` now own independent package manifests.
+- Direct `@supabase/supabase-js` dependency was removed from both frontend applications; persistence remains API-owned.
+- `apps/api` no longer serves the frontend SPA and now has an explicit standalone runtime dependency manifest.
+- Root `server.js` remains only a compatibility entrypoint to `apps/api/server.js`.
+
+### Build gate
+
+`.github/workflows/09c-standalone-build.yml` verifies independently:
+
+1. `apps/api` — `node --check server.js`
+2. `apps/web` — isolated `npm install` + `npm run build`
+3. `apps/admin` — isolated `npm install` + `npm run build`
+
+The gate must pass before Mission 09C is declared complete.
+
+### Legacy retirement rule
+
+The old `frontend/` source/build boundary has been removed from the repository. No API runtime may reintroduce frontend static serving.
