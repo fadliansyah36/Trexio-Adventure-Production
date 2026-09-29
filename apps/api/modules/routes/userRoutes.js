@@ -721,6 +721,3 @@ api.patch('/users/me/preferences', requireAuth, (req, res) => {
   res.json({ ok: true, preferences: u.preferences });
 });
 
-// --- Chat User ↔ Mitra & Vendor Communications ---
-api.get('/chat/conversations', requireAuth, (req, res) => {
-};
