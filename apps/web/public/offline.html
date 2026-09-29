@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Offline — Trexio Adventure Marketplace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@800;900&family=Manrope:wght@500;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #F8F7F4;
+        --fg: #1A1D1A;
+        --primary: #CC5A3F;
+        --secondary: #1E3F20;
+        --muted: #525252;
+        --border: rgba(30, 63, 32, 0.12);
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background-color: var(--bg);
+        color: var(--fg);
+        font-family: 'Manrope', -apple-system, system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .container {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 32px 24px;
+        text-align: center;
+      }
+      .logo-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 28px;
+      }
+      .logo-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+      }
+      .brand-title {
+        font-family: 'Cabinet Grotesk', sans-serif;
+        font-size: 28px;
+        font-weight: 900;
+        color: var(--secondary);
+        letter-spacing: -0.04em;
+        line-height: 1;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 16px;
+        border-radius: 9999px;
+        background: rgba(204, 90, 63, 0.12);
+        color: var(--primary);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 20px;
+        border: 1px solid rgba(204, 90, 63, 0.25);
+      }
+      h1 {
+        font-family: 'Cabinet Grotesk', sans-serif;
+        font-size: 32px;
+        font-weight: 900;
+        line-height: 1.15;
+        margin: 0 0 12px 0;
+        letter-spacing: -0.03em;
+        color: var(--fg);
+      }
+      p {
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.6;
+        max-width: 420px;
+        margin: 0 auto 28px auto;
+      }
+      .info-card {
+        background: #FFFFFF;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 16px 20px;
+        max-width: 380px;
+        width: 100%;
+        margin-bottom: 28px;
+        text-align: left;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+      }
+      .info-card-title {
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--secondary);
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .info-card-text {
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.5;
+        margin: 0;
+      }
+      .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+        max-width: 280px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 48px;
+        padding: 0 24px;
+        border-radius: 12px;
+        font-weight: 800;
+        font-size: 14px;
+        text-decoration: none;
+        transition: transform 0.15s ease, background-color 0.2s ease, opacity 0.2s ease;
+        cursor: pointer;
+        border: none;
+      }
+      .btn:active { transform: scale(0.98); }
+      .btn-primary {
+        background: var(--secondary);
+        color: #FFFFFF;
+        box-shadow: 0 8px 20px -6px rgba(30, 63, 32, 0.3);
+      }
+      .btn-primary:hover {
+        background: #152d16;
+      }
+      .status-text {
+        margin-top: 16px;
+        font-size: 12px;
+        color: var(--muted);
+        min-height: 18px;
+      }
+      .tagline {
+        margin-top: 40px;
+        font-size: 11px;
+        color: rgba(0,0,0,0.4);
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        font-weight: 800;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo-header">
+        <img src="/logo-icon.svg" alt="Trexio Logo" class="logo-icon" />
+        <span class="brand-title">TREXIO</span>
+      </div>
+
+      <div class="badge">
+        <span>📡</span> Mode Offline
+      </div>
+
+      <h1>Koneksi Terputus</h1>
+      <p>Anda sedang berada di luar jangkauan sinyal. Periksa koneksi internet untuk melanjutkan pencarian open trip dan persewaan alat outdoor.</p>
+
+      <div class="info-card">
+        <div class="info-card-title">
+          <span>⚡</span> PWA Offline Caching Active
+        </div>
+        <p class="info-card-text">
+          Halaman dan aset statis yang telah dikunjungi tetap tersimpan secara lokal. Aplikasi akan terhubung kembali secara otomatis saat sinyal pulih.
+        </p>
+      </div>
+
+      <div class="actions">
+        <button id="retry-btn" class="btn btn-primary" onclick="retryConnection()">
+          Coba Muat Ulang
+        </button>
+      </div>
+
+      <div id="status-msg" class="status-text"></div>
+
+      <div class="tagline">
+        Trexio — Track Every Journey
+      </div>
+    </div>
+
+    <script>
+      // Auto reload when device comes online
+      window.addEventListener('online', function() {
+        var status = document.getElementById('status-msg');
+        if (status) status.innerText = 'Koneksi kembali! Memuat ulang...';
+        setTimeout(function() {
+          window.location.reload();
+        }, 800);
+      });
+
+      function retryConnection() {
+        var btn = document.getElementById('retry-btn');
+        var status = document.getElementById('status-msg');
+        if (btn) {
+          btn.innerText = 'Memeriksa Koneksi...';
+          btn.disabled = true;
+          btn.style.opacity = '0.7';
+        }
+        if (status) status.innerText = 'Menguji respons jaringan...';
+
+        fetch('/favicon-32x32.png?t=' + Date.now(), { method: 'HEAD', cache: 'no-store' })
+          .then(function(response) {
+            if (response.ok) {
+              if (status) status.innerText = 'Terhubung! Memuat ulang halaman...';
+              window.location.reload();
+            } else {
+              throw new Error('Network error');
+            }
+          })
+          .catch(function() {
+            setTimeout(function() {
+              if (btn) {
+                btn.innerText = 'Coba Muat Ulang';
+                btn.disabled = false;
+                btn.style.opacity = '1';
+              }
+              if (status) status.innerText = 'Masih offline. Silakan periksa jaringan Wi-Fi/Data Anda.';
+            }, 1000);
+          });
+      }
+    </script>
+  </body>
+</html>
