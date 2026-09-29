@@ -44,20 +44,20 @@ function scan(rootKey, patterns) {
 scan('web', [
   { name: 'direct backend persistence import', pattern: /(?:^|[\\/])(?:\.\.\/)+src\/(?:db|repositories)(?:[\\/]|$)/m },
   { name: 'direct backend server import', pattern: /(?:^|[\\/])(?:\.\.\/)+server(?:\.js)?(?:['"]|$)/m },
-  { name: 'database driver import', pattern: /(?:from|require\\()\s*['"](?:pg|mysql2|sqlite3|better-sqlite3|drizzle-orm|typeorm)(?:['"]|\\/)/m },
+  { name: 'database driver import', pattern: /(?:from|require\(\))\s*['"](?:pg|mysql2|sqlite3|better-sqlite3|drizzle-orm|typeorm)(?:['"]|\/)/m },
   { name: 'Supabase persistence SDK import', pattern: /['"]@supabase\/supabase-js['"]/ },
 ]);
 
 scan('admin', [
   { name: 'direct backend persistence import', pattern: /(?:^|[\\/])(?:\.\.\/)+src\/(?:db|repositories)(?:[\\/]|$)/m },
   { name: 'direct backend server import', pattern: /(?:^|[\\/])(?:\.\.\/)+server(?:\.js)?(?:['"]|$)/m },
-  { name: 'database driver import', pattern: /(?:from|require\\()\s*['"](?:pg|mysql2|sqlite3|better-sqlite3|drizzle-orm|typeorm)(?:['"]|\\/)/m },
+  { name: 'database driver import', pattern: /(?:from|require\(\))\s*['"](?:pg|mysql2|sqlite3|better-sqlite3|drizzle-orm|typeorm)(?:['"]|\/)/m },
   { name: 'Supabase persistence SDK import', pattern: /['"]@supabase\/supabase-js['"]/ },
 ]);
 
 scan('packages', [
   { name: 'Supabase SDK import', pattern: /['"]@supabase\/supabase-js['"]/ },
-  { name: 'database driver import', pattern: /(?:from|require\\()\s*['"](?:pg|mysql2|sqlite3|better-sqlite3|drizzle-orm|typeorm)(?:['"]|\\/)/m },
+  { name: 'database driver import', pattern: /(?:from|require\(\))\s*['"](?:pg|mysql2|sqlite3|better-sqlite3|drizzle-orm|typeorm)(?:['"]|\/)/m },
   { name: 'server-only node persistence import', pattern: /(?:from|require\\()\s*['"](?:express|multer|midtrans-client|jsonwebtoken|bcryptjs)(?:['"]|\\/)/m },
 ]);
 
