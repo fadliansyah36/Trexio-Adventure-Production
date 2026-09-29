@@ -58,6 +58,12 @@ jobs:
             fi
             sleep 1
           done
+          echo '--- API SERVER LOG ---'
+          cat /tmp/trexio-api.log || true
+          echo '--- API RESPONSE ---'
+          cat /tmp/api-response.json 2>/dev/null || true
+          echo '--- API STATUS ---'
+          cat /tmp/api-status.txt 2>/dev/null || true
           test -s /tmp/api-response.json
           test "$(cat /tmp/api-status.txt)" = "404"
           node -e "const r=require('/tmp/api-response.json'); if(r.code!=='API_NOT_FOUND') process.exit(1)"
