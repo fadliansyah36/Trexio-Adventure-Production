@@ -45,6 +45,7 @@ jobs:
         shell: bash
         env:
           NODE_ENV: test
+          PORT: 3100
           JWT_SECRET: 09e_runtime_verification_secret_01234567890123456789
           SEED_ADMIN_PASSWORD: 09e_runtime_test_password_0123456789
         run: |
@@ -52,7 +53,7 @@ jobs:
           PID=$!
           trap 'kill $PID 2>/dev/null || true' EXIT
           for i in {1..30}; do
-            if curl --max-time 3 -sS -o /tmp/api-response.json -w "%{http_code}" http://127.0.0.1:3000/api/does-not-exist > /tmp/api-status.txt 2>/dev/null; then
+            if curl --max-time 3 -sS -o /tmp/api-response.json -w "%{http_code}" http://127.0.0.1:3100/api/does-not-exist > /tmp/api-status.txt 2>/dev/null; then
               break
             fi
             sleep 1
