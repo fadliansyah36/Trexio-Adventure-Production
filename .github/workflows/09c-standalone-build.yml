@@ -5,6 +5,8 @@ name: 09C Standalone Build Gate
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
     paths:
       - "apps/api/**"
       - "apps/web/**"
