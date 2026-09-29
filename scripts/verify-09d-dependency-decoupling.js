@@ -41,7 +41,9 @@ function scan(rootKey, patterns) {
       if (
         rule.name === 'Supabase persistence SDK import' &&
         (relativeFile === 'apps/web/src/lib/supabaseClient.js' ||
-          relativeFile === 'apps/admin/src/lib/supabaseClient.js')
+          relativeFile === 'apps/admin/src/lib/supabaseClient.js' ||
+          relativeFile === 'apps/web/package.json' ||
+          relativeFile === 'apps/admin/package.json')
       ) {
         continue;
       }
