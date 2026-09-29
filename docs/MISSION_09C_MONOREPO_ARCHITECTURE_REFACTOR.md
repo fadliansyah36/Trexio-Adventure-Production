@@ -50,4 +50,37 @@ No frontend or shared package may access Supabase persistence directly.
 
 Target monorepo boundaries are now represented physically in Git. Production behavior has intentionally not been changed yet.
 
-Next: **09C Phase 2 — Dependency-Safe API Boundary Extraction**.
+Next: continue **09C API Runtime Decomposition** through domain-specific route extraction.
+
+## Phase 5C — Marketplace & Discovery Route Extraction
+
+**Status:** IMPLEMENTED — API syntax CI verified
+
+Extracted public Marketplace / Discovery HTTP registration into:
+
+- `apps/api/modules/routes/marketplace.js`
+
+The module now owns:
+
+- `/categories/:slug`
+- `/destinations`
+- `/trips`
+- `/trips/featured`
+- `/trips/:trip_id`
+- `/search/suggestions`
+- `/search/smart`
+- `/search/discovery`
+- existing direct `/api/search/*` compatibility aliases
+
+The module receives runtime state and service dependencies explicitly from `apps/api/server.js`. It does not create a database connection or access Supabase persistence directly.
+
+During verification, Phase 5B also exposed an orphaned chat route boundary left in `apps/api/server.js`. The original `GET /chat/conversations` route wrapper was restored before Phase 5C was considered complete.
+
+Verification:
+
+- `API Syntax Verification` — PASS on commit `6882f1fe4e993393b746d5f1cad5a18090f2c533`
+- `node --check apps/api/server.js` — PASS
+- `node --check apps/api/modules/routes/marketplace.js` — PASS
+- PWA and Security/SAST workflows were triggered for the same commit and remained the broader repository gates.
+
+Next: continue API route decomposition by business domain without moving persistence boundaries prematurely.
