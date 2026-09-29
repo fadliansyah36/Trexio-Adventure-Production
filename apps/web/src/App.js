@@ -95,7 +95,6 @@ import SafetyCenter from "@/pages/SafetyCenter";
 import BackpackerDashboard from "@/pages/backpacker/BackpackerDashboard";
 import FloatingChatHub from "@/components/site/FloatingChatHub";
 
-import TenantSubscription from "@/pages/admin/TenantSubscription";
 
 
 import VendorLayout from "@/pages/vendor/VendorLayout";
