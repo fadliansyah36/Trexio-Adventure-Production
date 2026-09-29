@@ -154,4 +154,4 @@ The gate must pass before Mission 09C is declared complete.
 
 ### Legacy retirement rule
 
-The old `frontend/` source/build boundary has been removed from the repository. No API runtime may reintroduce frontend static serving.
+The new `apps/web` and `apps/admin` source/build boundaries are physically materialized. The legacy `frontend/` boundary is intentionally retained temporarily as a rollback/reference copy until the standalone build gate passes; it must not be used by the API runtime.
