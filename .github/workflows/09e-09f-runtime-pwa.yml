@@ -52,12 +52,13 @@ jobs:
           PID=$!
           trap 'kill $PID 2>/dev/null || true' EXIT
           for i in {1..20}; do
-            if curl -fsS http://127.0.0.1:3000/api/does-not-exist > /tmp/api-response.json 2>/dev/null; then
+            if curl -sS -o /tmp/api-response.json -w "%{http_code}" http://127.0.0.1:3000/api/does-not-exist > /tmp/api-status.txt 2>/dev/null; then
               break
             fi
             sleep 1
           done
           test -s /tmp/api-response.json
+          test "$(cat /tmp/api-status.txt)" = "404"
           node -e "const r=require('/tmp/api-response.json'); if(r.code!=='API_NOT_FOUND') process.exit(1)"
           kill $PID 2>/dev/null || true
 
