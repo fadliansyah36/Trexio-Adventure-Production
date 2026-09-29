@@ -2,7 +2,7 @@
 
 function createApiClient({ baseUrl, fetchImpl = globalThis.fetch } = {}) {
   if (!fetchImpl) throw new Error('A fetch implementation is required');
-  const normalizedBaseUrl = String(baseUrl || '').replace(/\\/+$/, '');
+  const normalizedBaseUrl = String(baseUrl || '').replace(/\/+$/, '');
   return {
     async request(path, options = {}) {
       const response = await fetchImpl(normalizedBaseUrl + path, {
