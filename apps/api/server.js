@@ -23,6 +23,7 @@ const { registerUploadRoutes } = require('./modules/routes/uploadRoutes');
 const { registerBackpackerRoutes } = require('./modules/routes/backpackerRoutes');
 const registerAuthRoutes = require('./modules/routes/authRoutes');
 const registerUserRoutes = require('./modules/routes/userRoutes');
+const { registerMarketplaceDiscoveryRoutes } = require('./modules/routes/marketplaceDiscoveryRoutes');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -11660,7 +11661,10 @@ api.get('/admin/payouts', requireSuperAdmin, (req, res) => {
   res.json(payouts);
 });
 
-regis
+registerUploadRoutes({ api, requireAuth, upload });
+registerBackpackerRoutes({ api, requireAuth, trips });
+registerBackpackerRoutes({ api, requireAuth, trips });
+
 // Mission 09C Phase 5C — Marketplace & Discovery route boundary
 registerMarketplaceDiscoveryRoutes(api, {
   homepageConfig,
@@ -11677,9 +11681,6 @@ registerMarketplaceDiscoveryRoutes(api, {
   syncAdCampaignsStatus,
   advertising_campaigns,
 });
-
-terUploadRoutes({ api, requireAuth, upload });
-registerBackpackerRoutes({ api, requireAuth, trips });
 
 // API 404 Catch-All to prevent falling through to static SPA HTML
 api.use((req, res) => {
