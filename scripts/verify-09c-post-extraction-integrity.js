@@ -72,8 +72,12 @@ if (legacyFrontend) {
 
 const rootServer = path.join(ROOT, 'server.js');
 if (fs.existsSync(rootServer)) {
-  const content = fs.readFileSync(rootServer, 'utf8').trim();
-  if (content !== "require('./apps/api/server');") {
+  const content = fs.readFileSync(rootServer, 'utf8')
+    .replace(/^\uFEFF/, '')
+    .replace(/\r/g, '')
+    .trim();
+  const compatibilityEntrypoint = /^require\(['"]\.\/apps\/api\/server['"]\);$/.test(content);
+  if (!compatibilityEntrypoint) {
     failures.push('root server.js is not a pure compatibility entrypoint');
   }
 }
