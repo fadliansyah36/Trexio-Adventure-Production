@@ -38,8 +38,8 @@ jobs:
 
       - name: Verify PWA production output
         run: |
-          test -f frontend/build/index.html
-          test -d frontend/build/static
+          test -f apps/web/build/index.html
+          test -d apps/web/build/static
           echo "PWA production output verified"
 
       - name: PWA BUILD VERIFIED
