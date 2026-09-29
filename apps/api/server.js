@@ -3633,61 +3633,6 @@ const category_items = {
   ]
 };
 
-// --- Catalog & Trips ---
-api.get('/categories/:slug', (req, res) => {
-  const slug = req.params.slug.toLowerCase();
-  const baseItems = category_items[slug] || [];
-
-  const matchedTrips = trips.filter(t => (t.category || 'open-trip').toLowerCase() === slug).map(t => {
-    const enriched = enrichTripWithVendor(t);
-    const specsList = Array.isArray(enriched.specs) && enriched.specs.length > 0
-      ? enriched.specs
-      : (Array.isArray(enriched.included) && enriched.included.length > 0 ? enriched.included.slice(0, 3) : []);
-
-    return {
-      id: enriched.id,
-      title: enriched.title,
-      category: enriched.category,
-      provider: enriched.vendor_name,
-      vendor_verified: enriched.vendor_verified,
-      location: enriched.destination || enriched.mountain || 'Indonesia',
-      price: enriched.price,
-      price_unit: enriched.price_unit || (
-        slug === 'rental-gear' ? 'hari' :
-        slug === 'guide' || slug === 'porter' ? 'hari' :
-        slug === 'homestay' || slug === 'camping-ground' || slug === 'basecamp' ? 'malam' :
-        slug === 'shuttle' || slug === 'transportasi' ? 'trip' :
-        slug === 'wisata-alam' || slug === 'event' ? 'tiket' : 'orang'
-      ),
-      rating: enriched.rating || 5.0,
-      reviews_count: enriched.reviews_count || 12,
-      badge: enriched.badge || (enriched.vendor_verified ? 'Partner Verifikasi' : 'Mitra Trexio'),
-      image: enriched.cover_image || enriched.images?.[0] || 'https://images.unsplash.com/photo-1551632811-561732d1e306',
-      description: enriched.description,
-      specs: specsList,
-      trip_id: enriched.id,
-      vendor_id: enriched.vendor_id,
-      unit_stock: enriched.unit_stock,
-      condition: enriched.condition,
-      pickup_point: enriched.pickup_point,
-      vehicle_type: enriched.vehicle_type,
-      license: enriched.license,
-      available_dates: (enriched.available_dates && enriched.available_dates.length > 0) ? enriched.available_dates : (enriched.departure_dates || []),
-      departure_dates: enriched.departure_dates || []
-    };
-  });
-
-  const combined = [...matchedTrips, ...baseItems];
-  res.json({
-    slug,
-    count: combined.length,
-    items: combined
-  });
-});
-api.get('/destinations', (req, res) => {
-  res.json(destinations);
-});
-
 function enrichTripWithVendor(t) {
   const v = vendors.find(item => item.id === t.vendor_id || item.slug === t.vendor_slug) || vendors[0];
   const isVerified = v ? (v.status === 'verified' || v.verified === true) : false;
@@ -4039,152 +3984,6 @@ function buildPublicVendorDTO(v) {
   };
 }
 
-const aiSmartSearchService = require('./modules/ai/services/ai-smart-search.service');
-
-api.get('/trips', async (req, res) => {
-  try {
-    const { q, category, region, difficulty, min_price, max_price, sort, limit, page, smart } = req.query;
-
-    if (q || smart === 'true') {
-      const dbStores = { trips, rentals, vendors, reviews, bookings, wishlists };
-      const searchRes = await aiSmartSearchService.search({
-        query: q || '',
-        category,
-        region,
-        difficulty,
-        min_price,
-        max_price,
-        sort,
-        limit: limit ? Number(limit) : 50,
-        page: page ? Number(page) : 1,
-        user: req.user || null,
-        dbStores,
-      });
-
-      return res.json(searchRes.results.map(enrichTripWithVendor));
-    }
-
-    // Default Filter behavior if no query provided
-    let result = trips.filter(t => t.published !== false);
-    if (category) result = result.filter(t => t.category === category);
-    if (region) result = result.filter(t => t.region === region);
-    if (difficulty) result = result.filter(t => t.difficulty === difficulty);
-    if (min_price) result = result.filter(t => t.price >= Number(min_price));
-    if (max_price) result = result.filter(t => t.price <= Number(max_price));
-
-    if (sort === 'price_asc') result.sort((a, b) => a.price - b.price);
-    else if (sort === 'price_desc') result.sort((a, b) => b.price - a.price);
-    else result.sort((a, b) => (b.booked_seats || 0) - (a.booked_seats || 0));
-
-    const max = limit ? Number(limit) : 50;
-    res.json(result.slice(0, max).map(enrichTripWithVendor));
-  } catch (err) {
-    console.error('[API /trips Error]', err.message);
-    let fallbackResult = trips.filter(t => t.published !== false);
-    res.json(fallbackResult.slice(0, 50).map(enrichTripWithVendor));
-  }
-});
-
-api.get('/trips/featured', (req, res) => {
-  const featured = [...trips].sort((a, b) => (b.booked_seats || 0) - (a.booked_seats || 0)).slice(0, 6);
-  res.json(featured.map(enrichTripWithVendor));
-});
-
-api.get('/search/suggestions', async (req, res) => {
-  try {
-    const q = (req.query.q || '').trim();
-    const suggestions = await aiSmartSearchService.searchMultiCategory({
-      query: q,
-      dbStores: { trips, rentals, vendors },
-    });
-    res.json(suggestions);
-  } catch (err) {
-    console.error('[API /search/suggestions Error]', err.message);
-    res.json({
-      query: req.query.q || '',
-      trips: [],
-      rentals: [],
-      vendors: [],
-      destinations: [],
-      popular: ['Gunung Rinjani', 'Mt. Prau Dieng', 'Sailing Komodo', 'Sewa Tenda Dome'],
-    });
-  }
-});
-
-// Phase 5 AI Smart Search & Trip Discovery Dedicated Endpoints
-const handleSmartSearchPost = async (req, res) => {
-  try {
-    const dbStores = { trips, rentals, vendors, reviews, bookings, wishlists };
-    const searchRes = await aiSmartSearchService.search({
-      ...req.body,
-      user: req.user || null,
-      dbStores,
-    });
-    res.json(searchRes);
-  } catch (err) {
-    console.error('[API /search/smart Error]', err.message);
-    res.status(500).json({ success: false, error: 'Terjadi kesalahan internal. Silakan coba lagi nanti.' });
-  }
-};
-
-const handleSmartSearchGet = async (req, res) => {
-  try {
-    const dbStores = { trips, rentals, vendors, reviews, bookings, wishlists };
-    const { q, category, region, difficulty, min_price, max_price, sort, limit, page } = req.query;
-    const searchRes = await aiSmartSearchService.search({
-      query: q || '',
-      category,
-      region,
-      difficulty,
-      min_price,
-      max_price,
-      sort,
-      limit: limit ? Number(limit) : 50,
-      page: page ? Number(page) : 1,
-      user: req.user || null,
-      dbStores,
-    });
-    res.json(searchRes);
-  } catch (err) {
-    console.error('[API GET /search/smart Error]', err.message);
-    res.status(500).json({ success: false, error: 'Terjadi kesalahan internal. Silakan coba lagi nanti.' });
-  }
-};
-
-const handleSearchDiscoveryPost = async (req, res) => {
-  try {
-    const rawQuery = req.body?.query || req.body?.prompt || req.body?.q;
-    if (!rawQuery || typeof rawQuery !== 'string' || !rawQuery.trim()) {
-      return res.status(400).json({ ok: false, error: 'Kueri pencarian AI Discovery wajib diisi.' });
-    }
-
-    const cleanQuery = rawQuery.trim().replace(/[\<\>]/g, '').slice(0, 500);
-    if (cleanQuery.length < 2) {
-      return res.status(400).json({ ok: false, error: 'Kueri pencarian minimal 2 karakter.' });
-    }
-
-    const dbStores = { trips, rentals, vendors, reviews, bookings, wishlists };
-    const discoveryRes = await aiSmartSearchService.discoverTrips({
-      userQuery: cleanQuery,
-      user: req.user || null,
-      dbStores,
-    });
-    res.json(discoveryRes);
-  } catch (err) {
-    console.error('[API /search/discovery Error]', err.message);
-    res.status(500).json({ ok: false, error: 'Terjadi kesalahan sistem saat memproses AI Trip Discovery.' });
-  }
-};
-
-api.post('/search/smart', handleSmartSearchPost);
-api.get('/search/smart', handleSmartSearchGet);
-api.post('/search/discovery', authLimiter, handleSearchDiscoveryPost);
-
-app.post('/api/search/smart', handleSmartSearchPost);
-app.get('/api/search/smart', handleSmartSearchGet);
-app.post('/api/search/discovery', authLimiter, handleSearchDiscoveryPost);
-app.post('/search/discovery', authLimiter, handleSearchDiscoveryPost);
-
 // Super Admin AI Smart Search Controls
 api.get('/super/ai/search/overview', requireSuperAdmin, (req, res) => {
   try {
@@ -4228,6 +4027,25 @@ api.post('/super/ai/search/config', requireSuperAdmin, (req, res) => {
 // =========================================================================
 // PHASE 6 — AI SEO & CONTENT INTELLIGENCE ENDPOINTS
 // =========================================================================
+const registerMarketplaceRoutes = require('./modules/routes/marketplace');
+
+registerMarketplaceRoutes({
+  api,
+  app,
+  trips,
+  rentals,
+  vendors,
+  reviews,
+  bookings,
+  wishlists,
+  destinations,
+  category_items,
+  enrichTripWithVendor,
+  findProduct,
+  aiSmartSearchService: require('./modules/ai/services/ai-smart-search.service'),
+  authLimiter,
+});
+
 const aiSeoService = require('./modules/ai/services/ai-seo.service');
 
 // Public Explore & Content Hub Endpoints
@@ -4440,11 +4258,7 @@ api.post('/super/seo/articles/generate-draft', requireSuperAdmin, async (req, re
   }
 });
 
-api.get('/trips/:trip_id', (req, res) => {
-  const p = findProduct(req.params.trip_id);
-  if (!p) return res.status(404).json({ detail: 'Trip atau Produk tidak ditemukan' });
-  res.json(p);
-});
+
 
 api.get('/coupons/validate/:code', (req, res) => {
   const code = req.params.code.toUpperCase();
