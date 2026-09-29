@@ -6,7 +6,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "build": "node --check server.js"
   },
   "description": "Trexio API runtime boundary. Transitional extraction; source modules and dependency installation remain repository-root owned until later monorepo phases."
 }
