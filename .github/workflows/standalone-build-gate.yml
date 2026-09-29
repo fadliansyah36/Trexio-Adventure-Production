@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'apps/**'
+      - 'frontend/**'
       - 'packages/**'
       - 'scripts/verify-standalone-apps.js'
       - 'scripts/verify-09c-post-extraction-integrity.js'
