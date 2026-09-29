@@ -76,7 +76,11 @@ jobs:
           cache-dependency-path: apps/web/package.json
       - run: npm install --no-audit --no-fund
       - run: npm run build
-      - run: test -s build/index.html
+      - name: Verify web build output
+        run: |
+          test -d apps/web/build
+          test -s apps/web/build/index.html
+          test ! -e ../../frontend/build/index.html || test ! -d ../../frontend/build
 
   admin:
     needs: structural
@@ -93,4 +97,7 @@ jobs:
           cache-dependency-path: apps/admin/package.json
       - run: npm install --no-audit --no-fund
       - run: npm run build
-      - run: test -s build/index.html
+      - name: Verify admin build output
+        run: |
+          test -d apps/admin/build
+          test -s apps/admin/build/index.html
