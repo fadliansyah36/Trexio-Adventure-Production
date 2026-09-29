@@ -77,6 +77,77 @@ api.get('/destinations', (req, res) => {
   res.json(destinations);
 });
 
+  api.get('/trips', async (req, res) => {
+    try {
+      const { q, category, region, difficulty, min_price, max_price, sort, limit, page, smart } = req.query;
+
+      if (q || smart === 'true') {
+        const dbStores = { trips, rentals, vendors, reviews, bookings, wishlists };
+        const searchRes = await aiSmartSearchService.search({
+          query: q || '',
+          category,
+          region,
+          difficulty,
+          min_price,
+          max_price,
+          sort,
+          limit: limit ? Number(limit) : 50,
+          page: page ? Number(page) : 1,
+          user: req.user || null,
+          dbStores,
+        });
+
+        return res.json(searchRes.results.map(enrichTripWithVendor));
+      }
+
+      let result = trips.filter(t => t.published !== false);
+      if (category) result = result.filter(t => t.category === category);
+      if (region) result = result.filter(t => t.region === region);
+      if (difficulty) result = result.filter(t => t.difficulty === difficulty);
+      if (min_price) result = result.filter(t => t.price >= Number(min_price));
+      if (max_price) result = result.filter(t => t.price <= Number(max_price));
+
+      if (sort === 'price_asc') result.sort((a, b) => a.price - b.price);
+      else if (sort === 'price_desc') result.sort((a, b) => b.price - a.price);
+      else result.sort((a, b) => (b.booked_seats || 0) - (a.booked_seats || 0));
+
+      const max = limit ? Number(limit) : 50;
+      res.json(result.slice(0, max).map(enrichTripWithVendor));
+    } catch (err) {
+      console.error('[API /trips Error]', err.message);
+      const fallbackResult = trips.filter(t => t.published !== false);
+      res.json(fallbackResult.slice(0, 50).map(enrichTripWithVendor));
+    }
+  });
+
+  api.get('/trips/featured', (req, res) => {
+    const featured = [...trips]
+      .sort((a, b) => (b.booked_seats || 0) - (a.booked_seats || 0))
+      .slice(0, 6);
+    res.json(featured.map(enrichTripWithVendor));
+  });
+
+  api.get('/search/suggestions', async (req, res) => {
+    try {
+      const q = (req.query.q || '').trim();
+      const suggestions = await aiSmartSearchService.searchMultiCategory({
+        query: q,
+        dbStores: { trips, rentals, vendors },
+      });
+      res.json(suggestions);
+    } catch (err) {
+      console.error('[API /search/suggestions Error]', err.message);
+      res.json({
+        query: req.query.q || '',
+        trips: [],
+        rentals: [],
+        vendors: [],
+        destinations: [],
+        popular: ['Gunung Rinjani', 'Mt. Prau Dieng', 'Sailing Komodo', 'Sewa Tenda Dome'],
+      });
+    }
+  });
+
   const handleSmartSearchPost = async (req, res) => {
     try {
       const dbStores = { trips, rentals, vendors, reviews, bookings, wishlists };
