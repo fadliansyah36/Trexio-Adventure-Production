@@ -84,3 +84,44 @@ Verification:
 - PWA and Security/SAST workflows were triggered for the same commit and remained the broader repository gates.
 
 Next: continue API route decomposition by business domain without moving persistence boundaries prematurely.
+
+## Phase 5C — Marketplace & Discovery Route Extraction
+
+**Status:** COMPLETE
+
+The public marketplace/discovery HTTP route registration has been extracted from the monolithic API runtime into:
+
+- `apps/api/modules/routes/marketplaceDiscoveryRoutes.js`
+
+The module owns route wiring for:
+
+- homepage configuration;
+- Explore article discovery and sources;
+- rental listing/detail discovery;
+- public storefront/vendor discovery;
+- public vendor product filtering/sorting;
+- public vendor reviews;
+- advertising package discovery;
+- active sponsored placement discovery.
+
+Public storefront compatibility aliases were retained, including the existing `/vendor/public/*` and `/api/public/vendors/*` forms.
+
+### Dependency boundary
+
+The route module receives business state and domain helpers through explicit dependency injection from `apps/api/server.js`. It does not open database connections, read environment secrets, or import repositories directly.
+
+Current direction remains:
+
+`web/admin -> API route boundary -> domain/application helpers -> repositories -> Supabase PostgreSQL`
+
+### Phase 5C safety result
+
+- No database schema changes
+- No data migration
+- No route contract intentionally removed
+- Existing public route aliases preserved
+- Legacy root `server.js` remains a compatibility entrypoint
+- API runtime remains `apps/api/server.js`
+- Marketplace/discovery route registration is now physically isolated from the API composition root
+
+Next logical step: **Mission 09C Phase 6 — Shared Contracts / API Contract Isolation & Standalone Build Verification**.
