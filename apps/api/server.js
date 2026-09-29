@@ -11696,63 +11696,7 @@ app.use(['/api', '/api/v1'], (err, req, res, next) => {
   });
 });
 
-// ==========================================
-// FRONTEND BUILD & STATIC SERVING
-// ==========================================
-
-const FRONTEND_BUILD = path.join(ROOT_DIR, 'frontend', 'build');
-
-let isBuildingFrontend = false;
-
-function buildFrontendAsync() {
-  if (fs.existsSync(FRONTEND_BUILD) && fs.existsSync(path.join(FRONTEND_BUILD, 'index.html'))) {
-    return;
-  }
-  if (isBuildingFrontend) return;
-  isBuildingFrontend = true;
-  console.log('[AI Studio] Notice: Checking frontend build status...');
-  // Frontend static bundle is served from FRONTEND_BUILD if present
-  isBuildingFrontend = false;
-}
-
-// Trigger build check asynchronously without blocking app.listen
-buildFrontendAsync();
-
-// [M-1 FIX] Do NOT let static middleware serve index.html directly (it would
-// bypass CSP nonce injection and the strict-dynamic policy blocks all scripts).
-// Static assets (JS/CSS/img) are still served; "/" and SPA routes fall through
-// to the catch-all below which injects the per-request nonce into index.html.
-app.use(express.static(FRONTEND_BUILD));
-
-app.get('*', (req, res) => {
-  const indexPath = path.join(FRONTEND_BUILD, 'index.html');
-  if (fs.existsSync(indexPath)) {
-    return res.sendFile(indexPath);
-  } else {
-    res.status(200).send(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Trexio — Starting...</title>
-          <meta http-equiv="refresh" content="3">
-          <style>
-            body { font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f8f7f4; color: #1e3f20; text-align: center; }
-            .card { padding: 2rem; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); max-width: 400px; }
-            .spinner { width: 32px; height: 32px; border: 3px solid #e0e0e0; border-top-color: #1e3f20; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
-            @keyframes spin { to { transform: rotate(360deg); } }
-          </style>
-        </head>
-        <body>
-          <div class="card">
-            <div class="spinner"></div>
-            <h2>Aplikasi Trexio sedang disiapkan...</h2>
-            <p>Halaman ini akan memuat otomatis dalam beberapa detik.</p>
-          </div>
-        </body>
-      </html>
-    `);
-  }
-});
+// Frontend is deployed independently from apps/web. The API runtime does not serve SPA assets.
 
 // Start server
 const server = app.listen(PORT, '0.0.0.0', async () => {
