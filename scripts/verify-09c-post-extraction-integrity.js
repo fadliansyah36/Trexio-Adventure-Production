@@ -51,6 +51,7 @@ for (const required of [
 
 scan('apps/api', [
   { name: 'legacy frontend source import', pattern: /(?:require|from)\s*\(?\s*['"][^'"]*frontend\// },
+  { name: 'legacy root database import', pattern: /(?:require|from)\s*\(?\s*['"](?:\.\.\/)+src\/db\// },
 ]);
 
 scan('apps/web', [
