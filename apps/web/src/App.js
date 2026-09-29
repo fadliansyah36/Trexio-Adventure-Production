@@ -58,6 +58,7 @@ import Home from "@/pages/Home";
 import Explore from "@/pages/Explore";
 import AITripDiscoveryDashboard from "@/pages/AITripDiscoveryDashboard";
 import Storefront from "@/pages/Storefront";
+import TenantPublicPreview from "@/pages/TenantPublicPreview";
 import ImpersonationBanner from "@/components/site/ImpersonationBanner";
 import TripDetail from "@/pages/TripDetail";
 import Booking from "@/pages/Booking";
