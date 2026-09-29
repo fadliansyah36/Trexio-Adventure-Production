@@ -11,6 +11,8 @@ on:
       - "apps/admin/**"
       - "packages/**"
       - ".github/workflows/09c-standalone-build.yml"
+      - "package.json"
+      - "scripts/verify-standalone-apps.js"
   workflow_dispatch:
 
 jobs:
