@@ -1524,7 +1524,7 @@ const bookingLimiter = rateLimit({
 });
 
 const api = express.Router();
-const { registerMarketplaceDiscoveryRoutes } = require('./modules/routes/marketplaceDiscoveryRoutes');
+
 api.use(globalApiLimiter);
 api.use(validateInputParams);
 
