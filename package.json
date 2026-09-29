@@ -4,7 +4,11 @@
   "private": true,
   "type": "commonjs",
   "workspaces": [
-    "frontend"
+    "frontend",
+    "apps/web",
+    "apps/admin",
+    "apps/api",
+    "packages/*"
   ],
   "scripts": {
     "dev": "node apps/api/server.js",
@@ -26,7 +30,8 @@
     "db:verify-legacy-retirement": "node scripts/verify-legacy-retirement.js",
     "verify:api-boundary": "node scripts/verify-api-boundary.js",
     "api:verify-module-graph": "node scripts/verify-api-module-graph.js",
-    "verify:api-contracts": "node scripts/verify-api-contracts.js"
+    "verify:api-contracts": "node scripts/verify-api-contracts.js",
+    "verify:standalone-apps": "node scripts/verify-standalone-apps.js"
   },
   "dependencies": {
     "@google/genai": "^2.15.0",
