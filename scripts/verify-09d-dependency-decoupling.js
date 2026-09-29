@@ -58,7 +58,7 @@ scan('admin', [
 scan('packages', [
   { name: 'Supabase SDK import', pattern: /['"]@supabase\/supabase-js['"]/ },
   { name: 'database driver import', pattern: /(?:from|require\()\s*['"](?:pg|mysql2|sqlite3|better-sqlite3|drizzle-orm|typeorm)(?:['"]|\/)/m },
-  { name: 'server-only node persistence import', pattern: /(?:from|require\\()\s*['"](?:express|multer|midtrans-client|jsonwebtoken|bcryptjs)(?:['"]|\\/)/m },
+  { name: 'server-only node persistence import', pattern: /(?:from|require\()\s*['"](?:express|multer|midtrans-client|jsonwebtoken|bcryptjs)(?:['"]|\/)/m },
 ]);
 
 const apiServer = path.join(boundaries.api, 'server.js');
