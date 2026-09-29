@@ -9,5 +9,20 @@
     "dev": "node server.js",
     "build": "node --check server.js"
   },
-  "description": "Trexio API runtime boundary. Transitional extraction; source modules and dependency installation remain repository-root owned until later monorepo phases."
+  "description": "Trexio API standalone runtime. Owns HTTP routes, domain modules, repositories and Supabase PostgreSQL persistence.",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^4.21.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "uuid": "^11.1.0",
+    "express-rate-limit": "^8.6.1",
+    "speakeasy": "^2.0.0",
+    "qrcode": "^1.5.4",
+    "midtrans-client": "^1.4.3",
+    "pg": "^8.13.1"
+  }
 }
