@@ -1,5 +1,7 @@
 name: 09C Standalone Build Gate
 
+# Closure verification trigger: every change to an extracted app re-runs all three independent build jobs.
+
 on:
   push:
     branches: [main]
