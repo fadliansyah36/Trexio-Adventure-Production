@@ -5,7 +5,6 @@ const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
 const failures = [];
-const warnings = [];
 
 function requirePath(rel) {
   if (!fs.existsSync(path.join(ROOT, rel))) failures.push('missing: ' + rel);
@@ -65,7 +64,7 @@ for (const app of ['apps/web', 'apps/admin']) {
   if (fs.existsSync(swPath)) {
     const sw = fs.readFileSync(swPath, 'utf8');
     for (const handler of ['install', 'activate', 'fetch']) {
-      if (!new RegExp('addEventListener\\\\(["\\\']' + handler + '["\\\']').test(sw)) {
+      if (!sw.includes('addEventListener("' + handler + '"') && !sw.includes("addEventListener('" + handler + "'")) {
         failures.push(app + ': service worker missing ' + handler + ' handler');
       }
     }
