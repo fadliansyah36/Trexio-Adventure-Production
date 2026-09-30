@@ -11,6 +11,11 @@ on:
       - "scripts/verify-09c-post-extraction-integrity.js"
       - "scripts/verify-09e-09f-pwa-runtime.js"
       - ".github/workflows/09e-09f-runtime-pwa.yml"
+      - "package.json"
+      - "eslint.config.mjs"
+      - "scripts/security-scan.js"
+      - "scripts/verify-repo-integrity.js"
+      - "scripts/verify-production-readiness.js"
   workflow_dispatch:
 
 jobs:
@@ -73,7 +78,7 @@ jobs:
         run: |
           node server.js > /tmp/trexio-api.log 2>&1 &
           PID=$!
-          trap 'kill $PID 2>/dev/null || true' EXIT
+          trap 'if kill -0 "$PID" 2>/dev/null; then kill "$PID"; fi' EXIT
           for i in {1..30}; do
             if curl --max-time 3 -sS -o /tmp/api-response.json -w "%{http_code}" http://127.0.0.1:3100/api/does-not-exist > /tmp/api-status.txt 2>/dev/null; then
               break
@@ -83,13 +88,13 @@ jobs:
           echo '--- API SERVER LOG ---'
           cat /tmp/trexio-api.log || true
           echo '--- API RESPONSE ---'
-          cat /tmp/api-response.json 2>/dev/null || true
+          if [ -f /tmp/api-response.json ]; then cat /tmp/api-response.json; fi
           echo '--- API STATUS ---'
-          cat /tmp/api-status.txt 2>/dev/null || true
+          if [ -f /tmp/api-status.txt ]; then cat /tmp/api-status.txt; fi
           test -s /tmp/api-response.json
           test "$(cat /tmp/api-status.txt)" = "404"
           node -e "const r=require('/tmp/api-response.json'); if(r.code!=='API_NOT_FOUND') process.exit(1)"
-          kill $PID 2>/dev/null || true
+          if kill -0 "$PID" 2>/dev/null; then kill "$PID"; fi
 
   web:
     needs: [structural, lint, security]
