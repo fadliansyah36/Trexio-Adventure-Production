@@ -7231,7 +7231,7 @@ api.patch('/api/v1/operator/assignments/:id/status', requireTenantAccess, (req, 
   });
 });
 
-api.get('/api/v1/operator/manifest', requireTenantAccess, (req, res) => {
+api.get('/api/v1/operator/manifest', requireTenantAccess, requireBasecampOperator, (req, res) => {
   const { mountain, date } = req.query;
   const tenant = resolveTenantScope(req);
 
@@ -7258,7 +7258,7 @@ api.get('/api/v1/operator/manifest', requireTenantAccess, (req, res) => {
   });
 });
 
-api.post('/api/v1/operator/checkin/verify', requireTenantAccess, (req, res) => {
+api.post('/api/v1/operator/checkin/verify', requireTenantAccess, requireVendor, (req, res) => {
   const { code } = req.body;
   if (!code) return res.status(400).json({ detail: 'Kode QR Booking wajib disertakan' });
 
