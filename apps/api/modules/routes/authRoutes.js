@@ -15,7 +15,7 @@ module.exports = function registerAuthRoutes(ctx) {
     syncAllUsersToPostgres, saveUsersToDisk, tenants, vendors,
     conversations, messages, auditLogs, systemHealth, persistCollection,
     frontendUrl, sendVerificationEmail, createNotification,
-    getClientIp, sanitizeHeaders, getRequestId
+    getClientIp, getRequestId
   } = ctx;
 
 api.post('/auth/register', authLimiter, async (req, res) => {
