@@ -2373,7 +2373,7 @@ function getDefaultTenant() {
   return defaultTenant;
 }
 
-api.get('/tenant/current', (req, res) => {
+api.get('/tenant/current', requireTenantAccess, (req, res) => {
   const tenant = resolveTenantScope(req);
   res.json({
     id: tenant.id,
