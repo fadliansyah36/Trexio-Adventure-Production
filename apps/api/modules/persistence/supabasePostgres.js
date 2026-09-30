@@ -111,12 +111,12 @@ async function saveUserToSupabasePostgres(user) {
     const supabaseUid = user.supabase_uid ? String(user.supabase_uid) : null;
 
     await p.query(
-      `INSERT INTO users (uid, email, name, role, supabase_uid, data, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6::jsonb, NOW())
+      `INSERT INTO users (uid, email, name, role, supabase_uid, tenant_id, data, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, NOW())
        ON CONFLICT (uid) DO UPDATE
        SET name = EXCLUDED.name, email = EXCLUDED.email, role = EXCLUDED.role,
-           supabase_uid = EXCLUDED.supabase_uid, data = EXCLUDED.data, updated_at = NOW();`,
-      [uid, email, name, role, supabaseUid, JSON.stringify(user)]
+           supabase_uid = EXCLUDED.supabase_uid, tenant_id = EXCLUDED.tenant_id, data = EXCLUDED.data, updated_at = NOW();`,
+      [uid, email, name, role, supabaseUid, String(user.tenant_id || 'tenant_default'), JSON.stringify(user)]
     );
   } catch (err) {
     console.error('[Supabase PostgreSQL] Error syncing user:', err.message);
@@ -128,7 +128,7 @@ async function loadUsersFromSupabasePostgres() {
   const p = getPool();
   if (!p) return [];
   try {
-    const r = await p.query('SELECT uid, email, name, role, supabase_uid, data FROM users');
+    const r = await p.query('SELECT uid, email, name, role, supabase_uid, tenant_id, data FROM users');
     return r.rows.map((row) => {
       const base = (row.data && typeof row.data === 'object') ? row.data : {};
       return {
@@ -138,6 +138,7 @@ async function loadUsersFromSupabasePostgres() {
         name: base.name || row.name,
         role: base.role || row.role,
         supabase_uid: base.supabase_uid || row.supabase_uid || undefined,
+        tenant_id: base.tenant_id || row.tenant_id || 'tenant_default',
       };
     });
   } catch (err) {
