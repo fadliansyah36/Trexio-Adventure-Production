@@ -57,6 +57,30 @@ const test = spawnSync(process.execPath, [path.join(ROOT, 'scripts/test-tenant-i
 if (test.status === 0) pass('authorization_unit_tests', test.stdout.trim());
 else fail('authorization_unit_tests', (test.stderr || test.stdout || 'unit test failed').trim());
 
+
+for (const file of [
+  'apps/api/modules/repositories/vendorRepository.js',
+  'apps/api/modules/repositories/tripRepository.js',
+  'apps/api/modules/repositories/bookingRepository.js',
+  'apps/api/modules/repositories/paymentRepository.js',
+]) {
+  const full = path.join(ROOT, file);
+  const source = fs.existsSync(full) ? fs.readFileSync(full, 'utf8') : '';
+  if (source.includes('tenant_id')) pass('repository_tenant_key:' + file, 'repository reads/writes relational tenant_id');
+  else fail('repository_tenant_key:' + file, 'repository has no relational tenant_id boundary');
+}
+
+const migrationFiles = fs.readdirSync(path.join(ROOT, 'supabase/migrations')).filter((name) => name.includes('10c') && name.endsWith('.sql'));
+if (migrationFiles.length) {
+  const migrationText = migrationFiles.map((name) => fs.readFileSync(path.join(ROOT, 'supabase/migrations', name), 'utf8')).join('\n');
+  for (const token of ['ALTER TABLE public.users', 'ALTER TABLE public.vendors', 'ALTER TABLE public.trips', 'ALTER TABLE public.bookings', 'ALTER TABLE public.payment_transactions', 'tenant_isolation_trips_all', 'tenant_isolation_bookings_all', 'tenant_isolation_payments_all']) {
+    if (migrationText.includes(token)) pass('database_rls:' + token, '10C migration contains required relational/RLS control');
+    else fail('database_rls:' + token, '10C migration is missing required control: ' + token);
+  }
+} else {
+  fail('database_migration', 'No 10C tenant isolation migration found');
+}
+
 const report = {
   generated_at: new Date().toISOString(),
   stage: '10C',

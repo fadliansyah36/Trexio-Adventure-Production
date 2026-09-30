@@ -2373,7 +2373,7 @@ function getDefaultTenant() {
   return defaultTenant;
 }
 
-api.get('/tenant/current', (req, res) => {
+api.get('/tenant/current', requireTenantAccess, (req, res) => {
   const tenant = resolveTenantScope(req);
   res.json({
     id: tenant.id,
@@ -7162,7 +7162,7 @@ api.get('/vendor/plan', requireAuth, (req, res) => {
 // ========================================================
 // UNIFIED OPERATOR DISPATCH & ROLES API (GUIDE/PORTER/RENTAL/BASECAMP)
 // ========================================================
-api.get('/api/v1/operator/profile', requireAuth, (req, res) => {
+api.get('/api/v1/operator/profile', requireTenantAccess, (req, res) => {
   const userRoles = getUserRoles(req.user);
   const v = vendors.find(item => item.user_id === req.user.id || item.id === req.user.vendor_id);
   const tenant = resolveTenantScope(req);
@@ -7188,7 +7188,7 @@ api.get('/api/v1/operator/profile', requireAuth, (req, res) => {
   });
 });
 
-api.get('/api/v1/operator/assignments', requireAuth, (req, res) => {
+api.get('/api/v1/operator/assignments', requireTenantAccess, (req, res) => {
   const userRoles = getUserRoles(req.user);
   const v = vendors.find(item => item.user_id === req.user.id || item.id === req.user.vendor_id);
   const tenant = resolveTenantScope(req);
@@ -7210,7 +7210,7 @@ api.get('/api/v1/operator/assignments', requireAuth, (req, res) => {
   });
 });
 
-api.patch('/api/v1/operator/assignments/:id/status', requireAuth, (req, res) => {
+api.patch('/api/v1/operator/assignments/:id/status', requireTenantAccess, (req, res) => {
   const { status, notes } = req.body;
   const targetBooking = bookings.find(b => b.id === req.params.id || b.code === req.params.id);
   if (!targetBooking) {
@@ -7231,7 +7231,7 @@ api.patch('/api/v1/operator/assignments/:id/status', requireAuth, (req, res) => 
   });
 });
 
-api.get('/api/v1/operator/manifest', requireBasecampOperator, (req, res) => {
+api.get('/api/v1/operator/manifest', requireTenantAccess, requireBasecampOperator, (req, res) => {
   const { mountain, date } = req.query;
   const tenant = resolveTenantScope(req);
 
@@ -7258,7 +7258,7 @@ api.get('/api/v1/operator/manifest', requireBasecampOperator, (req, res) => {
   });
 });
 
-api.post('/api/v1/operator/checkin/verify', requireVendor, (req, res) => {
+api.post('/api/v1/operator/checkin/verify', requireTenantAccess, requireVendor, (req, res) => {
   const { code } = req.body;
   if (!code) return res.status(400).json({ detail: 'Kode QR Booking wajib disertakan' });
 
@@ -9687,9 +9687,17 @@ const webhook_logs = [];
 
 function saveBookingsToDisk() {
   if (!Array.isArray(bookings)) return;
-  bookingRepository.replaceAll(bookings).catch((err) => {
-    console.error('[Persistence] Failed to persist bookings:', err.message);
-  });
+  const byTenant = new Map();
+  for (const booking of bookings) {
+    const tenantId = String(booking?.tenant_id || 'tenant_default');
+    if (!byTenant.has(tenantId)) byTenant.set(tenantId, []);
+    byTenant.get(tenantId).push(booking);
+  }
+  for (const [tenantId, tenantBookings] of byTenant) {
+    bookingRepository.replaceAll(tenantBookings, tenantId).catch((err) => {
+      console.error('[Persistence] Failed to persist bookings:', err.message);
+    });
+  }
 }
 
 function loadBookingsFromDisk() {
@@ -9699,9 +9707,17 @@ function loadBookingsFromDisk() {
 
 function savePaymentsDataToDisk() {
   if (!Array.isArray(payment_transactions)) return;
-  paymentRepository.replaceAll(payment_transactions).catch((err) => {
-    console.error('[Persistence] Failed to persist payments:', err.message);
-  });
+  const byTenant = new Map();
+  for (const payment of payment_transactions) {
+    const tenantId = String(payment?.tenant_id || 'tenant_default');
+    if (!byTenant.has(tenantId)) byTenant.set(tenantId, []);
+    byTenant.get(tenantId).push(payment);
+  }
+  for (const [tenantId, tenantPayments] of byTenant) {
+    paymentRepository.replaceAll(tenantPayments, tenantId).catch((err) => {
+      console.error('[Persistence] Failed to persist payments:', err.message);
+    });
+  }
 }
 
 function loadPaymentsFromDisk() {
