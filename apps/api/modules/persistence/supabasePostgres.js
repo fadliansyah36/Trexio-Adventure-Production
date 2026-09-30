@@ -137,6 +137,7 @@ async function loadUsersFromSupabasePostgres() {
         email: base.email || row.email,
         name: base.name || row.name,
         role: base.role || row.role,
+        tenant_id: base.tenant_id || row.tenant_id || 'tenant_default',
         supabase_uid: base.supabase_uid || row.supabase_uid || undefined,
         tenant_id: base.tenant_id || row.tenant_id || 'tenant_default',
       };
