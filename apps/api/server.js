@@ -7162,7 +7162,7 @@ api.get('/vendor/plan', requireAuth, (req, res) => {
 // ========================================================
 // UNIFIED OPERATOR DISPATCH & ROLES API (GUIDE/PORTER/RENTAL/BASECAMP)
 // ========================================================
-api.get('/api/v1/operator/profile', requireAuth, (req, res) => {
+api.get('/api/v1/operator/profile', requireTenantAccess, (req, res) => {
   const userRoles = getUserRoles(req.user);
   const v = vendors.find(item => item.user_id === req.user.id || item.id === req.user.vendor_id);
   const tenant = resolveTenantScope(req);
@@ -7188,7 +7188,7 @@ api.get('/api/v1/operator/profile', requireAuth, (req, res) => {
   });
 });
 
-api.get('/api/v1/operator/assignments', requireAuth, (req, res) => {
+api.get('/api/v1/operator/assignments', requireTenantAccess, (req, res) => {
   const userRoles = getUserRoles(req.user);
   const v = vendors.find(item => item.user_id === req.user.id || item.id === req.user.vendor_id);
   const tenant = resolveTenantScope(req);
@@ -7210,7 +7210,7 @@ api.get('/api/v1/operator/assignments', requireAuth, (req, res) => {
   });
 });
 
-api.patch('/api/v1/operator/assignments/:id/status', requireAuth, (req, res) => {
+api.patch('/api/v1/operator/assignments/:id/status', requireTenantAccess, (req, res) => {
   const { status, notes } = req.body;
   const targetBooking = bookings.find(b => b.id === req.params.id || b.code === req.params.id);
   if (!targetBooking) {
@@ -7231,7 +7231,7 @@ api.patch('/api/v1/operator/assignments/:id/status', requireAuth, (req, res) => 
   });
 });
 
-api.get('/api/v1/operator/manifest', requireBasecampOperator, (req, res) => {
+api.get('/api/v1/operator/manifest', requireTenantAccess, (req, res) => {
   const { mountain, date } = req.query;
   const tenant = resolveTenantScope(req);
 
@@ -7258,7 +7258,7 @@ api.get('/api/v1/operator/manifest', requireBasecampOperator, (req, res) => {
   });
 });
 
-api.post('/api/v1/operator/checkin/verify', requireVendor, (req, res) => {
+api.post('/api/v1/operator/checkin/verify', requireTenantAccess, (req, res) => {
   const { code } = req.body;
   if (!code) return res.status(400).json({ detail: 'Kode QR Booking wajib disertakan' });
 
