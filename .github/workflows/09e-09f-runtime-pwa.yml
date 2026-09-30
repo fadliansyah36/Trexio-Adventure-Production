@@ -99,7 +99,7 @@ jobs:
             sleep 1
           done
           echo '--- API SERVER LOG ---'
-          cat /tmp/trexio-api.log || true
+          cat /tmp/trexio-api.log
           echo '--- API RESPONSE ---'
           if [ -f /tmp/api-response.json ]; then cat /tmp/api-response.json; fi
           echo '--- API STATUS ---'
