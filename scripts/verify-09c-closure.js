@@ -16,9 +16,9 @@ const targets = [
   ['apps/api', path.join(root, 'apps/api')],
 ];
 const forbidden = [
-  /(^|[/'"])frontend//,
-  /(^|[/'"])backend//,
-  /(^|[/'"])src/(?!.*apps)/,
+  /(^|[/'"])frontend\//,
+  /(^|[/'"])backend\//,
+  /(^|[/'"])src\/(?!.*apps)/,
 ];
 
 let failed = false;

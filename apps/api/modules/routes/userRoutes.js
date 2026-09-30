@@ -720,4 +720,4 @@ api.patch('/users/me/preferences', requireAuth, (req, res) => {
   saveUsersToDisk();
   res.json({ ok: true, preferences: u.preferences });
 });
-
+};

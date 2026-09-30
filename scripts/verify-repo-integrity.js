@@ -122,8 +122,11 @@ function scanDirectoryForViolations(dir) {
   }
 }
 
-scanDirectoryForViolations('src');
-scanDirectoryForViolations('frontend/src');
+scanDirectoryForViolations('apps/api');
+scanDirectoryForViolations('apps/web');
+scanDirectoryForViolations('apps/admin');
+scanDirectoryForViolations('packages');
+scanDirectoryForViolations('scripts');
 if (fs.existsSync('server.js')) {
   scannedCount++;
   const serverContent = fs.readFileSync('server.js', 'utf8');
@@ -172,6 +175,6 @@ if (violations.length > 0) {
   process.exit(1);
 } else {
   console.log('STATUS: ✓ ALL ARCHITECTURE & REPO INTEGRITY CHECKS PASSED');
-  console.log('Repositori bersih, terintegrasi penuh ke Supabase PostgreSQL, Midtrans, dan Google GenAI.');
+  console.log('Repositori aktif melewati integrity checks untuk Supabase PostgreSQL, Midtrans, dan Google GenAI.');
   process.exit(0);
 }

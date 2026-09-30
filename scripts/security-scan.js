@@ -1,6 +1,6 @@
 /**
  * Trexio SAST & Code Security Scanner
- * Performs static security scans across server.js, /src, and /frontend/src
+ * Performs static security scans across the active apps/, packages/, scripts/, and API compatibility entrypoint.
  */
 
 const fs = require('fs');
@@ -48,7 +48,7 @@ function scanFile(filePath) {
   });
 
   // Client-side logging must never dump Axios configs or request/response bodies.
-  if (filePath.startsWith('frontend/') && /console\.error\([^\n]*(?:fullConfig|requestDTO|requestData|serverResponseBody)/i.test(content)) {
+  if ((filePath.startsWith('apps/web/') || filePath.startsWith('apps/admin/')) && /console\.error\([^\n]*(?:fullConfig|requestDTO|requestData|serverResponseBody)/i.test(content)) {
     findings.p1.push({ file: filePath, rule: 'Sensitive request configuration/body logged to browser console' });
   }
 
@@ -85,8 +85,11 @@ function traverse(dir) {
 
 // Perform scan
 scanFile('server.js');
-traverse('src');
-traverse('frontend/src');
+traverse('apps/api');
+traverse('apps/web');
+traverse('apps/admin');
+traverse('packages');
+traverse('scripts');
 
 console.log(`Scan completed across ${totalFiles} source files.`);
 console.log(`P0 Critical Findings: ${findings.p0.length}`);

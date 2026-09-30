@@ -354,6 +354,8 @@ const bookings = [];
 const rental_orders = [];
 const push_subscriptions = [];
 const audit_logs = [];
+let auditLogs = [];
+const payment_transactions = [];
 
 // ==========================================
 // TREXIO SUBSCRIPTION & ADVERTISING ENGINE
@@ -624,25 +626,6 @@ function loadCommunicationsFromDisk() {
 
 loadSubDataFromDisk();
 loadCommunicationsFromDisk();
-
-function recordAuditLog(actor, action, targetType, targetId, prevState = null, newState = null) {
-  const log = {
-    id: `log_${Date.now()}_${uuidv4().substring(0, 6)}`,
-    actor_id: actor?.id || 'system',
-    actor_email: actor?.email || 'system@trexio.id',
-    actor_role: actor?.role || 'system',
-    action,
-    target_type: targetType,
-    target_id: targetId,
-    previous_state: prevState,
-    new_state: newState,
-    timestamp: nowISO()
-  };
-  audit_logs.unshift(log);
-  if (audit_logs.length > 500) audit_logs.pop();
-  saveAuditLogsToDisk();
-  return log;
-}
 
 function syncAdCampaignsStatus() {
   const now = new Date();
@@ -1935,7 +1918,7 @@ registerAuthRoutes({
   logActivity, nowISO, uuidv4, speakeasy, QRCode,
   syncAllUsersToPostgres, saveUsersToDisk, tenants, vendors,
   conversations, messages, auditLogs, systemHealth, persistCollection,
-  sanitizeHeaders, createNotification
+  createNotification
 });
 
 // Mission 09C Phase 5B: authentication routes extracted to modules/routes/authRoutes.js
@@ -9102,12 +9085,6 @@ function sanitizeAuditValue(val) {
   return maskSensitiveString(String(val));
 }
 
-let auditLogs = [];
-
-function saveAuditLogsToDisk() {
-  persistCollection('audit_logs');
-}
-
 function recordAuditLog(userEmail, action, resource, oldVal, newVal, req = null, extraMeta = {}) {
   let ip = extraMeta?.ip;
   let userAgent = extraMeta?.userAgent;
@@ -9705,7 +9682,6 @@ let midtransConfig = {
   ],
 };
 
-const payment_transactions = [];
 const webhook_logs = [];
 
 function saveBookingsToDisk() {
