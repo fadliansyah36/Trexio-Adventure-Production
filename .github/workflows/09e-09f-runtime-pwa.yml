@@ -93,7 +93,7 @@ jobs:
           PID=$!
           trap 'if kill -0 "$PID" 2>/dev/null; then kill "$PID"; fi' EXIT
           for i in {1..30}; do
-            if curl --max-time 3 -sS -o /tmp/api-response.json -w "%{http_code}" http://127.0.0.1:3100/api/does-not-exist > /tmp/api-status.txt 2>/dev/null; then
+            if curl --max-time 3 -sS -o /tmp/api-response.json -w "%{http_code}" http://127.0.0.1:3100/api/ > /tmp/api-status.txt 2>/dev/null; then
               break
             fi
             sleep 1
@@ -105,8 +105,8 @@ jobs:
           echo '--- API STATUS ---'
           if [ -f /tmp/api-status.txt ]; then cat /tmp/api-status.txt; fi
           test -s /tmp/api-response.json
-          test "$(cat /tmp/api-status.txt)" = "404"
-          node -e "const r=require('/tmp/api-response.json'); if(r.code!=='API_NOT_FOUND') process.exit(1)"
+          test "$(cat /tmp/api-status.txt)" = "200"
+          node -e "const r=require('/tmp/api-response.json'); if(r.name!=='TREXIO API' || r.status!=='ok') process.exit(1)"
           if kill -0 "$PID" 2>/dev/null; then kill "$PID"; fi
 
   web:
