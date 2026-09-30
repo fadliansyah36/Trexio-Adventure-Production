@@ -70,6 +70,7 @@
     "@types/react": "19.2.18",
     "sharp": "^0.35.3",
     "ts-node": "^10.9.2",
-    "typescript": "5.8.2"
+    "typescript": "5.8.2",
+    "eslint-plugin-react-hooks": "^5.0.0"
   }
 }
