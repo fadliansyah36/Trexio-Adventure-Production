@@ -2,6 +2,7 @@ const { getPool } = require('../persistence/supabasePostgres');
 
 const SELECT_COLUMNS = `
   id,
+  tenant_id,
   user_id,
   brand_name,
   slug,
@@ -19,6 +20,7 @@ function hydrate(row) {
   return {
     ...data,
     id: row.id,
+    tenant_id: row.tenant_id,
     user_id: row.user_id,
     brand_name: row.brand_name,
     slug: row.slug,
@@ -31,31 +33,31 @@ function hydrate(row) {
   };
 }
 
-async function list() {
+async function list(tenantId = null) {
   const p = getPool();
   if (!p) return [];
-  const result = await p.query(`SELECT ${SELECT_COLUMNS} FROM vendors ORDER BY created_at ASC, id ASC`);
+  const result = await p.query(`SELECT ${SELECT_COLUMNS} FROM vendors ${tenantId ? 'WHERE tenant_id = $1' : ''} ORDER BY created_at ASC, id ASC`);
   return result.rows.map(hydrate);
 }
 
-async function findById(id) {
+async function findById(id, tenantId = null) {
   if (!id) return null;
   const p = getPool();
   if (!p) return null;
   const result = await p.query(
-    `SELECT ${SELECT_COLUMNS} FROM vendors WHERE id = $1 LIMIT 1`,
-    [String(id)]
+    `SELECT ${SELECT_COLUMNS} FROM vendors WHERE id = $1 ${tenantId ? 'AND tenant_id = $2' : ''} LIMIT 1`,
+    tenantId ? [String(id), String(tenantId)] : [String(id)]
   );
   return result.rows[0] ? hydrate(result.rows[0]) : null;
 }
 
-async function findByUserId(userId) {
+async function findByUserId(userId, tenantId = null) {
   if (!userId) return null;
   const p = getPool();
   if (!p) return null;
   const result = await p.query(
-    `SELECT ${SELECT_COLUMNS} FROM vendors WHERE user_id = $1 LIMIT 1`,
-    [String(userId)]
+    `SELECT ${SELECT_COLUMNS} FROM vendors WHERE user_id = $1 ${tenantId ? 'AND tenant_id = $2' : ''} LIMIT 1`,
+    tenantId ? [String(userId), String(tenantId)] : [String(userId)]
   );
   return result.rows[0] ? hydrate(result.rows[0]) : null;
 }
@@ -68,10 +70,11 @@ async function save(vendor) {
   const data = { ...vendor };
   const result = await p.query(
     `INSERT INTO vendors (
-       id, user_id, brand_name, slug, status, rating, total_trips, documents, data, updated_at
+       id, tenant_id, user_id, brand_name, slug, status, rating, total_trips, documents, data, updated_at
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9::jsonb, NOW())
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, NOW())
      ON CONFLICT (id) DO UPDATE SET
+       tenant_id = EXCLUDED.tenant_id,
        user_id = EXCLUDED.user_id,
        brand_name = EXCLUDED.brand_name,
        slug = EXCLUDED.slug,
@@ -84,6 +87,7 @@ async function save(vendor) {
      RETURNING ${SELECT_COLUMNS}`,
     [
       String(vendor.id),
+      String(vendor.tenant_id || 'tenant_default'),
       vendor.user_id ? String(vendor.user_id) : null,
       String(vendor.brand_name || 'Mitra TREXIO'),
       vendor.slug || null,
@@ -97,11 +101,11 @@ async function save(vendor) {
   return hydrate(result.rows[0]);
 }
 
-async function remove(id) {
+async function remove(id, tenantId = null) {
   if (!id) return false;
   const p = getPool();
   if (!p) return false;
-  const result = await p.query('DELETE FROM vendors WHERE id = $1', [String(id)]);
+  const result = await p.query(`DELETE FROM vendors WHERE id = $1 ${tenantId ? 'AND tenant_id = $2' : ''}`, tenantId ? [String(id), String(tenantId)] : [String(id)]);
   return result.rowCount > 0;
 }
 
