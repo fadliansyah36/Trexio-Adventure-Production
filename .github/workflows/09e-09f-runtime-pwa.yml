@@ -17,6 +17,17 @@ on:
       - "scripts/verify-repo-integrity.js"
       - "scripts/verify-production-readiness.js"
       - "scripts/reconcile-09c-09d-evidence.js"
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/api/**"
+      - "apps/web/**"
+      - "apps/admin/**"
+      - "packages/**"
+      - "scripts/**"
+      - "package.json"
+      - "eslint.config.mjs"
+      - ".github/workflows/09e-09f-runtime-pwa.yml"
   workflow_dispatch:
 
 jobs:
