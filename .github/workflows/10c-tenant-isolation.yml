@@ -1,0 +1,27 @@
+name: Trexio 10C Tenant Isolation Gate
+
+on:
+  pull_request:
+    paths:
+      - 'apps/api/server.js'
+      - 'apps/api/security/**'
+      - 'scripts/test-tenant-isolation.js'
+      - 'scripts/verify-10c-tenant-isolation.js'
+      - 'package.json'
+  workflow_dispatch:
+
+jobs:
+  tenant-isolation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify tenant isolation
+        run: npm run verify:10c-tenant-isolation
+      - name: Upload 10C evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: trexio-10c-tenant-isolation-evidence
+          path: data/tenant-isolation-10c.json
