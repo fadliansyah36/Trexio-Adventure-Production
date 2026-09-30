@@ -22,7 +22,7 @@
     "supabase:push": "node scripts/db-push.js",
     "supabase:pull": "node scripts/db-pull.js",
     "pre-push": "npm run verify-integrity && npm run security-scan",
-    "lint": "echo 'No lint issues'",
+    "lint": "eslint \"apps/**/*.{js,jsx,cjs,mjs}\" \"packages/**/*.{js,jsx,cjs,mjs}\" \"scripts/**/*.js\" \"server.js\"",
     "db:verify-relational-cutover": "node scripts/verify-relational-cutover.js",
     "db:apply-mission-08-booking-payment": "node scripts/apply-mission-08-booking-payment-cutover.js",
     "db:verify-booking-payment-cutover": "node scripts/verify-booking-payment-cutover.js",
@@ -33,7 +33,8 @@
     "verify:standalone-apps": "node scripts/verify-standalone-apps.js",
     "verify:09d-dependencies": "node scripts/verify-09d-dependency-decoupling.js",
     "verify:09c-post-extraction": "node scripts/verify-09c-post-extraction-integrity.js",
-    "verify:09e-09f": "node scripts/verify-09e-09f-pwa-runtime.js"
+    "verify:09e-09f": "node scripts/verify-09e-09f-pwa-runtime.js",
+    "verify:production-readiness": "node scripts/verify-production-readiness.js"
   },
   "dependencies": {
     "@google/genai": "^2.15.0",
