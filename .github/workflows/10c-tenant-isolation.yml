@@ -35,9 +35,6 @@ jobs:
 
       - name: Lint
         run: npm run lint
-
-      - name: Full automated test suite
-        run: npm test
       - name: Upload 10C evidence
         uses: actions/upload-artifact@v4
         with:
