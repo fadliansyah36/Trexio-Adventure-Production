@@ -1,0 +1,27 @@
+name: Trexio 10D Midtrans Webhook Gate
+
+on:
+  pull_request:
+    paths:
+      - 'apps/api/server.js'
+      - 'apps/api/modules/repositories/paymentWebhookRepository.js'
+      - 'scripts/verify-10d-midtrans-webhook.js'
+      - 'supabase/migrations/20260930060000_production_payment_webhook_idempotency.sql'
+      - 'package.json'
+  workflow_dispatch:
+
+jobs:
+  payment-webhook:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify Midtrans webhook hardening
+        run: npm run verify:10d-midtrans-webhook
+      - name: Upload 10D evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: trexio-10d-payment-webhook-evidence
+          path: data/payment-webhook-10d.json
