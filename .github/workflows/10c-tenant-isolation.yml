@@ -21,8 +21,23 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Install dependencies
+        run: npm ci
+
       - name: Verify tenant isolation
         run: npm run verify:10c-tenant-isolation
+
+      - name: Run tenant authorization unit tests
+        run: npm run test:tenant-isolation
+
+      - name: Syntax check tenant persistence modules
+        run: node --check apps/api/modules/repositories/vendorRepository.js && node --check apps/api/modules/repositories/tripRepository.js && node --check apps/api/modules/repositories/bookingRepository.js && node --check apps/api/modules/repositories/paymentRepository.js && node --check apps/api/modules/persistence/supabasePostgres.js
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Full automated test suite
+        run: npm test
       - name: Upload 10C evidence
         uses: actions/upload-artifact@v4
         with:
