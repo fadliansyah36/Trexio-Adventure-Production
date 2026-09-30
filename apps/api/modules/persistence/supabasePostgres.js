@@ -112,7 +112,7 @@ async function saveUserToSupabasePostgres(user) {
 
     await p.query(
       `INSERT INTO users (uid, email, name, role, supabase_uid, tenant_id, data, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, NOW())
+       VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, NOW())
        ON CONFLICT (uid) DO UPDATE
        SET name = EXCLUDED.name, email = EXCLUDED.email, role = EXCLUDED.role,
            supabase_uid = EXCLUDED.supabase_uid, tenant_id = EXCLUDED.tenant_id, data = EXCLUDED.data, updated_at = NOW();`,
@@ -139,7 +139,6 @@ async function loadUsersFromSupabasePostgres() {
         role: base.role || row.role,
         tenant_id: base.tenant_id || row.tenant_id || 'tenant_default',
         supabase_uid: base.supabase_uid || row.supabase_uid || undefined,
-        tenant_id: base.tenant_id || row.tenant_id || 'tenant_default',
       };
     });
   } catch (err) {
