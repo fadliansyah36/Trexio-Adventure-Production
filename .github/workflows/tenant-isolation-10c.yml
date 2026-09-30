@@ -1,0 +1,41 @@
+name: Trexio 10C Tenant Isolation Gate
+
+on:
+  pull_request:
+    paths:
+      - 'apps/api/server.js'
+      - 'apps/api/security/**'
+      - 'apps/api/modules/repositories/**'
+      - 'apps/api/modules/persistence/**'
+      - 'scripts/test-tenant-isolation.js'
+      - 'scripts/verify-10c-tenant-isolation.js'
+      - 'supabase/migrations/**'
+      - 'package.json'
+  workflow_dispatch:
+
+jobs:
+  tenant-isolation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - name: Verify 10C tenant isolation
+        run: npm run verify:10c-tenant-isolation
+      - name: Syntax check repositories
+        run: |
+          node --check apps/api/modules/repositories/vendorRepository.js
+          node --check apps/api/modules/repositories/tripRepository.js
+          node --check apps/api/modules/repositories/bookingRepository.js
+          node --check apps/api/modules/repositories/paymentRepository.js
+          node --check apps/api/modules/persistence/supabasePostgres.js
+      - name: Lint
+        run: npm run lint
+      - name: Automated tests
+        run: npm test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trexio-10c-tenant-isolation-evidence
+          path: data/tenant-isolation-10c.json
