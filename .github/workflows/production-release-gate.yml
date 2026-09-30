@@ -20,13 +20,25 @@ jobs:
           node-version: 20
       - name: Verify structural readiness
         run: node scripts/verify-production-readiness.js
+      - name: Verify operational readiness evidence
+        env:
+          TREXIO_PRODUCTION_BASE_URL: ${{ vars.TREXIO_PRODUCTION_BASE_URL }}
+          TREXIO_PRODUCTION_ATTESTATION: ${{ secrets.TREXIO_PRODUCTION_ATTESTATION }}
+        run: node scripts/verify-production-operational-readiness.js
       - name: Verify production attestation and live smoke
         env:
           TREXIO_PRODUCTION_BASE_URL: ${{ vars.TREXIO_PRODUCTION_BASE_URL }}
           TREXIO_PRODUCTION_ATTESTATION: ${{ secrets.TREXIO_PRODUCTION_ATTESTATION }}
         run: node scripts/verify-production-release-attestation.js
+      - name: Build final production readiness report
+        run: node scripts/build-final-production-readiness-report.js
       - name: Publish production release evidence
         uses: actions/upload-artifact@v4
         with:
           name: trexio-production-release-gate
-          path: data/production-release-gate.json
+          path: |
+            data/production-readiness-structural.json
+            data/production-operational-readiness.json
+            data/production-release-gate.json
+            data/FINAL-PRODUCTION-READINESS.json
+            data/FINAL-PRODUCTION-READINESS.md
