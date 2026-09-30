@@ -354,6 +354,7 @@ const bookings = [];
 const rental_orders = [];
 const push_subscriptions = [];
 const audit_logs = [];
+let auditLogs = [];
 
 // ==========================================
 // TREXIO SUBSCRIPTION & ADVERTISING ENGINE
@@ -9082,8 +9083,6 @@ function sanitizeAuditValue(val) {
   }
   return maskSensitiveString(String(val));
 }
-
-let auditLogs = [];
 
 function recordAuditLog(userEmail, action, resource, oldVal, newVal, req = null, extraMeta = {}) {
   let ip = extraMeta?.ip;
