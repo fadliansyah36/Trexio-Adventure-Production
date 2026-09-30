@@ -9682,7 +9682,6 @@ let midtransConfig = {
   ],
 };
 
-const payment_transactions = [];
 const webhook_logs = [];
 
 function saveBookingsToDisk() {
