@@ -9104,10 +9104,6 @@ function sanitizeAuditValue(val) {
 
 let auditLogs = [];
 
-function saveAuditLogsToDisk() {
-  persistCollection('audit_logs');
-}
-
 function recordAuditLog(userEmail, action, resource, oldVal, newVal, req = null, extraMeta = {}) {
   let ip = extraMeta?.ip;
   let userAgent = extraMeta?.userAgent;
