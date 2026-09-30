@@ -355,6 +355,7 @@ const rental_orders = [];
 const push_subscriptions = [];
 const audit_logs = [];
 let auditLogs = [];
+const payment_transactions = [];
 
 // ==========================================
 // TREXIO SUBSCRIPTION & ADVERTISING ENGINE
