@@ -1,4 +1,5 @@
 import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
 
 export default [
   {
@@ -25,6 +26,9 @@ export default [
       parserOptions: {
         ecmaFeatures: { jsx: true },
       },
+    },
+    plugins: {
+      'react-hooks': reactHooks,
     },
     rules: {
       'no-unreachable': 'error',
