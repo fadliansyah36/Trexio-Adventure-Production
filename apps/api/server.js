@@ -625,25 +625,6 @@ function loadCommunicationsFromDisk() {
 loadSubDataFromDisk();
 loadCommunicationsFromDisk();
 
-function recordAuditLog(actor, action, targetType, targetId, prevState = null, newState = null) {
-  const log = {
-    id: `log_${Date.now()}_${uuidv4().substring(0, 6)}`,
-    actor_id: actor?.id || 'system',
-    actor_email: actor?.email || 'system@trexio.id',
-    actor_role: actor?.role || 'system',
-    action,
-    target_type: targetType,
-    target_id: targetId,
-    previous_state: prevState,
-    new_state: newState,
-    timestamp: nowISO()
-  };
-  audit_logs.unshift(log);
-  if (audit_logs.length > 500) audit_logs.pop();
-  saveAuditLogsToDisk();
-  return log;
-}
-
 function syncAdCampaignsStatus() {
   const now = new Date();
   let changed = false;
