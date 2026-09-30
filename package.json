@@ -37,7 +37,9 @@
     "verify:production-readiness": "node scripts/verify-production-readiness.js",
     "verify:09c-09d-evidence": "node scripts/reconcile-09c-09d-evidence.js",
     "verify:production-operational-readiness": "node scripts/verify-production-operational-readiness.js",
-    "report:production-readiness": "node scripts/build-final-production-readiness-report.js"
+    "report:production-readiness": "node scripts/build-final-production-readiness-report.js",
+    "test:tenant-isolation": "node scripts/test-tenant-isolation.js",
+    "verify:10c-tenant-isolation": "node scripts/verify-10c-tenant-isolation.js"
   },
   "dependencies": {
     "@google/genai": "^2.15.0",
