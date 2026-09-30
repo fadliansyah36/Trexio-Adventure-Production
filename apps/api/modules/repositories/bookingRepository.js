@@ -75,11 +75,24 @@ async function remove(id, tenantId = null) {
   const r = await p.query(`DELETE FROM bookings WHERE (external_id=$1 OR booking_code=$1) ${tenantId ? 'AND tenant_id=$2' : ''}`, tenantId ? [String(id), String(tenantId)] : [String(id)]);
   return r.rowCount > 0;
 }
-async function replaceAll(bookings) {
+async function replaceAll(bookings, tenantId) {
+  if (!tenantId) throw new Error('tenantId is required for booking replaceAll');
+  const scopedTenantId = String(tenantId);
   const p=getPool(); if(!p) throw new Error('Supabase PostgreSQL pool is unavailable');
   const list=Array.isArray(bookings)?bookings.filter(b=>b&&b.id):[];
-  for(const b of list) await save(b);
-  if(list.length) await p.query('DELETE FROM bookings WHERE external_id IS NOT NULL AND NOT (external_id=ANY($1::text[]))',[list.map(b=>String(b.id))]);
-  else await p.query('DELETE FROM bookings');
+  for(const b of list) {
+    if(String(b.tenant_id || scopedTenantId) !== scopedTenantId) {
+      throw new Error('Cross-tenant booking replaceAll payload rejected');
+    }
+    await save({ ...b, tenant_id: scopedTenantId });
+  }
+  if(list.length) {
+    await p.query(
+      'DELETE FROM bookings WHERE tenant_id=$1 AND external_id IS NOT NULL AND NOT (external_id=ANY($2::text[]))',
+      [scopedTenantId, list.map(b=>String(b.id))]
+    );
+  } else {
+    await p.query('DELETE FROM bookings WHERE tenant_id=$1', [scopedTenantId]);
+  }
 }
 module.exports = { list, findById, findByCode, save, remove, replaceAll };
