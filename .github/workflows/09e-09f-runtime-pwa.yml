@@ -16,6 +16,7 @@ on:
       - "scripts/security-scan.js"
       - "scripts/verify-repo-integrity.js"
       - "scripts/verify-production-readiness.js"
+      - "scripts/reconcile-09c-09d-evidence.js"
   workflow_dispatch:
 
 jobs:
@@ -31,6 +32,7 @@ jobs:
       - run: node scripts/verify-api-contracts.js
       - run: node scripts/verify-09d-dependency-decoupling.js
       - run: node scripts/verify-production-readiness.js
+      - run: node scripts/reconcile-09c-09d-evidence.js
 
   lint:
     needs: structural
@@ -147,4 +149,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: trexio-production-readiness
-          path: data/production-readiness-structural.json
+          path: |
+            data/production-readiness-structural.json
+            data/09c-09d-evidence-reconciliation.json
