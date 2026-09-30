@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - 'apps/api/server.js'
+      - 'apps/api/modules/repositories/**'
+      - 'apps/api/modules/persistence/**'
+      - 'supabase/migrations/**'
       - 'apps/api/security/**'
       - 'scripts/test-tenant-isolation.js'
       - 'scripts/verify-10c-tenant-isolation.js'
@@ -18,8 +21,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
       - name: Verify tenant isolation
         run: npm run verify:10c-tenant-isolation
+
+      - name: Run tenant authorization unit tests
+        run: npm run test:tenant-isolation
+
+      - name: Syntax check tenant persistence modules
+        run: node --check apps/api/modules/repositories/vendorRepository.js && node --check apps/api/modules/repositories/tripRepository.js && node --check apps/api/modules/repositories/bookingRepository.js && node --check apps/api/modules/repositories/paymentRepository.js && node --check apps/api/modules/persistence/supabasePostgres.js
+
+      - name: Lint
+        run: npm run lint
       - name: Upload 10C evidence
         uses: actions/upload-artifact@v4
         with:
