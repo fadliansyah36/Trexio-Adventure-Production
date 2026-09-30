@@ -1917,7 +1917,7 @@ registerAuthRoutes({
   logActivity, nowISO, uuidv4, speakeasy, QRCode,
   syncAllUsersToPostgres, saveUsersToDisk, tenants, vendors,
   conversations, messages, auditLogs, systemHealth, persistCollection,
-  sanitizeHeaders, createNotification
+  createNotification
 });
 
 // Mission 09C Phase 5B: authentication routes extracted to modules/routes/authRoutes.js
