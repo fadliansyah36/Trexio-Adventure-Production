@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: 20
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Verify tenant isolation
         run: npm run verify:10c-tenant-isolation
