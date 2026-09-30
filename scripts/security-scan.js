@@ -1,6 +1,6 @@
 /**
  * Trexio SAST & Code Security Scanner
- * Performs static security scans across server.js, /src, and /frontend/src
+ * Performs static security scans across the active apps/, packages/, scripts/, and API compatibility entrypoint.
  */
 
 const fs = require('fs');
@@ -85,8 +85,11 @@ function traverse(dir) {
 
 // Perform scan
 scanFile('server.js');
-traverse('src');
-traverse('frontend/src');
+traverse('apps/api');
+traverse('apps/web');
+traverse('apps/admin');
+traverse('packages');
+traverse('scripts');
 
 console.log(`Scan completed across ${totalFiles} source files.`);
 console.log(`P0 Critical Findings: ${findings.p0.length}`);
