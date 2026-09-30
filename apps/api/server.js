@@ -9687,9 +9687,17 @@ const webhook_logs = [];
 
 function saveBookingsToDisk() {
   if (!Array.isArray(bookings)) return;
-  bookingRepository.replaceAll(bookings).catch((err) => {
-    console.error('[Persistence] Failed to persist bookings:', err.message);
-  });
+  const byTenant = new Map();
+  for (const booking of bookings) {
+    const tenantId = String(booking?.tenant_id || 'tenant_default');
+    if (!byTenant.has(tenantId)) byTenant.set(tenantId, []);
+    byTenant.get(tenantId).push(booking);
+  }
+  for (const [tenantId, tenantBookings] of byTenant) {
+    bookingRepository.replaceAll(tenantBookings, tenantId).catch((err) => {
+      console.error('[Persistence] Failed to persist bookings:', err.message);
+    });
+  }
 }
 
 function loadBookingsFromDisk() {
@@ -9699,9 +9707,17 @@ function loadBookingsFromDisk() {
 
 function savePaymentsDataToDisk() {
   if (!Array.isArray(payment_transactions)) return;
-  paymentRepository.replaceAll(payment_transactions).catch((err) => {
-    console.error('[Persistence] Failed to persist payments:', err.message);
-  });
+  const byTenant = new Map();
+  for (const payment of payment_transactions) {
+    const tenantId = String(payment?.tenant_id || 'tenant_default');
+    if (!byTenant.has(tenantId)) byTenant.set(tenantId, []);
+    byTenant.get(tenantId).push(payment);
+  }
+  for (const [tenantId, tenantPayments] of byTenant) {
+    paymentRepository.replaceAll(tenantPayments, tenantId).catch((err) => {
+      console.error('[Persistence] Failed to persist payments:', err.message);
+    });
+  }
 }
 
 function loadPaymentsFromDisk() {
