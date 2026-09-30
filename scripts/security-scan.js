@@ -48,7 +48,7 @@ function scanFile(filePath) {
   });
 
   // Client-side logging must never dump Axios configs or request/response bodies.
-  if (filePath.startsWith('frontend/') && /console\.error\([^\n]*(?:fullConfig|requestDTO|requestData|serverResponseBody)/i.test(content)) {
+  if ((filePath.startsWith('apps/web/') || filePath.startsWith('apps/admin/')) && /console\.error\([^\n]*(?:fullConfig|requestDTO|requestData|serverResponseBody)/i.test(content)) {
     findings.p1.push({ file: filePath, rule: 'Sensitive request configuration/body logged to browser console' });
   }
 
