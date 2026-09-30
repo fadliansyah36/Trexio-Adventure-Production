@@ -47,7 +47,7 @@ function hydrate(row) {
 async function list(tenantId = null) {
   const p = getPool();
   if (!p) return [];
-  const result = await p.query(`SELECT ${SELECT_COLUMNS} FROM trips ${tenantId ? 'WHERE tenant_id = $1' : ''} ORDER BY created_at ASC, id ASC`);
+  const result = await p.query(`SELECT ${SELECT_COLUMNS} FROM trips ${tenantId ? 'WHERE tenant_id = $1' : ''} ORDER BY created_at ASC, id ASC`, tenantId ? [String(tenantId)] : []);
   return result.rows.map(hydrate);
 }
 
