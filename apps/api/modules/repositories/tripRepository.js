@@ -2,6 +2,7 @@ const { getPool } = require('../persistence/supabasePostgres');
 
 const SELECT_COLUMNS = `
   id,
+  tenant_id,
   external_id,
   title,
   destination,
@@ -25,6 +26,7 @@ function hydrate(row) {
   return {
     ...data,
     id: publicId,
+    tenant_id: row.tenant_id,
     title: row.title,
     destination: row.destination,
     price: row.price !== null ? Number(row.price) : 0,
@@ -42,14 +44,14 @@ function hydrate(row) {
   };
 }
 
-async function list() {
+async function list(tenantId = null) {
   const p = getPool();
   if (!p) return [];
-  const result = await p.query(`SELECT ${SELECT_COLUMNS} FROM trips ORDER BY created_at ASC, id ASC`);
+  const result = await p.query(`SELECT ${SELECT_COLUMNS} FROM trips ${tenantId ? 'WHERE tenant_id = $1' : ''} ORDER BY created_at ASC, id ASC`);
   return result.rows.map(hydrate);
 }
 
-async function findById(id) {
+async function findById(id, tenantId = null) {
   if (!id) return null;
   const p = getPool();
   if (!p) return null;
@@ -57,9 +59,9 @@ async function findById(id) {
   const result = await p.query(
     `SELECT ${SELECT_COLUMNS}
      FROM trips
-     WHERE external_id = $1 OR (external_id IS NULL AND id::text = $1)
+     WHERE (external_id = $1 OR (external_id IS NULL AND id::text = $1)) ${tenantId ? 'AND tenant_id = $2' : ''}
      LIMIT 1`,
-    [value]
+    tenantId ? [value, String(tenantId)] : [value]
   );
   return result.rows[0] ? hydrate(result.rows[0]) : null;
 }
@@ -72,11 +74,12 @@ async function save(trip) {
   const data = { ...trip };
   const result = await p.query(
     `INSERT INTO trips (
-       external_id, title, destination, price, duration_days, available_seats,
+       external_id, tenant_id, title, destination, price, duration_days, available_seats,
        category, vendor_id, slug, status, cover_image, description, data, updated_at
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, NOW())
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14::jsonb, NOW())
      ON CONFLICT (external_id) DO UPDATE SET
+       tenant_id = EXCLUDED.tenant_id,
        title = EXCLUDED.title,
        destination = EXCLUDED.destination,
        price = EXCLUDED.price,
@@ -93,6 +96,7 @@ async function save(trip) {
      RETURNING ${SELECT_COLUMNS}`,
     [
       String(trip.id),
+      String(trip.tenant_id || 'tenant_default'),
       String(trip.title || 'Trip TREXIO'),
       String(trip.destination || trip.location || 'Indonesia'),
       Number.isFinite(Number(trip.price)) ? Number(trip.price) : 0,
@@ -114,11 +118,11 @@ async function save(trip) {
   return hydrate(result.rows[0]);
 }
 
-async function remove(id) {
+async function remove(id, tenantId = null) {
   if (!id) return false;
   const p = getPool();
   if (!p) return false;
-  const result = await p.query('DELETE FROM trips WHERE external_id = $1', [String(id)]);
+  const result = await p.query(`DELETE FROM trips WHERE external_id = $1 ${tenantId ? 'AND tenant_id = $2' : ''}`, tenantId ? [String(id), String(tenantId)] : [String(id)]);
   return result.rowCount > 0;
 }
 
