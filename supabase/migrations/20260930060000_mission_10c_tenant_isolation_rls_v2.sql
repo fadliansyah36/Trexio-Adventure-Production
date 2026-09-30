@@ -31,6 +31,18 @@ ALTER TABLE public.trips ALTER COLUMN tenant_id SET NOT NULL;
 ALTER TABLE public.bookings ALTER COLUMN tenant_id SET NOT NULL;
 ALTER TABLE public.payment_transactions ALTER COLUMN tenant_id SET NOT NULL;
 
+ALTER TABLE public.users DROP CONSTRAINT IF EXISTS users_tenant_id_fkey;
+ALTER TABLE public.vendors DROP CONSTRAINT IF EXISTS vendors_tenant_id_fkey;
+ALTER TABLE public.trips DROP CONSTRAINT IF EXISTS trips_tenant_id_fkey;
+ALTER TABLE public.bookings DROP CONSTRAINT IF EXISTS bookings_tenant_id_fkey;
+ALTER TABLE public.payment_transactions DROP CONSTRAINT IF EXISTS payment_transactions_tenant_id_fkey;
+
+ALTER TABLE public.users ADD CONSTRAINT users_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.app_tenants(id);
+ALTER TABLE public.vendors ADD CONSTRAINT vendors_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.app_tenants(id);
+ALTER TABLE public.trips ADD CONSTRAINT trips_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.app_tenants(id);
+ALTER TABLE public.bookings ADD CONSTRAINT bookings_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.app_tenants(id);
+ALTER TABLE public.payment_transactions ADD CONSTRAINT payment_transactions_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.app_tenants(id);
+
 CREATE INDEX IF NOT EXISTS idx_users_tenant_id ON public.users(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_vendors_tenant_id ON public.vendors(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_trips_tenant_id ON public.trips(tenant_id);
