@@ -24,6 +24,7 @@ const { registerBackpackerRoutes } = require('./modules/routes/backpackerRoutes'
 const registerAuthRoutes = require('./modules/routes/authRoutes');
 const registerUserRoutes = require('./modules/routes/userRoutes');
 const { registerMarketplaceDiscoveryRoutes } = require('./modules/routes/marketplaceDiscoveryRoutes');
+const { resolveTenantForRequest, assertTenantAccess } = require('./security/tenantIsolation');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -985,47 +986,47 @@ function requireBasecampOperator(req, res, next) {
 // TENANT RESOLUTION & ISOLATION SCOPING
 // ==========================================
 function resolveTenantScope(req) {
-  const requestedTenantId = req.headers['x-tenant-id'] || req.query.tenant_id || req.params.tenant_id || req.body?.tenant_id;
-  const requestedTenantSlug = req.headers['x-tenant-slug'] || req.query.tenant_slug || req.params.tenant_slug;
-
-  let tenant = null;
-  if (requestedTenantId) {
-    tenant = tenants.find(t => t.id === requestedTenantId);
-  }
-  if (!tenant && requestedTenantSlug) {
-    tenant = tenants.find(t => t.slug?.toLowerCase() === String(requestedTenantSlug).toLowerCase());
-  }
-  if (!tenant && req.user?.tenant_id) {
-    tenant = tenants.find(t => t.id === req.user.tenant_id || t.owner_user_id === req.user.id);
-  }
-  if (!tenant) {
-    tenant = getDefaultTenant();
-  }
-  return tenant;
+  return resolveTenantForRequest({
+    requestedTenantId:
+      req.headers['x-tenant-id'] ||
+      req.query.tenant_id ||
+      req.params.tenant_id ||
+      req.body?.tenant_id,
+    requestedTenantSlug:
+      req.headers['x-tenant-slug'] ||
+      req.query.tenant_slug ||
+      req.params.tenant_slug,
+    user: req.user,
+    tenants,
+    defaultTenant: getDefaultTenant(),
+  });
 }
 
 function requireTenantAccess(req, res, next) {
   const user = getCurrentUser(req);
   if (!user) {
-    return res.status(401).json({ detail: req._auth_error || 'Silakan login terlebih dahulu', code: 'UNAUTHORIZED_SESSION' });
+    return res.status(401).json({
+      detail: req._auth_error || 'Silakan login terlebih dahulu',
+      code: 'UNAUTHORIZED_SESSION'
+    });
   }
+
   req.user = user;
   const userRoles = getUserRoles(user);
-  
-  // Super Admin and Platform Admin have global access across all tenants
-  if (userRoles.includes('super_admin') || userRoles.includes('admin')) {
-    req.tenant = resolveTenantScope(req);
-    return next();
-  }
-
-  // Tenant Owner / Admin / Staff must only access their own tenant
   const targetTenant = resolveTenantScope(req);
-  const userTenantId = user.tenant_id;
-  const isOwner = targetTenant.owner_user_id === user.id;
-  const isAssigned = userTenantId && (targetTenant.id === userTenantId);
+  const access = assertTenantAccess({
+    user,
+    userRoles,
+    targetTenant,
+  });
 
-  if (!isOwner && !isAssigned) {
-    recordSecurityIncident('HIGH', 'Percobaan Pelanggaran Isolasi Tenant (Cross-Tenant Access Attempt)', `User ${user.email} (Tenant: ${userTenantId || 'None'}) mencoba mengakses Tenant ${targetTenant.id} (${targetTenant.name})`, req);
+  if (!access.allowed) {
+    recordSecurityIncident(
+      'HIGH',
+      'Percobaan Pelanggaran Isolasi Tenant (Cross-Tenant Access Attempt)',
+      `User ${user.email} (Tenant: ${user.tenant_id || 'None'}) mencoba mengakses Tenant ${targetTenant?.id || 'None'} (${targetTenant?.name || 'Unknown'})`,
+      req
+    );
     return res.status(403).json({
       detail: 'Akses Ditolak: Anda tidak memiliki izin untuk mengakses atau memodifikasi data tenant ini.',
       code: 'FORBIDDEN_TENANT_ISOLATION'
@@ -2384,7 +2385,7 @@ api.get('/tenant/current', (req, res) => {
   });
 });
 
-api.get('/tenant/builder-config', (req, res) => {
+api.get('/tenant/builder-config', requireTenantAccess, (req, res) => {
   const tenant = resolveTenantScope(req);
   if (!tenant.landing_config) {
     return res.status(404).json({ detail: 'Belum ada konfigurasi builder tersimpan' });
@@ -2596,7 +2597,7 @@ api.post('/super/homepage-config', requireSuperAdmin, (req, res) => {
 });
 
 // Tenant Storefront Analytics API
-api.get('/tenant/analytics', (req, res) => {
+api.get('/tenant/analytics', requireTenantAccess, (req, res) => {
   const period = req.query.period || '30d';
   const tenant = resolveTenantScope(req);
   
