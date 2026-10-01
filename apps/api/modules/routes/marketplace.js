@@ -22,6 +22,7 @@ function registerMarketplaceRoutes({
   findProduct,
   aiSmartSearchService,
   authLimiter,
+  marketplaceService,
 }) {
 api.get('/categories/:slug', (req, res) => {
   const slug = req.params.slug.toLowerCase();
@@ -96,35 +97,38 @@ api.get('/destinations', (req, res) => {
           user: req.user || null,
           dbStores,
         });
-
         return res.json(searchRes.results.map(enrichTripWithVendor));
       }
 
-      let result = trips.filter(t => t.published !== false);
-      if (category) result = result.filter(t => t.category === category);
-      if (region) result = result.filter(t => t.region === region);
-      if (difficulty) result = result.filter(t => t.difficulty === difficulty);
-      if (min_price) result = result.filter(t => t.price >= Number(min_price));
-      if (max_price) result = result.filter(t => t.price <= Number(max_price));
+      const result = await marketplaceService.listTrips({
+        q,
+        category,
+        region,
+        difficulty,
+        min_price,
+        max_price,
+        sort,
+        limit,
+        page,
+      });
 
-      if (sort === 'price_asc') result.sort((a, b) => a.price - b.price);
-      else if (sort === 'price_desc') result.sort((a, b) => b.price - a.price);
-      else result.sort((a, b) => (b.booked_seats || 0) - (a.booked_seats || 0));
-
-      const max = limit ? Number(limit) : 50;
-      res.json(result.slice(0, max).map(enrichTripWithVendor));
+      const items = await Promise.all(result.items.map((trip) => marketplaceService.enrichTripWithVendor(trip)));
+      res.json({ ...result, items });
     } catch (err) {
       console.error('[API /trips Error]', err.message);
-      const fallbackResult = trips.filter(t => t.published !== false);
-      res.json(fallbackResult.slice(0, 50).map(enrichTripWithVendor));
+      res.status(503).json({ success: false, error: 'Marketplace data service unavailable' });
     }
   });
 
-  api.get('/trips/featured', (req, res) => {
-    const featured = [...trips]
-      .sort((a, b) => (b.booked_seats || 0) - (a.booked_seats || 0))
-      .slice(0, 6);
-    res.json(featured.map(enrichTripWithVendor));
+  api.get('/trips/featured', async (req, res) => {
+    try {
+      const featured = await marketplaceService.listFeatured(6);
+      const items = await Promise.all(featured.map((trip) => marketplaceService.enrichTripWithVendor(trip)));
+      res.json(items);
+    } catch (err) {
+      console.error('[API /trips/featured Error]', err.message);
+      res.status(503).json({ success: false, error: 'Marketplace data service unavailable' });
+    }
   });
 
   api.get('/search/suggestions', async (req, res) => {
