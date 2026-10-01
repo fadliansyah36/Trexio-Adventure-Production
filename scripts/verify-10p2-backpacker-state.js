@@ -7,7 +7,7 @@ const store = read('apps/api/modules/backpacker/store.js');
 const routes = read('apps/api/modules/backpacker/routes.js');
 const persistence = read('apps/api/modules/persistence/supabasePostgres.js');
 const migrationDir = path.join(root, 'supabase/migrations');
-const migrations = fs.readdirSync(migrationDir).filter((n) => n.includes('10p2_backpacker_postgres_persistence')).map((n) => fs.readFileSync(path.join(migrationDir,n),'utf8')).join('\n');
+const migrations = fs.readdirSync(migrationDir).filter((n) => n.includes('tenp2_backpacker_postgres_persistence')).map((n) => fs.readFileSync(path.join(migrationDir,n),'utf8')).join('\n');
 const collections = [
  ['profiles','backpacker_profiles'],['intents','backpacker_travel_intents'],['journeys','backpacker_journeys'],
  ['stops','backpacker_journey_stops'],['participants','backpacker_journey_participants'],['expenses','backpacker_journey_expenses'],
