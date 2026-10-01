@@ -177,7 +177,7 @@ const nowISO = () => new Date().toISOString();
 // [CLEANUP] All hardcoded/demo/seed users removed. Users now live in Supabase
 // PostgreSQL and are hydrated on boot. A single admin is seeded from env vars
 // (SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD) into both Supabase Auth and the DB.
-const users = [];
+const users = businessState.proxies.users;
 
 
 const {
@@ -193,6 +193,7 @@ const vendorRepository = require('./modules/repositories/vendorRepository');
 const bookingRepository = require('./modules/repositories/bookingRepository');
 const paymentRepository = require('./modules/repositories/paymentRepository');
 const paymentWebhookRepository = require('./modules/repositories/paymentWebhookRepository');
+const businessState = require('./modules/runtime/businessState');
 
 // System Live Health & Strict Connection Status
 const systemHealth = {
@@ -270,309 +271,78 @@ function requireDbConnection(req, res, next) {
 }
 
 function syncAllUsersToPostgres() {
-  if (Array.isArray(users)) {
-    users.forEach(u => saveUserToSupabasePostgres(u));
-  }
+  // 10P.2: request-scoped businessState middleware is the persistence boundary.
 }
 
 function saveUsersToDisk(specificUser) {
-  if (specificUser) {
-    saveUserToSupabasePostgres(specificUser);
-  } else {
-    syncAllUsersToPostgres();
-  }
+  if (specificUser) return saveUserToSupabasePostgres(specificUser);
+  return Promise.resolve();
 }
 
 // Conversations & Messages (User <-> Mitra & Support) - Hydrated strictly from Supabase Postgres
-const conversations = [];
-const messages = [];
+const conversations = businessState.proxies.conversations;
+const messages = businessState.proxies.messages;
 
 // Tenants
-const tenants = [
-  {
-    id: 'tenant_default',
-    slug: 'default',
-    name: 'TREXIO Indonesia',
-    plan: 'enterprise',
-    active: true,
-    branding: {
-      logo: '',
-      favicon: '',
-      primary_color: '#CC5A3F',
-      secondary_color: '#1E3F20',
-      brand_name: 'TREXIO Indonesia',
-      tagline: 'Marketplace Open Trip & Rental Gear',
-    },
-    settings: { currency: 'IDR', locale: 'id-ID' },
-    created_at: nowISO(),
-    updated_at: nowISO(),
-  }
-];
+const tenants = businessState.proxies.tenants;
 
 // Custom Domains
-const tenant_domains = [];
+const tenant_domains = businessState.proxies.tenant_domains;
 
 // Destinations - Hydrated strictly from Supabase Postgres
-const destinations = [];
+const destinations = businessState.proxies.destinations;
 
 // Vendors - Hydrated strictly from Supabase Postgres
-const vendors = [];
+const vendors = businessState.proxies.vendors;
 
 // Trips - Hydrated strictly from Supabase Postgres
-const trips = [];
+const trips = businessState.proxies.trips;
 
 // Coupons - Hydrated strictly from Supabase Postgres
-const coupons = [];
+const coupons = businessState.proxies.coupons;
 
 // Communities - Hydrated strictly from Supabase Postgres
-const communities = [];
+const communities = businessState.proxies.communities;
 
-const community_categories = [
-  { id: 'cat_pendakian', slug: 'pendakian', name: 'Pendakian & Trekking', icon: 'Mountains', description: 'Diskusi jalur, estimasi waktu, & kondisi cuaca pendakian' },
-  { id: 'cat_destinasi', slug: 'destinasi', name: 'Destinasi & Spot', icon: 'Compass', description: 'Rekomendasi spot kemping, sunrise, & air terjun' },
-  { id: 'cat_gunung', slug: 'gunung', name: 'Info Gunung & Simaksi', icon: 'MapPin', description: 'Update status kuota simaksi, penutupan jalur, & regulasi' },
-  { id: 'cat_opentrip', slug: 'open-trip', name: 'Open Trip & Teman Jalan', icon: 'UsersThree', description: 'Cari barengan pendakian & info jadwal open trip' },
-  { id: 'cat_peralatan', slug: 'peralatan', name: 'Peralatan & Gear', icon: 'Package', description: 'Review ultralight gear, tenda, sepatu, & perlengkapan' },
-  { id: 'cat_basecamp', slug: 'basecamp', name: 'Basecamp & Penginapan', icon: 'HouseLine', description: 'Info fasilitas basecamp, ojek gunung, & logistik' },
-  { id: 'cat_guide', slug: 'guide-porter', name: 'Guide & Porter', icon: 'UserCheck', description: 'Diskusi pemandu gunung terlisensi & jasa porter' },
-  { id: 'cat_camping', slug: 'camping', name: 'Camping & Survival', icon: 'Tent', description: 'Tips kemping, memasak di gunung, & manajemen air' },
-  { id: 'cat_outdoor', slug: 'outdoor-activities', name: 'Outdoor Activities', icon: 'Sparkle', description: 'Caving, rafting, bouldering, & kegiatan alam bebas' },
-  { id: 'cat_umum', slug: 'umum', name: 'Diskusi Umum', icon: 'ChatCircleDots', description: 'Obrolan santai & tanya jawab sesama petualang' }
-];
+const community_categories = businessState.proxies.community_categories;
 
-const community_members = [];
-const community_posts = [];
-const community_comments = [];
-const community_events = [];
-const community_bookmarks = [];
-const community_reports = [];
-const community_moderation_logs = [];
-const community_suspended_users = new Set();
+const community_members = businessState.proxies.community_members;
+const community_posts = businessState.proxies.community_posts;
+const community_comments = businessState.proxies.community_comments;
+const community_events = businessState.proxies.community_events;
+const community_bookmarks = businessState.proxies.community_bookmarks;
+const community_reports = businessState.proxies.community_reports;
+const community_moderation_logs = businessState.proxies.community_moderation_logs;
+const community_suspended_users = businessState.proxies.community_suspended_users;
 
 // Rentals - Hydrated strictly from Supabase Postgres
-const rentals = [];
+const rentals = businessState.proxies.rentals;
 
-const bookings = [];
-const rental_orders = [];
-const push_subscriptions = [];
-const audit_logs = [];
+const bookings = businessState.proxies.bookings;
+const rental_orders = businessState.proxies.rental_orders;
+const push_subscriptions = businessState.proxies.push_subscriptions;
+const audit_logs = businessState.proxies.audit_logs;
 let auditLogs = [];
-const payment_transactions = [];
+const payment_transactions = businessState.proxies.payment_transactions;
 
 // ==========================================
 // TREXIO SUBSCRIPTION & ADVERTISING ENGINE
 // ==========================================
 
 // Subscription Plans
-const subscription_plans = [
-  {
-    id: 'plan_free',
-    name: 'Basic Free',
-    target_role: 'tenant',
-    price: 0,
-    billing_cycle: 'monthly',
-    description: 'Paket gratis standar untuk agen pemula dengan fitur toko dasar.',
-    features: [
-      'Akses 1 Template Standard',
-      'Maksimal 5 Produk Trip/Rental',
-      'Subdomain trexio.id Gratis',
-      'Dukungan Komunitas'
-    ],
-    entitlements: {
-      theme_access: ['template-1'],
-      custom_domain: false,
-      landing_builder: false,
-      advanced_analytics: false,
-      custom_branding: false,
-      max_products: 5
-    },
-    trial_days: 0,
-    grace_period_days: 3,
-    is_active: true,
-    created_at: nowISO(),
-    updated_at: nowISO()
-  },
-  {
-    id: 'plan_pro_monthly',
-    name: 'Pro Agency (Bulanan)',
-    target_role: 'tenant',
-    price: 299000,
-    billing_cycle: 'monthly',
-    description: 'Paket profesional untuk travel agency dengan akses semua template premium dan custom domain.',
-    features: [
-      'Akses Semua 7 Template Premium Storefront',
-      'Drag & Drop Visual Page Builder Engine',
-      'Kustom Domain & SSL Otomatis',
-      'Produk Trip & Rental Tanpa Batas',
-      'Kustom Branding (Logo, Favicon, Warna)',
-      'Analitik Funnel Penjualan Lengkap',
-      'Prioritas Dukungan Customer Service 24/7'
-    ],
-    entitlements: {
-      theme_access: 'all',
-      custom_domain: true,
-      landing_builder: true,
-      advanced_analytics: true,
-      custom_branding: true,
-      max_products: 9999
-    },
-    trial_days: 14,
-    grace_period_days: 7,
-    is_active: true,
-    created_at: nowISO(),
-    updated_at: nowISO()
-  },
-  {
-    id: 'plan_pro_yearly',
-    name: 'Pro Agency (Tahunan - Hemat 16%)',
-    target_role: 'tenant',
-    price: 2990000,
-    billing_cycle: 'yearly',
-    description: 'Paket tahunan hemat untuk travel agency dengan bonus 2 bulan gratis dan akses semua fitur pro.',
-    features: [
-      'Hemat Rp588.000 (Bonus 2 Bulan Gratis)',
-      'Akses Semua 7 Template Premium Storefront',
-      'Drag & Drop Visual Page Builder Engine',
-      'Kustom Domain & SSL Otomatis',
-      'Produk Trip & Rental Tanpa Batas',
-      'Kustom Branding & Custom Script Header',
-      'Analitik Funnel Penjualan Lengkap',
-      'Prioritas Dukungan VIP 24/7'
-    ],
-    entitlements: {
-      theme_access: 'all',
-      custom_domain: true,
-      landing_builder: true,
-      advanced_analytics: true,
-      custom_branding: true,
-      max_products: 9999
-    },
-    trial_days: 14,
-    grace_period_days: 14,
-    is_active: true,
-    created_at: nowISO(),
-    updated_at: nowISO()
-  },
-  {
-    id: 'plan_enterprise_yearly',
-    name: 'Enterprise Agency White-Label',
-    target_role: 'tenant',
-    price: 7990000,
-    billing_cycle: 'yearly',
-    description: 'Solusi whitelabel skala penuh untuk konsorsium agen wisata, multi-tenant, dan integrasi API kustom.',
-    features: [
-      'Semua Fitur Pro Agency',
-      'Akses Multi-Subdomain & Multi-Tenant',
-      'Dedicated Account Manager & SLA 99.9%',
-      'Custom API Integration & Webhooks',
-      'Bebas Biaya Komisi Platform Tambahan'
-    ],
-    entitlements: {
-      theme_access: 'all',
-      custom_domain: true,
-      landing_builder: true,
-      advanced_analytics: true,
-      custom_branding: true,
-      max_products: 99999
-    },
-    trial_days: 30,
-    grace_period_days: 30,
-    is_active: true,
-    created_at: nowISO(),
-    updated_at: nowISO()
-  }
-];
+const subscription_plans = businessState.proxies.subscription_plans;
 
 // Active Tenant Subscriptions
-const tenant_subscriptions = [
-  {
-    id: 'sub_default_01',
-    tenant_id: 'tenant_default',
-    user_id: 'user_superadmin_prod',
-    plan_id: 'plan_pro_yearly',
-    plan_name: 'Pro Agency (Tahunan - Hemat 16%)',
-    amount: 2990000,
-    billing_cycle: 'yearly',
-    status: 'active',
-    start_date: new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString(),
-    end_date: new Date(Date.now() + 335 * 24 * 3600 * 1000).toISOString(),
-    auto_renew: true,
-    payment_status: 'paid',
-    midtrans_order_id: 'TRX-SUB-INIT-01',
-    created_at: nowISO(),
-    updated_at: nowISO()
-  }
-];
+const tenant_subscriptions = businessState.proxies.tenant_subscriptions;
 
 // Advertising Packages
-const advertising_packages = [
-  {
-    id: 'pkg_sponsored_search',
-    name: 'Sponsored Search Placement',
-    placement: 'sponsored_search',
-    description: 'Produk/Trip Anda akan berada di urutan teratas pada halaman pencarian & hasil filter kata kunci.',
-    price_per_duration: 150000,
-    duration_days: 7,
-    eligible_categories: ['all'],
-    homepage_eligibility: false,
-    priority: 1,
-    is_active: true,
-    terms: 'Produk harus aktif, terverifikasi, dan memiliki stok/pax tersedia.',
-    created_at: nowISO(),
-    updated_at: nowISO()
-  },
-  {
-    id: 'pkg_category_top',
-    name: 'Category Top Banner & Listing',
-    placement: 'category_top',
-    description: 'Produk tampil sebagai rekomendasi utama di bagian teratas Kategori (misal: Open Trip, Guide, Rental).',
-    price_per_duration: 350000,
-    duration_days: 14,
-    eligible_categories: ['all'],
-    homepage_eligibility: false,
-    priority: 2,
-    is_active: true,
-    terms: 'Meningkatkan konversi pemesanan produk spesifik pada kategori relevan.',
-    created_at: nowISO(),
-    updated_at: nowISO()
-  },
-  {
-    id: 'pkg_homepage_featured',
-    name: 'Homepage Featured Partner & Trip',
-    placement: 'homepage_featured',
-    description: 'Sorotan utama di seksi "Mitra Pilihan & Trip Sponsor" pada Beranda Utama Marketplace Trexio.',
-    price_per_duration: 750000,
-    duration_days: 30,
-    eligible_categories: ['all'],
-    homepage_eligibility: true,
-    priority: 3,
-    is_active: true,
-    terms: 'Paparan maksimal ke puluhan ribu calon traveler dan pendaki harian.',
-    created_at: nowISO(),
-    updated_at: nowISO()
-  },
-  {
-    id: 'pkg_super_banner',
-    name: 'Super Homepage Hero Banner',
-    placement: 'super_banner',
-    description: 'Tampil pada Carousel Banner Utama di bagian atas Homepage Trexio dengan gambar promo HD kustom.',
-    price_per_duration: 1500000,
-    duration_days: 30,
-    eligible_categories: ['all'],
-    homepage_eligibility: true,
-    priority: 4,
-    is_active: true,
-    terms: 'Memerlukan gambar materi iklan HD minimal 1200x600px.',
-    created_at: nowISO(),
-    updated_at: nowISO()
-  }
-];
+const advertising_packages = businessState.proxies.advertising_packages;
 
 // Advertising Campaigns
-const advertising_campaigns = [];
+const advertising_campaigns = businessState.proxies.advertising_campaigns;
 
 // Billing Transactions
-const billing_transactions = [];
+const billing_transactions = businessState.proxies.billing_transactions;
 
 // Save & Load Helpers - Persists directly to Supabase PostgreSQL source of truth
 function persistVendorRecord(vendor) {
@@ -598,12 +368,7 @@ function removeTripRecord(tripId) {
 }
 
 function saveSubDataToDisk() {
-  persistCollection('subscription_plans');
-  persistCollection('tenant_subscriptions');
-  persistCollection('advertising_packages');
-  persistCollection('advertising_campaigns');
-  persistCollection('billing_transactions');
-  vendors.forEach(persistVendorRecord);
+  // 10P.2: request-scoped businessState middleware is the persistence boundary.
 }
 
 function saveAuditLogsToDisk() {
@@ -616,17 +381,8 @@ function loadSubDataFromDisk() {
 }
 
 async function saveCommunicationsToDisk() {
-  persistCollection('conversations');
-  persistCollection('messages');
+  // 10P.2: request-scoped businessState middleware is the persistence boundary.
 }
-
-function loadCommunicationsFromDisk() {
-  // [Supabase Postgres is Source of Truth]
-  // Communications are hydrated asynchronously on boot from Supabase PostgreSQL in hydrateCollections()
-}
-
-loadSubDataFromDisk();
-loadCommunicationsFromDisk();
 
 function syncAdCampaignsStatus() {
   const now = new Date();
@@ -680,15 +436,15 @@ function getTenantEntitlements(tenantId) {
   };
 }
 
-const wishlists = [];
-const carts = [];
+const wishlists = businessState.proxies.wishlists;
+const carts = businessState.proxies.carts;
 // Reviews - Hydrated strictly from Supabase Postgres
-const reviews = [];
+const reviews = businessState.proxies.reviews;
 // Notifications - Hydrated strictly from Supabase Postgres
-const notifications = [];
+const notifications = businessState.proxies.notifications;
 // Wallets - Hydrated strictly from Supabase Postgres
-const wallets = {};
-const payouts = [];
+const wallets = businessState.proxies.wallets;
+const payouts = businessState.proxies.payouts;
 
 function createNotification(user_id, title, message, type = 'info', link = '', category = null) {
   let inferredCategory = category;
@@ -1505,6 +1261,8 @@ const bookingLimiter = rateLimit({
 
 const api = express.Router();
 
+// 10P.2: request-scoped PostgreSQL business state boundary.
+api.use(businessState.middleware());
 api.use(globalApiLimiter);
 api.use(validateInputParams);
 
@@ -9095,25 +8853,11 @@ function recordAuditLog(userEmail, action, resource, oldVal, newVal, req = null,
   return entry;
 }
 
-const featureFlags = {
-  wishlist: true,
-  reviews: true,
-  private_trip: true,
-  rental: true,
-  camping: true,
-  featured_listing: true,
-  promo_vouchers: true,
-  disputes_resolution: true,
-};
+const featureFlags = businessState.proxies.featureFlags;
 
-const supportTickets = [
-  { id: 'TICK-901', user_name: 'Budi Santoso', category: 'Pembayaran', subject: 'Snap Midtrans QRIS tidak muncul', status: 'OPEN', priority: 'HIGH', created_at: nowISO() },
-  { id: 'TICK-902', user_name: 'Anita Wijaya', category: 'Booking Trip', subject: 'Perubahan tanggal Rinjani 3D2N', status: 'IN_PROGRESS', priority: 'MEDIUM', created_at: nowISO() },
-];
+const supportTickets = businessState.proxies.support_tickets;
 
-const platformDisputes = [
-  { id: 'DISP-101', booking_code: 'TRX-88219', user_name: 'Rian Perdana', vendor_name: 'Prau Outdoor', reason: 'Jadwal dibatalkan karena cuaca buruk tanpa refund penuh', status: 'UNDER_REVIEW', evidence: 'Bukti screenshot WhatsApp & slip transfer', created_at: nowISO() }
-];
+const platformDisputes = businessState.proxies.platform_disputes;
 
 api.get('/super/executive-kpis', requireSuperAdmin, (req, res) => {
   const verifiedBookings = bookings.filter(b => b.payment_status === 'verified');
@@ -9183,13 +8927,7 @@ api.get('/super/system-health', requireSuperAdmin, (req, res) => {
 });
 
 // CS Customer Care & Chatbot Configuration
-const csConfig = {
-  cs_status: 'OFFLINE', // 'ONLINE' | 'OFFLINE'
-  bot_enabled: true,
-  auto_reply_template: 'Saat ini Tim CS Super Admin sedang offline. Trexio CS Auto-Bot siap memandu Anda secara cepat.',
-  working_hours: '08:00 - 17:00 WIB',
-  total_bot_replies: 42,
-};
+const csConfig = businessState.proxies.csConfig;
 
 api.get('/super/customer-care/cs-config', requireSuperAdmin, (req, res) => {
   res.json(csConfig);
@@ -9280,47 +9018,7 @@ api.get('/super/security/audit-logs', requireSuperAdmin, (req, res) => {
 // TREXIO SYSTEM SECURITY ARCHITECTURE & CONTROL CENTER
 // ==========================================
 
-let securityIncidents = [
-  {
-    id: 'inc_01',
-    severity: 'HIGH',
-    title: 'Multi-Failed Admin Login Attempt',
-    description: 'Terdeteksi 5 kali percobaan login gagal berturut-turut pada akun admin dari IP 103.14.22.8',
-    category: 'Authentication',
-    status: 'contained',
-    affected_resource: 'user_superadmin_01',
-    ip: '103.14.22.8',
-    created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
-    resolved_at: null,
-    resolved_by: null
-  },
-  {
-    id: 'inc_02',
-    severity: 'INFO',
-    title: 'Midtrans Webhook Idempotent Match',
-    description: 'Webhook Midtrans duplikat diterima untuk Order #TRX-98212 dan diabaikan secara aman oleh server.',
-    category: 'Payment Security',
-    status: 'resolved',
-    affected_resource: 'order_TRX-98212',
-    ip: '180.252.120.10',
-    created_at: new Date(Date.now() - 3600000 * 5).toISOString(),
-    resolved_at: new Date(Date.now() - 3600000 * 4).toISOString(),
-    resolved_by: 'system'
-  },
-  {
-    id: 'inc_03',
-    severity: 'MEDIUM',
-    title: 'Rate Limit Threshold Exceeded',
-    description: 'Percobaan penelusuran berlebih melampaui limit API (300 req/15m) dihentikan oleh Express Rate Limiter.',
-    category: 'API Security',
-    status: 'resolved',
-    affected_resource: 'API Endpoint /api/explore',
-    ip: '36.88.210.4',
-    created_at: new Date(Date.now() - 3600000 * 12).toISOString(),
-    resolved_at: new Date(Date.now() - 3600000 * 11).toISOString(),
-    resolved_by: 'system'
-  }
-];
+let securityIncidents = businessState.proxies.securityIncidents;
 
 function saveIncidentsToDisk() {
   persistCollection('incidents');
@@ -10615,173 +10313,21 @@ api.post('/push/test', requireAuth, (req, res) => {
 // ==================================================
 
 // 1. Default Master Categories
-let masterCategories = [
-  { id: 'cat_open_trip', slug: 'open_trip', name: 'Open Trip & Tour', icon: 'UsersThree', type: 'trip', description: 'Trip gabungan hemat & seru dengan itinerary teruji', active: true, order: 1 },
-  { id: 'cat_private_trip', slug: 'private_trip', name: 'Private Trip', icon: 'Crown', type: 'trip', description: 'Trip kustom eksklusif sesuai tanggal & grup Anda', active: true, order: 2 },
-  { id: 'cat_guide', slug: 'guide', name: 'Mountain Guide APGI', icon: 'Compass', type: 'guide', description: 'Pemandu gunung bersertifikasi APGI & BNSP', active: true, order: 3 },
-  { id: 'cat_porter', slug: 'porter', name: 'Porter & Logistik', icon: 'Backpack', type: 'porter', description: 'Jasa pengangkut barang, tenda & tim masak outdoor', active: true, order: 4 },
-  { id: 'cat_basecamp', slug: 'basecamp', name: 'Basecamp & Pos SIMAKSI', icon: 'HouseLine', type: 'basecamp', description: 'Pos registrasi resmi & tempat istirahat pendaki', active: true, order: 5 },
-  { id: 'cat_rental', slug: 'rental', name: 'Sewa Alat Outdoor', icon: 'Tent', type: 'rental', description: 'Rental tenda dome, carrier, SB, perlengkapan', active: true, order: 6 },
-  { id: 'cat_camping', slug: 'camping', name: 'Camping & Glamping', icon: 'Campfire', type: 'camping', description: 'Kavling camping ground & glamping mewah', active: true, order: 7 },
-  { id: 'cat_transport', slug: 'transport', name: 'Transportasi & Shuttle', icon: 'Jeep', type: 'transport', description: 'Sewa Jeep Bromo, Elf shuttle basecamp & drop-off', active: true, order: 8 },
-  { id: 'cat_homestay', slug: 'homestay', name: 'Homestay & Lodging', icon: 'Bed', type: 'homestay', description: 'Penginapan lokal nyaman sekitar kaki gunung', active: true, order: 9 },
-  { id: 'cat_travel', slug: 'travel', name: 'Travel & Paket Wisata', icon: 'AirplaneInFlight', type: 'travel', description: 'Paket wisata petualangan & overland tour', active: true, order: 10 },
-  { id: 'cat_community', slug: 'community', name: 'Komunitas & Event', icon: 'Users', type: 'community', description: 'Jambore, event bersih gunung, & gathering hiker', active: true, order: 11 }
-];
+let masterCategories = businessState.proxies.masterCategories;
 
 function saveMasterCategoriesToDisk() {
   persistCollection('master_categories');
 }
 
 // 2. Default Master Locations Hierarchy
-let masterLocations = {
-  provinces: [
-    { id: 'prov_jabar', name: 'Jawa Barat', code: '32' },
-    { id: 'prov_jatim', name: 'Jawa Timur', code: '35' },
-    { id: 'prov_ntb', name: 'Nusa Tenggara Barat', code: '52' },
-    { id: 'prov_papuabarat', name: 'Papua Barat', code: '91' },
-    { id: 'prov_jateng', name: 'Jawa Tengah', code: '33' }
-  ],
-  cities: [
-    { id: 'city_bogor', province_id: 'prov_jabar', name: 'Kab. Bogor / Cianjur' },
-    { id: 'city_pasuruan', province_id: 'prov_jatim', name: 'Kab. Pasuruan / Probolinggo' },
-    { id: 'city_malang', province_id: 'prov_jatim', name: 'Kab. Malang' },
-    { id: 'city_lombok', province_id: 'prov_ntb', name: 'Kab. Lombok Utara' },
-    { id: 'city_rajaampat', province_id: 'prov_papuabarat', name: 'Kab. Raja Ampat' },
-    { id: 'city_wonosobo', province_id: 'prov_jateng', name: 'Kab. Wonosobo' }
-  ],
-  destinations: [
-    { id: 'dest_gede', province_id: 'prov_jabar', city_id: 'city_bogor', name: 'Gunung Gede Pangrango', slug: 'gede-pangrango', region: 'Jawa Barat', image: 'https://images.pexels.com/photos/1687514/pexels-photo-1687514.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940', description: 'Taman Nasional Gunung Gede Pangrango, populer untuk pendaki pemula & lanskap Alun-Alun Surya Kencana.' },
-    { id: 'dest_bromo', province_id: 'prov_jatim', city_id: 'city_pasuruan', name: 'Gunung Bromo', slug: 'bromo', region: 'Jawa Timur', image: 'https://images.pexels.com/photos/38262907/pexels-photo-38262907.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940', description: 'Kaldera Bromo Tengger Semeru dengan pemandangan sunrise dunia.' },
-    { id: 'dest_rinjani', province_id: 'prov_ntb', city_id: 'city_lombok', name: 'Gunung Rinjani', slug: 'rinjani', region: 'Nusa Tenggara Barat', image: 'https://images.pexels.com/photos/1687514/pexels-photo-1687514.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940', description: 'Atap NTB 3.726 MDPL dengan Danau Segara Anak ikonik.' },
-    { id: 'dest_rajaampat', province_id: 'prov_papuabarat', city_id: 'city_rajaampat', name: 'Raja Ampat', slug: 'raja-ampat', region: 'Papua Barat', image: 'https://images.unsplash.com/photo-1516690561799-46d8f74f9abf?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MDV8MHwxfHNlYXJjaHwxfHxyYWphJTIwYW1wYXQlMjBvY2VhbnxlbnwwfHx8fDE3ODQ1MTQ3Njd8MA&ixlib=rb-4.1.0&q=85', description: 'Gugusan pulau karst & surga keanekaragaman bahari dunia.' },
-    { id: 'dest_prau', province_id: 'prov_jateng', city_id: 'city_wonosobo', name: 'Gunung Prau', slug: 'prau', region: 'Jawa Tengah', image: 'https://images.pexels.com/photos/28386069/pexels-photo-28386069.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940', description: 'Puncak Seribu Bukit Dieng Plateau dengan golden sunrise memukau.' }
-  ],
-  mountains: [
-    { id: 'mnt_gede', destination_id: 'dest_gede', name: 'Gunung Gede', elevation: '2.958 MDPL', difficulty: 'Sedang', status: 'Waspada Level II' },
-    { id: 'mnt_pangrango', destination_id: 'dest_gede', name: 'Gunung Pangrango', elevation: '3.019 MDPL', difficulty: 'Sedang-Sulit', status: 'Normal' },
-    { id: 'mnt_bromo', destination_id: 'dest_bromo', name: 'Gunung Bromo', elevation: '2.329 MDPL', difficulty: 'Pemula', status: 'Waspada Level II' },
-    { id: 'mnt_rinjani', destination_id: 'dest_rinjani', name: 'Gunung Rinjani', elevation: '3.726 MDPL', difficulty: 'Sulit', status: 'Normal' },
-    { id: 'mnt_prau', destination_id: 'dest_prau', name: 'Gunung Prau', elevation: '2.565 MDPL', difficulty: 'Pemula', status: 'Normal' }
-  ],
-  trails: [
-    { id: 'trail_cibodas', destination_id: 'dest_gede', mountain_id: 'mnt_gede', name: 'Jalur Cibodas', length: '10 KM', avg_duration: '7 Jam', water_sources: 3 },
-    { id: 'trail_gunungputri', destination_id: 'dest_gede', mountain_id: 'mnt_gede', name: 'Jalur Gunung Putri', length: '8 KM', avg_duration: '6 Jam', water_sources: 1 },
-    { id: 'trail_senaru', destination_id: 'dest_rinjani', mountain_id: 'mnt_rinjani', name: 'Jalur Senaru', length: '14 KM', avg_duration: '9 Jam', water_sources: 4 },
-    { id: 'trail_sembalun', destination_id: 'dest_rinjani', mountain_id: 'mnt_rinjani', name: 'Jalur Sembalun', length: '16 KM', avg_duration: '8 Jam', water_sources: 2 },
-    { id: 'trail_patakbanteng', destination_id: 'dest_prau', mountain_id: 'mnt_prau', name: 'Jalur Patak Banteng', length: '4 KM', avg_duration: '3 Jam', water_sources: 1 }
-  ],
-  basecamps: [
-    { id: 'bc_cibodas', destination_id: 'dest_gede', trail_id: 'trail_cibodas', name: 'Basecamp Cibodas TNGGP', phone: '+6281234567890', address: 'Jl. Raya Cibodas No. 1, Cianjur', facilities: ['Toilet', 'Musholla', 'Parkir', 'Warung 24H', 'Pos Medis'] },
-    { id: 'bc_gunungputri', destination_id: 'dest_gede', trail_id: 'trail_gunungputri', name: 'Basecamp Gunung Putri TNGGP', phone: '+6281234567891', address: 'Kp. Gunung Putri, Pacet, Cianjur', facilities: ['Toilet', 'Musholla', 'Parkir 24H', 'Sewa Alat'] },
-    { id: 'bc_senaru', destination_id: 'dest_rinjani', trail_id: 'trail_senaru', name: 'Basecamp Senaru TNGR', phone: '+6281234567892', address: 'Senaru, Bayan, Lombok Utara', facilities: ['Homestay', 'Toilet', 'Kafe', 'Porter Station'] },
-    { id: 'bc_sembalun', destination_id: 'dest_rinjani', trail_id: 'trail_sembalun', name: 'Basecamp Sembalun TNGR', phone: '+6281234567893', address: 'Sembalun Lawang, Lombok Timur', facilities: ['Pemeriksaan Medis', 'Parkir', 'Sewa Alat'] },
-    { id: 'bc_patakbanteng', destination_id: 'dest_prau', trail_id: 'trail_patakbanteng', name: 'Basecamp Patak Banteng', phone: '+6281234567894', address: 'Patak Banteng, Kejajar, Wonosobo', facilities: ['Charger Station', 'Toilet', 'Warung Makan'] }
-  ]
-};
+let masterLocations = businessState.proxies.masterLocations;
 
 function saveMasterLocationsToDisk() {
   persistCollection('master_locations');
 }
 
 // 3. Default Master Roles & RBAC Matrix
-let masterRolesPermissions = {
-  roles: [
-    { key: 'SUPER_ADMIN', name: 'Super Admin', description: 'Hak akses penuh untuk mengelola seluruh ekosistem TREXIO', system: true },
-    { key: 'ADMIN', name: 'Platform Admin', description: 'Administrator operasional platform dan verifikasi mitra', system: true },
-    { key: 'TENANT_OWNER', name: 'Tenant Owner', description: 'Pemilik lisensi tenant & domain storefront outdoor mandiri', system: true },
-    { key: 'TENANT_ADMIN', name: 'Tenant Admin', description: 'Administrator manajemen katalog & pesanan storefront tenant', system: true },
-    { key: 'VENDOR_PARTNER', name: 'Vendor / Partner Operator', description: 'Penyedia jasa Open Trip, Tour, & Perlengkapan', system: true },
-    { key: 'GUIDE', name: 'Certified Mountain Guide', description: 'Pemandu gunung APGI/BNSP pengelola jadwal & briefing pendaki', system: true },
-    { key: 'PORTER', name: 'Porter & Logistics Crew', description: 'Penyedia jasa porter, angkut logistik & tim masak basecamp', system: true },
-    { key: 'RENTAL_OPERATOR', name: 'Rental Equipment Operator', description: 'Operator persewaan alat outdoor, inventaris & serah-terima alat', system: true },
-    { key: 'BASECAMP_OPERATOR', name: 'Basecamp & SIMAKSI Operator', description: 'Pengelola pos perizinan, manifest pendaki, & check-in kuota', system: true },
-    { key: 'USER_TRAVELER', name: 'User / Pendaki', description: 'Pengguna traveler pemesan trip, sewa alat & komunitas', system: true }
-  ],
-  modules: [
-    { key: 'users', label: 'Master Users & Admin' },
-    { key: 'roles_rbac', label: 'Roles & RBAC Permissions' },
-    { key: 'vendors', label: 'Vendor & Partner Marketplace' },
-    { key: 'tenants', label: 'Tenants & Storefronts' },
-    { key: 'marketplace_categories', label: 'Kategori & Layanan Marketplace' },
-    { key: 'destinations_locations', label: 'Destinasi, Gunung & Basecamp' },
-    { key: 'products_services', label: 'Produk Trip & Rental Gear' },
-    { key: 'subscriptions', label: 'Langganan SaaS Tenant' },
-    { key: 'advertising', label: 'Iklan & Sponsor Vendor' },
-    { key: 'payments', label: 'Pembayaran & Midtrans Gateway' },
-    { key: 'platform_config', label: 'Konfigurasi Platform & Feature Flags' },
-    { key: 'audit_logs', label: 'Audit Logs & Jejak Sistem' }
-  ],
-  matrix: {
-    SUPER_ADMIN: {
-      users: { create: true, read: true, update: true, delete: true, approve: true, export: true },
-      roles_rbac: { create: true, read: true, update: true, delete: true, approve: true, export: true },
-      vendors: { create: true, read: true, update: true, delete: true, approve: true, export: true },
-      tenants: { create: true, read: true, update: true, delete: true, approve: true, export: true },
-      marketplace_categories: { create: true, read: true, update: true, delete: true, approve: true, export: true },
-      destinations_locations: { create: true, read: true, update: true, delete: true, approve: true, export: true },
-      products_services: { create: true, read: true, update: true, delete: true, approve: true, export: true },
-      subscriptions: { create: true, read: true, update: true, delete: true, approve: true, export: true },
-      advertising: { create: true, read: true, update: true, delete: true, approve: true, export: true },
-      payments: { create: true, read: true, update: true, delete: true, approve: true, export: true },
-      platform_config: { create: true, read: true, update: true, delete: true, approve: true, export: true },
-      audit_logs: { create: false, read: true, update: false, delete: false, approve: false, export: true }
-    },
-    ADMIN: {
-      users: { create: true, read: true, update: true, delete: false, approve: true, export: true },
-      roles_rbac: { create: false, read: true, update: false, delete: false, approve: false, export: true },
-      vendors: { create: true, read: true, update: true, delete: false, approve: true, export: true },
-      tenants: { create: true, read: true, update: true, delete: false, approve: true, export: true },
-      marketplace_categories: { create: true, read: true, update: true, delete: false, approve: true, export: true },
-      destinations_locations: { create: true, read: true, update: true, delete: false, approve: true, export: true },
-      products_services: { create: true, read: true, update: true, delete: true, approve: true, export: true },
-      subscriptions: { create: false, read: true, update: false, delete: false, approve: false, export: true },
-      advertising: { create: true, read: true, update: true, delete: true, approve: true, export: true },
-      payments: { create: false, read: true, update: true, delete: false, approve: true, export: true },
-      platform_config: { create: false, read: true, update: true, delete: false, approve: false, export: true },
-      audit_logs: { create: false, read: true, update: false, delete: false, approve: false, export: true }
-    },
-    TENANT_OWNER: {
-      users: { create: true, read: true, update: true, delete: false, approve: false, export: false },
-      vendors: { create: true, read: true, update: true, delete: false, approve: true, export: true },
-      tenants: { create: false, read: true, update: true, delete: false, approve: false, export: false },
-      products_services: { create: true, read: true, update: true, delete: true, approve: true, export: true },
-      subscriptions: { create: false, read: true, update: true, delete: false, approve: false, export: false },
-      payments: { create: false, read: true, update: false, delete: false, approve: false, export: true },
-      audit_logs: { create: false, read: true, update: false, delete: false, approve: false, export: false }
-    },
-    TENANT_ADMIN: {
-      users: { create: false, read: true, update: false, delete: false, approve: false, export: false },
-      vendors: { create: false, read: true, update: false, delete: false, approve: false, export: false },
-      tenants: { create: false, read: true, update: false, delete: false, approve: false, export: false },
-      products_services: { create: true, read: true, update: true, delete: true, approve: false, export: true },
-      subscriptions: { create: false, read: true, update: false, delete: false, approve: false, export: false },
-      payments: { create: false, read: true, update: false, delete: false, approve: false, export: false }
-    },
-    VENDOR_PARTNER: {
-      products_services: { create: true, read: true, update: true, delete: true, approve: false, export: true },
-      advertising: { create: true, read: true, update: true, delete: false, approve: false, export: false },
-      payments: { create: false, read: true, update: false, delete: false, approve: false, export: true }
-    },
-    GUIDE: {
-      products_services: { create: false, read: true, update: true, delete: false, approve: false, export: false },
-      destinations_locations: { create: false, read: true, update: false, delete: false, approve: false, export: false }
-    },
-    PORTER: {
-      products_services: { create: false, read: true, update: true, delete: false, approve: false, export: false }
-    },
-    RENTAL_OPERATOR: {
-      products_services: { create: true, read: true, update: true, delete: true, approve: false, export: true }
-    },
-    BASECAMP_OPERATOR: {
-      destinations_locations: { create: false, read: true, update: true, delete: false, approve: false, export: false },
-      products_services: { create: false, read: true, update: true, delete: false, approve: false, export: false }
-    },
-    USER_TRAVELER: {
-      products_services: { create: false, read: true, update: false, delete: false, approve: false, export: false }
-    }
-  }
-};
+let masterRolesPermissions = businessState.proxies.masterRolesPermissions;
 
 function saveMasterRolesToDisk() {
   persistCollection('master_roles');
@@ -11508,30 +11054,13 @@ const server = app.listen(PORT, '0.0.0.0', async () => {
   }
 });
 
-// [DURABILITY + Supabase Auth] Hydrate users from Supabase Postgres, then ensure
-// the env-defined admin exists in Supabase Auth and is persisted durably.
+// [DURABILITY + Supabase Auth] Ensure bootstrap administrator exists durably.
+// Business collections are never hydrated into process-global memory.
 async function hydrateAndSeedUsers() {
   try {
     const dbUsers = await loadUsersFromSupabasePostgres();
-    if (Array.isArray(dbUsers) && dbUsers.length) {
-      dbUsers.forEach((u) => {
-        if (!u || !u.email) return;
-        const idx = users.findIndex(
-          (x) => (x.email && u.email && x.email.toLowerCase() === u.email.toLowerCase()) || x.id === u.id
-        );
-        if (idx !== -1) users[idx] = { ...users[idx], ...u };
-        else users.push(u);
-      });
-      console.log(`[Hydrate] Loaded ${dbUsers.length} user(s) from Supabase Postgres.`);
-    }
-  } catch (e) {
-    console.error('[Hydrate] Failed to hydrate users:', e.message);
-  }
-
-  // Seed the single admin from env into Supabase Auth (authoritative credentials).
-  try {
     const seedEmail = (SEED_ADMIN_EMAIL || '').toLowerCase().trim();
-    let admin = users.find((x) => x.email && x.email.toLowerCase() === seedEmail);
+    let admin = dbUsers.find((x) => x.email && x.email.toLowerCase() === seedEmail);
     if (!admin) {
       admin = {
         id: 'admin_root',
@@ -11543,155 +11072,22 @@ async function hydrateAndSeedUsers() {
         tenant_id: 'tenant_default',
         created_at: nowISO(),
       };
-      users.push(admin);
     } else {
-      admin.role = 'super_admin';
-      if (!Array.isArray(admin.roles) || !admin.roles.includes('super_admin')) {
-        admin.roles = Array.from(new Set([...(admin.roles || []), 'super_admin', 'admin', 'user', 'vendor']));
-      }
-      if (SEED_ADMIN_PASSWORD) {
-        admin.password_hash = bcrypt.hashSync(SEED_ADMIN_PASSWORD, 10);
-      }
+      admin = { ...admin, role: 'super_admin' };
+      admin.roles = Array.from(new Set([...(admin.roles || []), 'super_admin', 'admin', 'user', 'vendor']));
+      if (SEED_ADMIN_PASSWORD) admin.password_hash = bcrypt.hashSync(SEED_ADMIN_PASSWORD, 10);
     }
     if (supabaseAuth.supabaseAuthEnabled) {
-      const ensured = await supabaseAuth.ensureUser(seedEmail, SEED_ADMIN_PASSWORD, {
-        name: admin.name,
-        role: 'super_admin',
-      });
-      if (ensured && ensured.ok && ensured.user) {
-        admin.supabase_uid = ensured.user.id;
-        console.log('[Supabase Auth] Admin ensured in Supabase Auth.');
-      } else {
-        console.warn('[Supabase Auth] Could not ensure admin in Supabase Auth:', JSON.stringify(ensured && ensured.error || ensured));
-      }
+      const ensured = await supabaseAuth.ensureUser(seedEmail, SEED_ADMIN_PASSWORD, { name: admin.name, role: 'super_admin' });
+      if (ensured?.ok && ensured.user) admin.supabase_uid = ensured.user.id;
     }
-    // Persist admin (and hydrated changes) durably to Postgres.
-    if (typeof saveUserToSupabasePostgres === 'function') await saveUserToSupabasePostgres(admin);
-    syncAllUsersToPostgres();
+    await saveUserToSupabasePostgres(admin);
+    console.log('[Supabase Auth] Bootstrap administrator verified durably.');
   } catch (e) {
-    console.error('[Seed] Failed to seed admin:', e.message);
-  }
-
-  // Relational Vendor/Trip repositories are now canonical for these domains.
-  await hydrateRelationalCoreCollections();
-  // Remaining domains still use the transitional JSONB compatibility store.
-  await hydrateCollections();
-  __hydrationComplete = true;
-}
-
-// Maps a logical collection name to its in-memory array (read model).
-function __collectionArray(name) {
-  switch (name) {
-    case 'trips': return trips;
-    case 'vendors': return vendors;
-    case 'bookings': return bookings;
-    case 'payments': return payment_transactions;
-    case 'rentals': return rentals;
-    case 'destinations': return destinations;
-    case 'communities': return communities;
-    case 'coupons': return coupons;
-    case 'tenants': return tenants;
-    case 'reviews': return reviews;
-    case 'conversations': return conversations;
-    case 'messages': return messages;
-    case 'subscription_plans': return subscription_plans;
-    case 'tenant_subscriptions': return tenant_subscriptions;
-    case 'advertising_packages': return advertising_packages;
-    case 'advertising_campaigns': return advertising_campaigns;
-    case 'billing_transactions': return billing_transactions;
-    case 'audit_logs': return audit_logs;
-    case 'incidents': return securityIncidents;
-    case 'master_categories': return masterCategories;
-    case 'master_locations': return [masterLocations];
-    case 'master_roles': return [masterRolesPermissions];
-    case 'homepage_config': return [homepageConfig];
-    default: return null;
+    console.error('[Seed] Failed to ensure bootstrap administrator:', e.message);
   }
 }
 
-const ALL_SYNC_COLLECTIONS = [
-  'rentals',
-  'destinations',
-  'communities',
-  'coupons',
-  'tenants',
-  'reviews',
-  'conversations',
-  'messages',
-  'subscription_plans',
-  'tenant_subscriptions',
-  'advertising_packages',
-  'advertising_campaigns',
-  'billing_transactions',
-  'audit_logs',
-  'incidents',
-  'master_categories',
-  'master_locations',
-  'master_roles',
-  'homepage_config',
-];
-
-let __hydrationComplete = false;
-
-async function hydrateRelationalCoreCollections() {
-  try {
-    const [relationalVendors, relationalTrips, relationalBookings, relationalPayments] = await Promise.all([
-      vendorRepository.list(),
-      tripRepository.list(),
-      bookingRepository.list(),
-      paymentRepository.list(),
-    ]);
-
-    vendors.length = 0;
-    relationalVendors.forEach((vendor) => vendors.push(vendor));
-
-    trips.length = 0;
-    relationalTrips.forEach((trip) => trips.push(trip));
-
-    bookings.length = 0;
-    relationalBookings.forEach((booking) => bookings.push(booking));
-
-    payment_transactions.length = 0;
-    relationalPayments.forEach((payment) => payment_transactions.push(payment));
-
-    console.log(`[Hydrate] Loaded ${relationalVendors.length} vendor(s) from relational PostgreSQL.`);
-    console.log(`[Hydrate] Loaded ${relationalTrips.length} trip(s) from relational PostgreSQL.`);
-    console.log(`[Hydrate] Loaded ${relationalBookings.length} booking(s) from relational PostgreSQL.`);
-    console.log(`[Hydrate] Loaded ${relationalPayments.length} payment transaction(s) from relational PostgreSQL.`);
-  } catch (e) {
-    console.error('[Hydrate] Failed to hydrate relational core domains:', e.message);
-    throw e;
-  }
-}
-
-async function hydrateCollections() {
-  for (const name of ALL_SYNC_COLLECTIONS) {
-    try {
-      const docs = await appDocumentRepository.list(name);
-      const arr = __collectionArray(name);
-      if (arr && Array.isArray(docs)) {
-        arr.length = 0;
-        docs.forEach((d) => arr.push(d));
-        if (docs.length) console.log(`[Hydrate] Loaded ${docs.length} ${name} from Supabase Postgres.`);
-      }
-    } catch (e) {
-      console.error(`[Hydrate] Failed to hydrate ${name}:`, e.message);
-    }
-  }
-}
-
-// Explicit persistence boundary. Mutations call this after changing a collection.
-// There is intentionally no periodic memory -> database reconciliation: PostgreSQL
-// is durable storage, while the in-memory arrays are a transitional read/write
-// compatibility layer until each domain is moved to repositories.
-function persistCollection(name) {
-  if (!__hydrationComplete) return;
-  const arr = __collectionArray(name);
-  if (!arr) return;
-  Promise.resolve(appDocumentRepository.replace(name, arr)).catch((err) => {
-    console.error(`[Persistence] Failed to persist ${name}:`, err.message);
-  });
-}
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
     console.error(`[AI Studio] Port ${PORT} is already in use. Retrying or shutting down stale process...`);
