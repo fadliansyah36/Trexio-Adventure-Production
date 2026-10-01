@@ -10953,6 +10953,8 @@ api.post('/super/master/products/:id/status', requireSuperAdmin, (req, res) => {
 });
 
 // Dynamic Sitemaps & Robots.txt
+// These app-level routes also consume request-scoped business state.
+app.use(['/sitemap.xml','/sitemap-products.xml','/sitemap-destinations.xml','/sitemap-articles.xml','/news-sitemap.xml'], businessState.middleware());
 app.get('/sitemap.xml', (req, res) => {
   res.header('Content-Type', 'application/xml');
   res.send(aiSeoService.generateSitemapXml('index'));
