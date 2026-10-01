@@ -49,7 +49,9 @@ const {
   updateAdminTravelIntent,
   getAdminSharedRides,
   updateAdminSharedRide,
-  getAdminJourneysAndCostSplits
+  getAdminJourneysAndCostSplits,
+  runBackpackerRequestContext,
+  flushBackpackerRequestContext
 } = require('./store');
 
 function createBackpackerRouter(options = {}) {
@@ -181,6 +183,28 @@ function createBackpackerRouter(options = {}) {
     return Array.from(combinedMap.values());
   };
   const router = express.Router();
+
+  // Mission 10P.2: hydrate Backpacker business data from PostgreSQL per request.
+  // The router exposes no process-global business collections; mutations are flushed
+  // to PostgreSQL before JSON/HTML responses are sent.
+  router.use((req, res, next) => {
+    runBackpackerRequestContext(() => {
+      const originalJson = res.json.bind(res);
+      const originalSend = res.send.bind(res);
+      let responseCommitted = false;
+      const commitResponse = (writer, payload) => {
+        if (responseCommitted) return res;
+        responseCommitted = true;
+        flushBackpackerRequestContext()
+          .then(() => writer(payload))
+          .catch(next);
+        return res;
+      };
+      res.json = (payload) => commitResponse(originalJson, payload);
+      res.send = (payload) => commitResponse(originalSend, payload);
+      next();
+    }).catch(next);
+  });
 
   // Helper response wrapper
   const success = (res, data, message = 'Success') => res.json({ status: 'success', message, data });
