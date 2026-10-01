@@ -112,7 +112,7 @@ function saveCollection(key) {
   const operation = previous.then(() => persistCollectionSnapshot(key));
   ctx.writeChains.set(key, operation);
   ctx.pending.add(operation);
-  operation.finally(() => ctx.pending.delete(operation));
+  operation.then(() => ctx.pending.delete(operation), () => ctx.pending.delete(operation));
   return operation;
 }
 
