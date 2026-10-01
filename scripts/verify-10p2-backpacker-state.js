@@ -26,7 +26,7 @@ expect(/runBackpackerRequestContext/.test(routes),'router does not initialize re
 expect(/flushBackpackerRequestContext/.test(routes),'router does not flush writes before response');
 for (const [logical,table] of collections) {
  expect(store.includes(logical + ': \'' + table + '\''),'missing store mapping for '+logical);
- expect(persistence.includes(logical + ': \'' + table + '\''),'missing persistence mapping for '+logical);
+ expect(persistence.includes(table + ': \'' + table + '\''),'missing persistence mapping for '+logical);
  expect(migrations.includes('CREATE TABLE IF NOT EXISTS public.'+table),'missing migration table for '+table);
 }
 if(failures.length){console.error('10P.2 BLOCKED'); failures.forEach((x)=>console.error(' - '+x)); process.exit(1)}
