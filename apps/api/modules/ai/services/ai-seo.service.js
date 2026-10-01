@@ -13,8 +13,7 @@
  * - Internal Linking Engine
  */
 
-const fs = require('fs');
-const path = require('path');
+const { loadCollection, loadSingleton, saveDocument, saveSingleton } = require('./aiPostgresPersistence');
 const urlModule = require('url');
 const http = require('http');
 const https = require('https');
@@ -24,11 +23,6 @@ const aiSecurityService = require('./ai-security.service');
 const aiEventService = require('./ai-event.service');
 const aiFeatureFlagsService = require('./ai-feature-flags.service');
 const { AI_FEATURE_FLAGS, AI_EVENT_TYPES } = require('../types');
-
-const DATA_DIR = path.join(__dirname, '..', '..', '..', 'data');
-const ARTICLES_FILE = path.join(DATA_DIR, 'db_articles.json');
-const SEO_CONFIG_FILE = path.join(DATA_DIR, 'db_seo_config.json');
-const NEWS_SOURCES_FILE = path.join(DATA_DIR, 'db_news_sources.json');
 
 const DEFAULT_BASE_URL = process.env.PUBLIC_APP_URL || process.env.APP_URL || 'https://www.trexio.id';
 
@@ -209,91 +203,33 @@ class AISeoService {
       last_audit_date: null,
       last_audit_score: 92,
     };
-    this.init();
+    this.ready = this.init();
   }
 
-  ensureDataDir() {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-  }
-
-  init() {
-    this.ensureDataDir();
-    this.loadArticles();
-    this.loadSources();
-    this.loadSeoConfig();
-  }
-
-  loadArticles() {
+  async init() {
     try {
-      if (fs.existsSync(ARTICLES_FILE)) {
-        const raw = fs.readFileSync(ARTICLES_FILE, 'utf8');
-        this.articles = JSON.parse(raw);
-      } else {
-        this.articles = [...DEFAULT_SEED_ARTICLES];
-        this.saveArticles();
-      }
-    } catch (e) {
-      console.error('[AISeoService] Error loading articles:', e.message);
-      this.articles = [...DEFAULT_SEED_ARTICLES];
+      this.articles = await loadCollection('ai_articles');
+      this.sources = await loadCollection('ai_news_sources');
+      const config = await loadSingleton('ai_seo_config');
+      if (config?.config) this.seoConfig = { ...this.seoConfig, ...config.config };
+    } catch (err) {
+      console.error('[AISeoService] Failed loading PostgreSQL state:', err.message);
+      throw err;
     }
   }
 
-  saveArticles() {
-    try {
-      this.ensureDataDir();
-      fs.writeFileSync(ARTICLES_FILE, JSON.stringify(this.articles, null, 2), 'utf8');
-    } catch (e) {
-      console.error('[AISeoService] Error saving articles:', e.message);
-    }
+  async saveArticles() {
+    await Promise.all(this.articles.map((article) => saveDocument('ai_articles', article)));
   }
 
-  loadSources() {
-    try {
-      if (fs.existsSync(NEWS_SOURCES_FILE)) {
-        const raw = fs.readFileSync(NEWS_SOURCES_FILE, 'utf8');
-        this.sources = JSON.parse(raw);
-      } else {
-        this.sources = [...DEFAULT_NEWS_SOURCES];
-        this.saveSources();
-      }
-    } catch (e) {
-      console.error('[AISeoService] Error loading sources:', e.message);
-      this.sources = [...DEFAULT_NEWS_SOURCES];
-    }
+  async saveSources() {
+    await Promise.all(this.sources.map((source) => saveDocument('ai_news_sources', source)));
   }
 
-  saveSources() {
-    try {
-      this.ensureDataDir();
-      fs.writeFileSync(NEWS_SOURCES_FILE, JSON.stringify(this.sources, null, 2), 'utf8');
-    } catch (e) {
-      console.error('[AISeoService] Error saving sources:', e.message);
-    }
+  async saveSeoConfig() {
+    await saveSingleton('ai_seo_config', { config: this.seoConfig });
   }
 
-  loadSeoConfig() {
-    try {
-      if (fs.existsSync(SEO_CONFIG_FILE)) {
-        const raw = fs.readFileSync(SEO_CONFIG_FILE, 'utf8');
-        this.seoConfig = { ...this.seoConfig, ...JSON.parse(raw) };
-      } else {
-        this.saveSeoConfig();
-      }
-    } catch (e) {
-      console.error('[AISeoService] Error loading SEO config:', e.message);
-    }
-  }
-
-  saveSeoConfig() {
-    try {
-      this.ensureDataDir();
-      fs.writeFileSync(SEO_CONFIG_FILE, JSON.stringify(this.seoConfig, null, 2), 'utf8');
-    } catch (e) {
-      console.error('[AISeoService] Error saving SEO config:', e.message);
-    }
-  }
 
   // =========================================================================
   // 1. ARTICLE & CONTENT HUB CRUD
@@ -335,7 +271,7 @@ class AISeoService {
     const article = this.articles.find(a => a.slug === slug || a.id === slug);
     if (article) {
       article.views_count = (article.views_count || 0) + 1;
-      this.saveArticles();
+      void this.saveArticles();
     }
     return article;
   }
@@ -373,7 +309,7 @@ class AISeoService {
     };
 
     this.articles.unshift(newArticle);
-    this.saveArticles();
+    void this.saveArticles();
     return newArticle;
   }
 
@@ -395,7 +331,7 @@ class AISeoService {
     }
 
     this.articles[idx] = updated;
-    this.saveArticles();
+    void this.saveArticles();
     return updated;
   }
 
@@ -403,7 +339,7 @@ class AISeoService {
     const idx = this.articles.findIndex(a => a.id === id);
     if (idx !== -1) {
       this.articles.splice(idx, 1);
-      this.saveArticles();
+      void this.saveArticles();
       return true;
     }
     return false;
@@ -920,7 +856,7 @@ Aturan Ketat:
 
     this.seoConfig.last_audit_date = new Date().toISOString();
     this.seoConfig.last_audit_score = healthScore;
-    this.saveSeoConfig();
+    void this.saveSeoConfig();
 
     return {
       health_score: healthScore,
