@@ -3,52 +3,34 @@
  * Tracks operational AI usage, token consumption, latency, estimated costs, and failure rates.
  */
 
-const fs = require('fs');
-const path = require('path');
+const { loadCollection, saveDocument } = require('./aiPostgresPersistence');
 const { v4: uuidv4 } = require('uuid');
 const { MODEL_PRICING } = require('../types');
-
-const DATA_DIR = path.join(__dirname, '..', '..', '..', 'data');
-const USAGE_FILE = path.join(DATA_DIR, 'db_ai_usage_logs.json');
 
 class AIUsageService {
   constructor() {
     this.logs = [];
     this.maxLogsInMemory = 2000;
+    this.ready = this.loadFromPostgres();
     this.loadFromDisk();
   }
 
-  ensureDataDir() {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
+  async loadFromPostgres() {
+    try {
+      const loaded = await loadCollection('ai_usage_logs');
+      this.logs = loaded
+        .map((doc) => doc.data || doc)
+        .sort((a, b) => new Date(b.timestamp || b.created_at || 0) - new Date(a.timestamp || a.created_at || 0))
+        .slice(0, this.maxLogsInMemory);
+    } catch (err) {
+      console.error('[AI PostgreSQL persistence] Failed to load ai_usage_logs:', err.message);
     }
   }
 
-  loadFromDisk() {
-    try {
-      this.ensureDataDir();
-      if (fs.existsSync(USAGE_FILE)) {
-        const raw = fs.readFileSync(USAGE_FILE, 'utf8');
-        const loaded = JSON.parse(raw);
-        if (Array.isArray(loaded)) {
-          this.logs = loaded;
-        }
-      }
-    } catch (err) {
-      console.error('[AIUsageService] Failed to load usage logs from disk:', err.message);
-    }
+  async persistEntry(entry) {
+    await saveDocument('ai_usage_logs', entry);
   }
 
-  saveToDisk() {
-    try {
-      this.ensureDataDir();
-      // Keep disk size reasonable (last 2000 logs)
-      const dataToSave = this.logs.slice(0, this.maxLogsInMemory);
-      fs.writeFileSync(USAGE_FILE, JSON.stringify(dataToSave, null, 2), 'utf8');
-    } catch (err) {
-      console.error('[AIUsageService] Failed to save usage logs to disk:', err.message);
-    }
-  }
 
   /**
    * Calculates estimated cost in USD based on model pricing table.
@@ -99,7 +81,7 @@ class AIUsageService {
       this.logs.pop();
     }
 
-    this.saveToDisk();
+    void this.persistEntry(logEntry);
     return logEntry;
   }
 
