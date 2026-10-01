@@ -19,7 +19,6 @@ function registerMarketplaceRoutes({
   destinations,
   category_items,
   enrichTripWithVendor,
-  findProduct,
   aiSmartSearchService,
   authLimiter,
   marketplaceService,
@@ -226,10 +225,15 @@ api.get('/destinations', (req, res) => {
   app.post('/api/search/discovery', authLimiter, handleSearchDiscoveryPost);
   app.post('/search/discovery', authLimiter, handleSearchDiscoveryPost);
 
-  api.get('/trips/:trip_id', (req, res) => {
-    const p = findProduct(req.params.trip_id);
-    if (!p) return res.status(404).json({ detail: 'Trip atau Produk tidak ditemukan' });
-    res.json(p);
+  api.get('/trips/:trip_id', async (req, res) => {
+    try {
+      const trip = await marketplaceService.findTrip(req.params.trip_id);
+      if (!trip) return res.status(404).json({ detail: 'Trip atau Produk tidak ditemukan' });
+      res.json(await marketplaceService.enrichTripWithVendor(trip));
+    } catch (err) {
+      console.error('[API /trips/:trip_id Error]', err.message);
+      res.status(503).json({ success: false, error: 'Marketplace data service unavailable' });
+    }
   });
 }
 
