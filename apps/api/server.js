@@ -417,8 +417,8 @@ function getTenantEntitlements(tenantId) {
       return {
         has_active_sub: false,
         in_grace_period: true,
-        plan_name: plan ? plan.name : 'Free Grace',
-        entitlements: plan ? plan.entitlements : subscription_plans[0].entitlements,
+        plan_name: plan ? plan.name : null,
+        entitlements: plan?.entitlements || {},
         sub: graceSub
       };
     }
@@ -426,12 +426,13 @@ function getTenantEntitlements(tenantId) {
     return {
       has_active_sub: false,
       in_grace_period: false,
-      plan_name: 'Basic Free',
-      entitlements: subscription_plans[0].entitlements,
+      plan_name: null,
+      entitlements: {},
       sub: null
     };
   }
-  const plan = subscription_plans.find(p => p.id === sub.plan_id) || subscription_plans[1];
+  const plan = subscription_plans.find(p => p.id === sub.plan_id);
+  if (!plan) return { has_active_sub: false, in_grace_period: false, plan_name: null, entitlements: {}, sub: null };
   return {
     has_active_sub: true,
     in_grace_period: false,
@@ -2108,27 +2109,7 @@ api.get('/vendor/communications/summary', requireVendor, (req, res) => {
 
 // --- Public Tenant ---
 function getDefaultTenant() {
-  if (tenants.length > 0 && tenants[0]) return tenants[0];
-  const defaultTenant = {
-    id: 'tenant_default',
-    slug: 'default',
-    name: 'TREXIO Indonesia',
-    plan: 'enterprise',
-    active: true,
-    branding: {
-      logo: '/trexio-logo.png',
-      favicon: '/favicon-32x32.png',
-      primary_color: '#CC5A3F',
-      secondary_color: '#1E3F20',
-      brand_name: 'TREXIO Indonesia',
-      tagline: 'Marketplace Open Trip & Rental Gear',
-    },
-    settings: { currency: 'IDR', locale: 'id-ID' },
-    created_at: nowISO(),
-    updated_at: nowISO(),
-  };
-  tenants.push(defaultTenant);
-  return defaultTenant;
+  return tenants.length > 0 ? tenants[0] : null;
 }
 
 api.get('/tenant/current', (req, res) => {
