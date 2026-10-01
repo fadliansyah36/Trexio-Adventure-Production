@@ -322,7 +322,7 @@ const bookings = businessState.proxies.bookings;
 const rental_orders = businessState.proxies.rental_orders;
 const push_subscriptions = businessState.proxies.push_subscriptions;
 const audit_logs = businessState.proxies.audit_logs;
-let auditLogs = [];
+const auditLogs = businessState.proxies.audit_logs;
 const payment_transactions = businessState.proxies.payment_transactions;
 
 // ==========================================
