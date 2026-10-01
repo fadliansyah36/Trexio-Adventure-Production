@@ -8,7 +8,6 @@ on:
       - "supabase/migrations/**"
       - ".github/workflows/10d-midtrans-webhook-gate.yml"
       - "package.json"
-      - "package-lock.json"
   workflow_dispatch:
 
 concurrency:
@@ -22,17 +21,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
       - name: Run 10D structural/security gate
-        run: npm run verify:10d-midtrans-webhook
+        run: node scripts/verify-10d-midtrans-webhook.js
 
       - name: Publish structural evidence
         uses: actions/upload-artifact@v4
