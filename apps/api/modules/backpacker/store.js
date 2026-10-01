@@ -1,24 +1,13 @@
 /**
  * TREXIO BACKPACKER - DATABASE & STORE ENGINE
- * Manages Backpacker data persistence in /data/db_backpacker_*.json
- * Strictly enforces state machines, concurrency locks, and ownership validation.
+ * PostgreSQL-backed request-scoped business state. No filesystem persistence.
  */
-
-const fs = require('fs');
-const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-
-const DATA_DIR = path.join(__dirname, '..', '..', 'data');
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
 
 // PostgreSQL-backed request-scoped data context.
 // No process-global business collections and no filesystem persistence are permitted.
 const { AsyncLocalStorage } = require('async_hooks');
 const appDocumentRepository = require('../repositories/appDocumentRepository');
-const { v4: uuidv4 } = require('uuid');
-
 const COLLECTIONS = {
   profiles: 'backpacker_profiles',
   intents: 'backpacker_travel_intents',
