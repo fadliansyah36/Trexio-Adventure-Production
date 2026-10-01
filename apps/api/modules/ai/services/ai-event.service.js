@@ -12,7 +12,6 @@ class AIEventService {
     this.events = [];
     this.maxEventsInMemory = 5000;
     this.ready = this.loadFromPostgres();
-    this.loadFromDisk();
   }
 
   async loadFromPostgres() {
