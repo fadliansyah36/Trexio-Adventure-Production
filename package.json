@@ -45,7 +45,8 @@
     "inventory:10p1": "node scripts/build-10p1-runtime-inventory.js",
     "verify:10p2-backpacker-state": "node scripts/verify-10p2-backpacker-state.js",
     "verify:10p2-global-state": "node scripts/verify-10p2-global-business-state.js",
-    "verify:10p2-server-global-state": "node scripts/verify-10p2-server-global-state.js"
+    "verify:10p2-server-global-state": "node scripts/verify-10p2-server-global-state.js",
+    "verify:10p3-file-persistence": "node scripts/verify-10p3-file-persistence.js"
   },
   "dependencies": {
     "@google/genai": "^2.15.0",
