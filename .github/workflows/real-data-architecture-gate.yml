@@ -9,6 +9,7 @@ on:
       - "server.js"
       - "scripts/verify-real-data-architecture.js"
       - "scripts/verify-10p2-backpacker-state.js"
+      - "scripts/verify-10p2-server-global-state.js"
       - "apps/api/modules/backpacker/**"
       - "apps/api/modules/persistence/**"
       - "apps/api/modules/repositories/**"
@@ -29,6 +30,9 @@ jobs:
 
       - name: Verify 10P.2 Backpacker state
         run: node scripts/verify-10p2-backpacker-state.js
+
+      - name: Verify 10P.2 server global business state
+        run: node scripts/verify-10p2-server-global-state.js
 
       - name: Verify real-data architecture
         run: node scripts/verify-real-data-architecture.js
