@@ -1,0 +1,35 @@
+{
+  "stage": "10C",
+  "type": "database_rls_runtime_evidence",
+  "environment": "Trexio Adventure Supabase",
+  "executed_at": "2026-10-01T09:59:00Z",
+  "test_method": "transactional runtime simulation using PostgreSQL authenticated role and request.jwt.claim.sub; all test rows rolled back",
+  "results": [
+    {
+      "actor": "tenant_a",
+      "resolved_tenant": "__10c_rt_a4",
+      "visible_vendor_count": 1,
+      "visible_other_tenant_vendor_count": 0,
+      "cross_tenant_insert_denied": true
+    },
+    {
+      "actor": "tenant_b",
+      "resolved_tenant": "__10c_rt_b4",
+      "visible_vendor_count": 1,
+      "visible_other_tenant_vendor_count": 0,
+      "cross_tenant_insert_denied": true
+    }
+  ],
+  "security_function_reconciliation": {
+    "legacy_public_helpers_removed": true,
+    "helpers_moved_to_private_schema": true,
+    "anon_execute": false,
+    "authenticated_execute": true,
+    "security_definer_search_path": ""
+  },
+  "limitations": [
+    "This is database-level runtime evidence, not a live production HTTP test.",
+    "The current production database has one persistent tenant (tenant_default); the two-tenant identities used above were transactional test fixtures and were rolled back."
+  ],
+  "status": "DATABASE_RUNTIME_PASS_HTTP_RUNTIME_EVIDENCE_REQUIRED"
+}
