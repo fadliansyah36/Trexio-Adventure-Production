@@ -12,7 +12,6 @@ class AIUsageService {
     this.logs = [];
     this.maxLogsInMemory = 2000;
     this.ready = this.loadFromPostgres();
-    this.loadFromDisk();
   }
 
   async loadFromPostgres() {
