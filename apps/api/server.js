@@ -24,6 +24,7 @@ const { registerBackpackerRoutes } = require('./modules/routes/backpackerRoutes'
 const registerAuthRoutes = require('./modules/routes/authRoutes');
 const registerUserRoutes = require('./modules/routes/userRoutes');
 const { registerMarketplaceDiscoveryRoutes } = require('./modules/routes/marketplaceDiscoveryRoutes');
+const marketplaceService = require('./modules/services/marketplaceService');
 const { resolveTenantForRequest, assertTenantAccess } = require('./security/tenantIsolation');
 
 const app = express();
@@ -3567,6 +3568,7 @@ registerMarketplaceRoutes({
   findProduct,
   aiSmartSearchService: require('./modules/ai/services/ai-smart-search.service'),
   authLimiter,
+  marketplaceService,
 });
 
 const aiSeoService = require('./modules/ai/services/ai-seo.service');
