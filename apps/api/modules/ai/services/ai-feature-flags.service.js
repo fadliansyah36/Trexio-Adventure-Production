@@ -21,24 +21,19 @@ class AIFeatureFlagsService {
     this.ready = this.loadFromPostgres();
   }
 
-  ensureDataDir() {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-  }
-
   async loadFromPostgres() {
     try {
       const loaded = await loadSingleton('ai_feature_flags');
-      if (loaded) this.this.flags = { ...this.this.flags, ...loaded.flags };
+      if (loaded?.flags) this.flags = { ...this.flags, ...loaded.flags };
     } catch (err) {
       console.error('[AI PostgreSQL persistence] Failed to load ai_feature_flags:', err.message);
     }
   }
 
   async persistToPostgres() {
-    await saveSingleton('ai_feature_flags', { flags: this.this.flags });
+    await saveSingleton('ai_feature_flags', { flags: this.flags });
   }
+
 
   getFlags() {
     return { ...this.flags };
@@ -58,7 +53,7 @@ class AIFeatureFlagsService {
   setFlag(flagName, enabled) {
     this.flags[flagName] = Boolean(enabled);
     void this.persistToPostgres();
-    return this.getFlags();
+return this.getFlags();
   }
 
   updateFlags(updatedFlags) {
@@ -69,7 +64,7 @@ class AIFeatureFlagsService {
         }
       });
     void this.persistToPostgres();
-    }
+}
     return this.getFlags();
   }
 }
