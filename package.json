@@ -3,7 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "type": "commonjs",
-  "workspaces": ["apps/web", "apps/admin", "apps/api", "packages/*"],
+  "workspaces": [
+    "apps/web",
+    "apps/admin",
+    "apps/api",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "node apps/api/server.js",
     "build": "npm --prefix apps/web run build",
@@ -36,7 +41,8 @@
     "test:tenant-isolation": "node scripts/test-tenant-isolation.js",
     "verify:10c-tenant-isolation": "node scripts/verify-10c-tenant-isolation.js",
     "verify:10d-midtrans-webhook": "node scripts/verify-10d-midtrans-webhook.js",
-    "verify:real-data-architecture": "node scripts/verify-real-data-architecture.js"
+    "verify:real-data-architecture": "node scripts/verify-real-data-architecture.js",
+    "inventory:10p1": "node scripts/build-10p1-runtime-inventory.js"
   },
   "dependencies": {
     "@google/genai": "^2.15.0",
