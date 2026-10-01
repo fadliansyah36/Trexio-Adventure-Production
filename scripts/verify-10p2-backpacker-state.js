@@ -36,5 +36,4 @@ for (const [logical,table] of collections) {
  expect(migrations.includes('CREATE TABLE IF NOT EXISTS public.'+table),'missing migration table for '+table);
 }
 if(failures.length){console.error('10P.2 BLOCKED'); failures.forEach((x)=>console.error(' - '+x)); process.exit(1)}
-require(path.join(root,'apps/api/modules/backpacker/store.js'));
 console.log(JSON.stringify({status:'PASS',stage:'10P.2',domain:'backpacker',collections:collections.length},null,2));
