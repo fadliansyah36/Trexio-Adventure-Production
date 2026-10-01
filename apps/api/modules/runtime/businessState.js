@@ -148,7 +148,7 @@ function createObjectProxy(name) {
 }
 
 async function initialize() {
-  const names = [...Object.keys(ARRAY_CONFIG), ...APP_COLLECTIONS];
+  const names = [...Object.keys(ARRAY_CONFIG).filter((name) => !ARRAY_CONFIG[name].alias), ...APP_COLLECTIONS];
   const collections = {};
   const snapshots = {};
   const loaded = await Promise.all(names.map(async (name) => [name, await loadCollection(name)]));
