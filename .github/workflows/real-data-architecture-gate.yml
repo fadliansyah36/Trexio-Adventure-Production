@@ -1,0 +1,34 @@
+name: Trexio Real Data Architecture Gate
+
+on:
+  pull_request:
+    paths:
+      - "apps/**"
+      - "frontend/**"
+      - "src/**"
+      - "server.js"
+      - "scripts/verify-real-data-architecture.js"
+      - "package.json"
+  workflow_dispatch:
+
+concurrency:
+  group: trexio-real-data-architecture-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  real-data-architecture:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify real-data architecture
+        run: node scripts/verify-real-data-architecture.js
+
+      - name: Publish audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trexio-real-data-architecture-audit
+          path: data/real-data-architecture-audit.json
+          if-no-files-found: warn
