@@ -200,15 +200,38 @@ function middleware() {
       const originalJson = res.json.bind(res);
       const originalSend = res.send.bind(res);
       const originalEnd = res.end.bind(res);
-      const commit = (writer, payload, encoding, cb) => {
+
+      const commitJson = async (payload) => {
         if (committed) return res;
         committed = true;
-        flush().then(() => writer(payload, encoding, cb)).catch(next);
-        return res;
+        await flush();
+        const wrappedSend = res.send;
+        res.send = originalSend;
+        try { return originalJson(payload); }
+        finally { res.send = wrappedSend; }
       };
-      res.json = (payload) => commit(originalJson, payload);
-      res.send = (payload) => commit(originalSend, payload);
-      res.end = (payload, encoding, cb) => commit(originalEnd, payload, encoding, cb);
+
+      const commitSend = async (payload) => {
+        if (committed) return res;
+        committed = true;
+        await flush();
+        const wrappedEnd = res.end;
+        res.end = originalEnd;
+        try { return originalSend(payload); }
+        finally { res.end = wrappedEnd; }
+      };
+
+      const commitEnd = async (payload, encoding, cb) => {
+        if (committed) return res;
+        committed = true;
+        await flush();
+        return originalEnd(payload, encoding, cb);
+      };
+
+      res.json = (payload) => { commitJson(payload).catch(next); return res; };
+      res.send = (payload) => { commitSend(payload).catch(next); return res; };
+      res.end = (payload, encoding, cb) => { commitEnd(payload, encoding, cb).catch(next); return res; };
+
       next();
     }).catch(next);
   };
