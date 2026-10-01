@@ -19,4 +19,4 @@ jobs:
         with:
           node-version: 20
       - name: Verify 10P.3
-        run: npm run verify:10p3-file-persistence
+        run: node scripts/verify-10p3-file-persistence.js
