@@ -139,37 +139,37 @@ function createBackpackerRouter(options = {}) {
         if (linked) return linked;
       }
 
-      const pickupPt = item.location || 'Titik Penjemputan / Basecamp';
-      const dropPt = item.destination || item.location || 'Basecamp Tujuan';
+      const pickupPt = item.location || null;
+      const dropPt = item.destination || item.location || null;
       const specsArr = Array.isArray(item.specs) ? item.specs : [];
 
       return {
         id: item.id,
         product_id: item.id,
         vendor_id: item.vendor_id || null,
-        vendor_name: item.provider || item.organizer || 'TREXIO Partner',
+        vendor_name: item.provider || item.organizer || null,
         title: item.title,
         slug: item.slug || item.id,
-        category: item.category || 'Shuttle & Transportasi',
-        transport_type: item.transportType || item.vehicle_type || (specsArr[0] || 'Angkutan Lokal'),
-        price: Number(item.price || 150000),
+        category: item.category || null,
+        transport_type: item.transportType || item.vehicle_type || specsArr[0] || null,
+        price: item.price ?? null,
         currency: 'IDR',
-        price_unit: item.price_unit || 'trip',
-        location: item.location || 'Indonesia',
+        price_unit: item.price_unit || null,
+        location: item.location || null,
         pickup_point: pickupPt,
         pickup_points: Array.isArray(item.meeting_points) ? item.meeting_points : [pickupPt],
         dropoff_point: dropPt,
         dropoff: dropPt,
-        departure_schedules: item.departure_dates || item.available_dates || ['Setiap Hari'],
-        schedules: item.departure_dates || item.available_dates || ['Setiap Hari'],
-        available_seats: item.stock || item.max_participants || 12,
-        availability: item.stock || item.max_participants || 12,
-        distance: item.distance || '45 km',
-        duration: '1 Hari / Trip',
+        departure_schedules: item.departure_dates || item.available_dates || [],
+        schedules: item.departure_dates || item.available_dates || [],
+        available_seats: item.stock ?? item.max_participants ?? null,
+        availability: item.stock ?? item.max_participants ?? null,
+        distance: item.distance ?? null,
+        duration: item.duration ?? null,
         cover_image: item.image || item.cover_image,
         description: item.description || '',
         specs: specsArr,
-        vendor_badge: item.badge || 'Partner Resmi Trexio'
+        vendor_badge: item.badge || null
       };
     });
 
