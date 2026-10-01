@@ -27,6 +27,7 @@ const ARRAY_CONFIG = {
   trips: { kind: 'trip' },
   bookings: { kind: 'booking' },
   payment_transactions: { kind: 'payment' },
+  auditLogs: { alias: 'audit_logs' },
 };
 
 const APP_COLLECTIONS = [
@@ -45,6 +46,7 @@ const OBJECT_COLLECTIONS = {
   masterRolesPermissions: 'master_roles',
   homepageConfig: 'homepage_config',
   featureFlags: 'feature_flags',
+  csConfig: 'cs_config',
 };
 
 function current() {
@@ -213,9 +215,12 @@ function middleware() {
 }
 
 const proxies = {};
-for (const name of Object.keys(ARRAY_CONFIG)) proxies[name] = createArrayProxy(name);
+for (const name of Object.keys(ARRAY_CONFIG)) proxies[name] = createArrayProxy(ARRAY_CONFIG[name].alias || name);
 for (const name of APP_COLLECTIONS) proxies[name] = createArrayProxy(name);
 for (const name of Object.keys(OBJECT_COLLECTIONS)) proxies[name] = createObjectProxy(name);
+proxies.securityIncidents = proxies.incidents;
+proxies.masterCategories = proxies.master_categories;
+proxies.auditLogs = proxies.audit_logs;
 
 module.exports = {
   middleware,
