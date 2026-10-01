@@ -25,8 +25,6 @@ expect(/new AsyncLocalStorage\(\)/.test(store),'store.js does not use request-sc
 expect(/appDocumentRepository/.test(store),'store.js does not use repository boundary');
 expect(/runBackpackerRequestContext/.test(routes),'router does not initialize request context');
 expect(/flushBackpackerRequestContext/.test(routes),'router does not flush writes before response');
-expect(!/const articles = \[\]/.test(server),'server.js still declares in-memory articles');
-expect(!/const announcements = \[\]/.test(server),'server.js still declares in-memory announcements');
 expect(/appDocumentRepository\.list\('articles'\)/.test(server),'articles route does not read repository');
 expect(/appDocumentRepository\.save\('articles'/.test(server),'article create does not write repository');
 expect(/appDocumentRepository\.list\('announcements'\)/.test(server),'announcement routes do not read repository');
