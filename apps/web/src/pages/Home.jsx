@@ -6,6 +6,7 @@ import SearchBarWithAutocomplete from "@/components/site/SearchBarWithAutocomple
 import { TrexioLogo } from "@/components/site/TrexioLogo";
 import SEO from "@/components/site/SEO";
 import { generateOrganizationSchema } from "@/services/seoService";
+import marketplaceService from "@/services/marketplaceService";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import ProductCard from "@/components/site/ProductCard";
@@ -306,8 +307,8 @@ export default function Home() {
 
     // Featured Trips
     setLoadingFeatured(true);
-    api.get("/trips/featured")
-      .then((r) => setFeatured(Array.isArray(r.data) ? r.data : []))
+    marketplaceService.listFeatured(6)
+      .then((items) => setFeatured(items))
       .catch(() => setFeatured([]))
       .finally(() => setLoadingFeatured(false));
 
@@ -327,8 +328,8 @@ export default function Home() {
 
     // Popular Open Trips
     setLoadingPopular(true);
-    api.get("/trips?sort=popularity&limit=10")
-      .then((r) => setPopularTrips(Array.isArray(r.data) ? r.data : []))
+    marketplaceService.listTrips({ sort: "popularity", limit: 10 })
+      .then((r) => setPopularTrips(r.items))
       .catch(() => setPopularTrips([]))
       .finally(() => setLoadingPopular(false));
 
@@ -444,14 +445,8 @@ export default function Home() {
   // Fetch items whenever selected category changes
   useEffect(() => {
     setLoadingCategoryItems(true);
-    api.get(`/categories/${selectedCategorySlug}`)
-      .then((res) => {
-        if (res.data && Array.isArray(res.data.items)) {
-          setCategoryItems(res.data.items);
-        } else {
-          setCategoryItems([]);
-        }
-      })
+    marketplaceService.listCategory(selectedCategorySlug)
+      .then((res) => setCategoryItems(res.items))
       .catch(() => setCategoryItems([]))
       .finally(() => setLoadingCategoryItems(false));
   }, [selectedCategorySlug]);
