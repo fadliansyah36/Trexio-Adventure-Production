@@ -36,8 +36,8 @@ for (const token of [
 }
 
 expectAbsent(/const\s+users\s*=\s*\[\]/, 'users empty-array compatibility state remains');
-expectAbsent(/const\s+(?:vendors|trips|bookings|payment_transactions)\s*=\[\]/, 'relational core empty-array state remains');
-expectAbsent(/const\s+(?:conversations|messages|notifications)\s*=\[\]/, 'communications empty-array state remains');
+expectAbsent(/const\s+(?:vendors|trips|bookings|payment_transactions)\s*=\s*\[\]/, 'relational core empty-array state remains');
+expectAbsent(/const\s+(?:conversations|messages|notifications)\s*=\s*\[\]/, 'communications empty-array state remains');
 
 const runtimeState = fs.readFileSync(path.join(root, 'apps/api/modules/runtime/businessState.js'), 'utf8');
 if (!/AsyncLocalStorage/.test(runtimeState)) failures.push('businessState.js is not request-scoped');
