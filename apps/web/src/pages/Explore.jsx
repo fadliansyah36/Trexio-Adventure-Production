@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { api, formatRupiah } from "@/lib/api";
+import marketplaceService from "@/services/marketplaceService";
 import TripCard from "@/components/site/TripCard";
 import SEO from "@/components/site/SEO";
 import SearchBarWithAutocomplete from "@/components/site/SearchBarWithAutocomplete";
@@ -79,33 +80,24 @@ export default function Explore() {
     if (minPrice > 0) query.min_price = minPrice;
     if (maxPrice < 10000000) query.max_price = maxPrice;
 
-    api.get("/search/smart", { params: query })
-      .then((r) => {
-        if (r.data && Array.isArray(r.data.results)) {
-          setTrips(r.data.results);
-          setSearchMeta({
-            isZeroResultRecovery: r.data.is_zero_result_recovery,
-            originalQuery: r.data.original_query,
-            correctedQuery: r.data.corrected_query,
-            intent: r.data.extracted_intent,
-            searchTips: r.data.search_tips,
-          });
-        } else if (Array.isArray(r.data)) {
-          setTrips(r.data);
-          setSearchMeta(null);
-        } else {
-          setTrips([]);
-          setSearchMeta(null);
-        }
+    marketplaceService.listTrips({
+      q,
+      category,
+      region,
+      difficulty,
+      sort,
+      min_price: minPrice > 0 ? minPrice : undefined,
+      max_price: maxPrice < 10000000 ? maxPrice : undefined,
+      limit: 50,
+      page: 1,
+    })
+      .then((result) => {
+        setTrips(result.items);
+        setSearchMeta({ total: result.total, page: result.page, limit: result.limit });
       })
       .catch(() => {
-        // Fallback to basic endpoint if smart search fails
-        api.get("/trips", { params: query })
-          .then((res) => {
-            setTrips(Array.isArray(res.data) ? res.data : []);
-            setSearchMeta(null);
-          })
-          .catch(() => setTrips([]));
+        setTrips([]);
+        setSearchMeta(null);
       })
       .finally(() => setLoading(false));
   }, [q, category, region, difficulty, sort, minPrice, maxPrice]);
