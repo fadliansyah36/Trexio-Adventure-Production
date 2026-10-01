@@ -28,15 +28,14 @@ function scanFile(file) {
 
   lines.forEach((lineText, i) => {
     const line = i + 1;
-    const line = i + 1;
-    if (/\\b(writeFileSync|appendFileSync|readFileSync|createWriteStream)\\s*\\(/.test(lineText) &&
+    if (/\b(writeFileSync|appendFileSync|readFileSync|createWriteStream)\s*\(/.test(lineText) &&
         !/config|lock|cache|tmp|migration|report/i.test(lineText)) {
       add(file, line, 'FILE_BUSINESS_PERSISTENCE', lineText);
     }
-    if (/\\b(localStorage|sessionStorage)\\s*\\./.test(lineText)) {
+    if (/\b(localStorage|sessionStorage)\s*\./.test(lineText)) {
       add(file, line, 'BROWSER_BUSINESS_PERSISTENCE', lineText);
     }
-    if (/\\b(mock|dummy|fake|placeholder|simulation|simulate|scenario|demo)\\b/i.test(lineText)) {
+    if (/\b(mock|dummy|fake|placeholder|simulation|simulate|scenario|demo)\b/i.test(lineText)) {
       add(file, line, 'MOCK_SIMULATION_IDENTIFIER', lineText);
     }
     if (/example-vapid-key|example\.com|test@|admin@trexio\.id/.test(lineText)) {
@@ -44,12 +43,12 @@ function scanFile(file) {
     }
   });
 
-  const businessArrayPattern = /const\\s+([A-Za-z][A-Za-z0-9_]*)\\s*=\\s*\\[\\s*\\{/g;
+  const businessArrayPattern = /const\s+([A-Za-z][A-Za-z0-9_]*)\s*=\s*\[\s*\{/g;
   let match;
   while ((match = businessArrayPattern.exec(text))) {
     const name = match[1];
     if (/^(config|routes|allowedOrigins|defaultAllowedOrigins|headers|rules|constants)$/i.test(name)) continue;
-    const line = text.slice(0, match.index).split(/\\r?\\n/).length;
+    const line = text.slice(0, match.index).split(/\r?\n/).length;
     add(file, line, 'STATIC_OBJECT_ARRAY', `const ${name} = [{ ... }]`);
   }
 }
