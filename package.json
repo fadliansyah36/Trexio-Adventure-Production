@@ -42,7 +42,8 @@
     "verify:10c-tenant-isolation": "node scripts/verify-10c-tenant-isolation.js",
     "verify:10d-midtrans-webhook": "node scripts/verify-10d-midtrans-webhook.js",
     "verify:real-data-architecture": "node scripts/verify-real-data-architecture.js",
-    "inventory:10p1": "node scripts/build-10p1-runtime-inventory.js"
+    "inventory:10p1": "node scripts/build-10p1-runtime-inventory.js",
+    "verify:10p2-backpacker-state": "node scripts/verify-10p2-backpacker-state.js"
   },
   "dependencies": {
     "@google/genai": "^2.15.0",
