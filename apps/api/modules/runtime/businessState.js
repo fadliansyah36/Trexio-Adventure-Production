@@ -206,9 +206,11 @@ function middleware() {
         committed = true;
         await flush();
         const wrappedSend = res.send;
+        const wrappedEnd = res.end;
         res.send = originalSend;
+        res.end = originalEnd;
         try { return originalJson(payload); }
-        finally { res.send = wrappedSend; }
+        finally { res.send = wrappedSend; res.end = wrappedEnd; }
       };
 
       const commitSend = async (payload) => {
