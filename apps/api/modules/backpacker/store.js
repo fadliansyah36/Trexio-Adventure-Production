@@ -1943,6 +1943,8 @@ function getAdminJourneysAndCostSplits(filter = {}) {
 
 module.exports = {
   db,
+  runBackpackerRequestContext,
+  flushBackpackerRequestContext,
   getProfileByUserId,
   upsertProfile,
   getTravelIntents,
