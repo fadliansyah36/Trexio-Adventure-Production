@@ -37,43 +37,25 @@ class AIRecommendationConfigService {
     this.ready = this.loadFromPostgres();
   }
 
-  ensureDataDir() {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
+  async loadFromPostgres() {
+    try {
+      const loaded = await loadSingleton('ai_recommendation_config');
+      if (loaded?.config) this.config = {
+        weights: { ...this.config.weights, ...loaded.config.weights },
+        diversity: { ...this.config.diversity, ...loaded.config.diversity },
+        sponsored_isolation: { ...this.config.sponsored_isolation, ...loaded.config.sponsored_isolation },
+        last_updated: loaded.config.last_updated || this.config.last_updated,
+        updated_by: loaded.config.updated_by || this.config.updated_by,
+      };
+    } catch (err) {
+      console.error('[AI PostgreSQL persistence] Failed to load ai_recommendation_config:', err.message);
     }
   }
 
-  loadFromDisk() {
-    try {
-      this.ensureDataDir();
-      if (fs.existsSync(CONFIG_FILE)) {
-        const raw = fs.readFileSync(CONFIG_FILE, 'utf8');
-        const loaded = JSON.parse(raw);
-        if (loaded && typeof loaded === 'object') {
-          this.config = {
-            weights: { ...DEFAULT_CONFIG.weights, ...loaded.weights },
-            diversity: { ...DEFAULT_CONFIG.diversity, ...loaded.diversity },
-            sponsored_isolation: { ...DEFAULT_CONFIG.sponsored_isolation, ...loaded.sponsored_isolation },
-            last_updated: loaded.last_updated || new Date().toISOString(),
-            updated_by: loaded.updated_by || 'system',
-          };
-        }
-      } else {
-        this.saveToDisk();
-      }
-    } catch (err) {
-      console.error('[AIRecommendationConfigService] Failed to load config from disk:', err.message);
-    }
+  async persistToPostgres() {
+    await saveSingleton('ai_recommendation_config', { config: this.config });
   }
 
-  saveToDisk() {
-    try {
-      this.ensureDataDir();
-      fs.writeFileSync(CONFIG_FILE, JSON.stringify(this.config, null, 2), 'utf8');
-    } catch (err) {
-      console.error('[AIRecommendationConfigService] Failed to save config to disk:', err.message);
-    }
-  }
 
   getConfig() {
     return JSON.parse(JSON.stringify(this.config));
@@ -103,7 +85,6 @@ class AIRecommendationConfigService {
 
     this.config.last_updated = new Date().toISOString();
     this.config.updated_by = userEmail;
-    this.saveToDisk();
 
     return this.getConfig();
   }
