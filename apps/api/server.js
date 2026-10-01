@@ -371,13 +371,18 @@ function saveSubDataToDisk() {
   // 10P.2: request-scoped businessState middleware is the persistence boundary.
 }
 
+function persistCollection() {
+  // 10P.2 compatibility hook; request-scoped middleware flushes actual changes.
+  return Promise.resolve();
+}
+
 function saveAuditLogsToDisk() {
-  persistCollection('audit_logs');
+  return persistCollection('audit_logs');
 }
 
 function loadSubDataFromDisk() {
   // [Supabase Postgres is Source of Truth]
-  // Collections are hydrated asynchronously on boot from Supabase PostgreSQL in hydrateCollections()
+  // PostgreSQL is loaded per request by businessState middleware.
 }
 
 async function saveCommunicationsToDisk() {
@@ -2317,7 +2322,7 @@ const DEFAULT_HOMEPAGE_CONFIG = {
   }
 };
 
-let homepageConfig = DEFAULT_HOMEPAGE_CONFIG;
+const homepageConfig = businessState.proxies.homepageConfig;
 
 function saveHomepageConfigToDisk() {
   persistCollection('homepage_config');
@@ -9371,7 +9376,7 @@ function saveBookingsToDisk() {
 
 function loadBookingsFromDisk() {
   // [Supabase Postgres is Source of Truth]
-  // Bookings are hydrated on boot from Supabase PostgreSQL in hydrateCollections()
+  // Bookings are loaded per request by businessState middleware.
 }
 
 function savePaymentsDataToDisk() {
@@ -9383,7 +9388,7 @@ function savePaymentsDataToDisk() {
 
 function loadPaymentsFromDisk() {
   // [Supabase Postgres is Source of Truth]
-  // Payments are hydrated on boot from Supabase PostgreSQL in hydrateCollections()
+  // Payments are loaded per request by businessState middleware.
 }
 
 function saveWebhookLogsToDisk() {
