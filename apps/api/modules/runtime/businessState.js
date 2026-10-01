@@ -170,7 +170,7 @@ async function initialize() {
 
 async function flush() {
   const ctx = current();
-  for (const name of ctx.dirty) {
+  for (const name of Object.keys(ctx.collections)) {
     const before = ctx.snapshots[name];
     const after = ctx.collections[name];
     if (JSON.stringify(before) !== JSON.stringify(after)) await saveCollection(name, after, before);
