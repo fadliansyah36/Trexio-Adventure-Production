@@ -8,6 +8,11 @@ on:
       - "src/**"
       - "server.js"
       - "scripts/verify-real-data-architecture.js"
+      - "scripts/verify-10p2-backpacker-state.js"
+      - "apps/api/modules/backpacker/**"
+      - "apps/api/modules/persistence/**"
+      - "apps/api/modules/repositories/**"
+      - "supabase/migrations/**"
       - "package.json"
   workflow_dispatch:
 
@@ -21,6 +26,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Verify 10P.2 Backpacker state
+        run: node scripts/verify-10p2-backpacker-state.js
 
       - name: Verify real-data architecture
         run: node scripts/verify-real-data-architecture.js
