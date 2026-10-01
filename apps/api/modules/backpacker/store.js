@@ -13,100 +13,127 @@ if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-// File Paths
-const FILES = {
-  profiles: path.join(DATA_DIR, 'db_backpacker_profiles.json'),
-  intents: path.join(DATA_DIR, 'db_travel_intents.json'),
-  journeys: path.join(DATA_DIR, 'db_journeys.json'),
-  stops: path.join(DATA_DIR, 'db_journey_stops.json'),
-  participants: path.join(DATA_DIR, 'db_journey_participants.json'),
-  expenses: path.join(DATA_DIR, 'db_journey_expenses.json'),
-  rides: path.join(DATA_DIR, 'db_shared_rides.json'),
-  ride_participants: path.join(DATA_DIR, 'db_shared_ride_participants.json'),
-  ride_requests: path.join(DATA_DIR, 'db_shared_ride_requests.json'),
-  connections: path.join(DATA_DIR, 'db_buddy_connections.json'),
-  reports: path.join(DATA_DIR, 'db_buddy_reports.json'),
-  location_consents: path.join(DATA_DIR, 'db_journey_location_consents.json'),
-  locations: path.join(DATA_DIR, 'db_journey_locations.json'),
-  assistance_requests: path.join(DATA_DIR, 'db_backpacker_assistance.json')
+// PostgreSQL-backed request-scoped data context.
+// No process-global business collections and no filesystem persistence are permitted.
+const { AsyncLocalStorage } = require('async_hooks');
+const appDocumentRepository = require('../repositories/appDocumentRepository');
+const { v4: uuidv4 } = require('uuid');
+
+const COLLECTIONS = {
+  profiles: 'backpacker_profiles',
+  intents: 'backpacker_travel_intents',
+  journeys: 'backpacker_journeys',
+  stops: 'backpacker_journey_stops',
+  participants: 'backpacker_journey_participants',
+  expenses: 'backpacker_journey_expenses',
+  rides: 'backpacker_shared_rides',
+  ride_participants: 'backpacker_shared_ride_participants',
+  ride_requests: 'backpacker_shared_ride_requests',
+  connections: 'backpacker_connections',
+  reports: 'backpacker_reports',
+  location_consents: 'backpacker_location_consents',
+  locations: 'backpacker_locations',
+  assistance_requests: 'backpacker_assistance_requests'
 };
 
-// In-Memory Data Collections
-const db = {
-  profiles: [],
-  intents: [],
-  journeys: [],
-  stops: [],
-  participants: [],
-  expenses: [],
-  rides: [],
-  ride_participants: [],
-  ride_requests: [],
-  connections: [],
-  reports: [],
-  location_consents: [],
-  locations: [],
-  assistance_requests: []
-};
+const backpackerContext = new AsyncLocalStorage();
 
-// Concurrency Mutex Lock Map for Shared Ride Seats & Atomicity
+function currentContext() {
+  const ctx = backpackerContext.getStore();
+  if (!ctx) throw new Error('Backpacker data context is not initialized for this request.');
+  return ctx;
+}
+
+function collectionKey(document) {
+  return document && (document.id || document.booking_code || document.tx_id || document.order_id || document.code || document.slug || null);
+}
+
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+async function createBackpackerRequestContext() {
+  const collections = {};
+  const snapshots = {};
+  for (const [name, repositoryCollection] of Object.entries(COLLECTIONS)) {
+    const documents = await appDocumentRepository.list(repositoryCollection);
+    collections[name] = Array.isArray(documents) ? documents : [];
+    snapshots[name] = new Map(collections[name].filter(Boolean).map((doc) => [String(collectionKey(doc)), JSON.stringify(doc)]));
+  }
+  return {
+    collections,
+    snapshots,
+    writeChains: new Map(),
+    pending: new Set()
+  };
+}
+
+async function runBackpackerRequestContext(next) {
+  const ctx = await createBackpackerRequestContext();
+  return backpackerContext.run(ctx, () => next());
+}
+
+// Compatibility accessor: the object itself contains no business state.
+// All collections are request-scoped snapshots hydrated from PostgreSQL.
+const db = new Proxy({}, {
+  get(_target, property) {
+    if (typeof property !== 'string') return undefined;
+    return currentContext().collections[property];
+  },
+  set(_target, property, value) {
+    if (typeof property !== 'string') return false;
+    currentContext().collections[property] = value;
+    return true;
+  }
+});
+
+async function persistCollectionSnapshot(name) {
+  const ctx = currentContext();
+  const repositoryCollection = COLLECTIONS[name];
+  if (!repositoryCollection) throw new Error(`Unknown Backpacker collection: ${name}`);
+  const current = Array.isArray(ctx.collections[name]) ? ctx.collections[name] : [];
+  const before = ctx.snapshots[name] || new Map();
+  const after = new Map(current.filter(Boolean).map((doc) => [String(collectionKey(doc)), doc]));
+
+  for (const [id, doc] of after) {
+    if (!id || JSON.stringify(doc) !== before.get(id)) {
+      await appDocumentRepository.save(repositoryCollection, doc);
+    }
+  }
+  for (const id of before.keys()) {
+    if (!after.has(id)) await appDocumentRepository.remove(repositoryCollection, id);
+  }
+  ctx.snapshots[name] = new Map(Array.from(after.entries()).map(([id, doc]) => [id, JSON.stringify(doc)]));
+}
+
+function saveCollection(key) {
+  const ctx = currentContext();
+  const previous = ctx.writeChains.get(key) || Promise.resolve();
+  const operation = previous.then(() => persistCollectionSnapshot(key));
+  ctx.writeChains.set(key, operation);
+  ctx.pending.add(operation);
+  operation.finally(() => ctx.pending.delete(operation));
+  return operation;
+}
+
+async function flushBackpackerRequestContext() {
+  const ctx = currentContext();
+  while (ctx.pending.size) {
+    await Promise.all(Array.from(ctx.pending));
+  }
+}
+
+// Concurrency Mutex Lock Map for ephemeral coordination only; no business data is stored here.
 const locks = new Map();
 
 async function acquireLock(key) {
-  while (locks.get(key)) {
-    await new Promise((r) => setTimeout(r, 20));
-  }
+  while (locks.get(key)) await new Promise((r) => setTimeout(r, 20));
   locks.set(key, true);
 }
 
 function releaseLock(key) {
   locks.delete(key);
 }
-
-// Load data helper
-function loadCollection(key, filepath, defaultSeed = []) {
-  try {
-    if (fs.existsSync(filepath)) {
-      const raw = fs.readFileSync(filepath, 'utf8');
-      db[key] = JSON.parse(raw);
-    } else {
-      db[key] = defaultSeed;
-      saveCollection(key, filepath);
-    }
-  } catch (err) {
-    console.error(`[BACKPACKER DB] Failed to load ${key}:`, err.message);
-    db[key] = defaultSeed;
-  }
-}
-
-// Save data helper
-function saveCollection(key, filepath) {
-  try {
-    fs.writeFileSync(filepath, JSON.stringify(db[key], null, 2), 'utf8');
-  } catch (err) {
-    console.error(`[BACKPACKER DB] Failed to save ${key}:`, err.message);
-  }
-}
-
-// Initialize Store with Empty Data Collections
-function initStore() {
-  loadCollection('profiles', FILES.profiles, []);
-  loadCollection('intents', FILES.intents, []);
-  loadCollection('journeys', FILES.journeys, []);
-  loadCollection('stops', FILES.stops, []);
-  loadCollection('participants', FILES.participants, []);
-  loadCollection('expenses', FILES.expenses, []);
-  loadCollection('rides', FILES.rides, []);
-  loadCollection('ride_participants', FILES.ride_participants, []);
-  loadCollection('ride_requests', FILES.ride_requests, []);
-  loadCollection('connections', FILES.connections, []);
-  loadCollection('reports', FILES.reports, []);
-  loadCollection('location_consents', FILES.location_consents, []);
-  loadCollection('locations', FILES.locations, []);
-  loadCollection('assistance_requests', FILES.assistance_requests, []);
-}
-
-initStore();
 
 // ==========================================
 // STORE API HELPERS & STATE MACHINES
