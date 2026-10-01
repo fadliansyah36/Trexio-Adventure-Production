@@ -34,12 +34,14 @@ const APP_COLLECTIONS = [
   'conversations','messages','tenants','tenant_domains','destinations','coupons',
   'communities','community_categories','community_members','community_posts',
   'community_comments','community_events','community_bookmarks','community_reports',
-  'community_moderation_logs','community_suspended_users','rentals','rental_orders',
+  'community_moderation_logs','rentals','rental_orders',
   'push_subscriptions','audit_logs','subscription_plans','tenant_subscriptions',
   'advertising_packages','advertising_campaigns','billing_transactions','wishlists',
   'carts','reviews','notifications','payouts','wallets','incidents','articles',
   'announcements','support_tickets','platform_disputes'
 ];
+
+const SET_COLLECTIONS = ['community_suspended_users'];
 
 const OBJECT_COLLECTIONS = {
   masterLocations: 'master_locations',
@@ -119,6 +121,16 @@ function createArrayProxy(name) {
   });
 }
 
+function createSetProxy(name) {
+  return new Proxy(new Set(), {
+    get(_target, property) {
+      const set = current().sets[name];
+      const value = set[property];
+      return typeof value === 'function' ? value.bind(set) : value;
+    }
+  });
+}
+
 function createObjectProxy(name) {
   return new Proxy({}, {
     get(_target, property) {
@@ -148,13 +160,21 @@ function createObjectProxy(name) {
 }
 
 async function initialize() {
-  const names = [...Object.keys(ARRAY_CONFIG).filter((name) => !ARRAY_CONFIG[name].alias), ...APP_COLLECTIONS];
+  const names = [...Object.keys(ARRAY_CONFIG).filter((name) => !ARRAY_CONFIG[name].alias), ...APP_COLLECTIONS, ...SET_COLLECTIONS];
   const collections = {};
   const snapshots = {};
   const loaded = await Promise.all(names.map(async (name) => [name, await loadCollection(name)]));
   for (const [name, docs] of loaded) {
     collections[name] = Array.isArray(docs) ? docs : [];
     snapshots[name] = clone(collections[name]);
+  }
+
+  const sets = {};
+  const setSnapshots = {};
+  for (const name of SET_COLLECTIONS) {
+    const docs = await loadCollection(name);
+    sets[name] = new Set((Array.isArray(docs) ? docs : []).map((d) => typeof d === 'string' ? d : (d.user_id || d.id)).filter(Boolean));
+    setSnapshots[name] = Array.from(sets[name]);
   }
 
   const objects = {};
@@ -167,11 +187,19 @@ async function initialize() {
     objectSnapshots[name] = clone(objects[name]);
   }
 
-  return { collections, snapshots, objects, objectSnapshots, dirty: new Set() };
+  return { collections, snapshots, sets, setSnapshots, objects, objectSnapshots, dirty: new Set() };
 }
 
 async function flush() {
   const ctx = current();
+  for (const name of SET_COLLECTIONS) {
+    const before = ctx.setSnapshots[name] || [];
+    const after = Array.from(ctx.sets[name]);
+    if (JSON.stringify(before) !== JSON.stringify(after)) {
+      await appDocumentRepository.replace(name, after.map((id) => ({ id: String(id), user_id: String(id) })));
+    }
+  }
+
   for (const name of Object.keys(ctx.collections)) {
     const before = ctx.snapshots[name];
     const after = ctx.collections[name];
@@ -242,6 +270,7 @@ function middleware() {
 const proxies = {};
 for (const name of Object.keys(ARRAY_CONFIG)) proxies[name] = createArrayProxy(ARRAY_CONFIG[name].alias || name);
 for (const name of APP_COLLECTIONS) proxies[name] = createArrayProxy(name);
+for (const name of SET_COLLECTIONS) proxies[name] = createSetProxy(name);
 for (const name of Object.keys(OBJECT_COLLECTIONS)) proxies[name] = createObjectProxy(name);
 proxies.securityIncidents = proxies.incidents;
 proxies.masterCategories = proxies.master_categories;
