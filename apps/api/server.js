@@ -690,8 +690,6 @@ const notifications = [];
 // Wallets - Hydrated strictly from Supabase Postgres
 const wallets = {};
 const payouts = [];
-// Articles - Hydrated strictly from Supabase Postgres
-const articles = [];
 // Announcements - Hydrated strictly from Supabase Postgres
 const announcements = [];
 
@@ -1527,7 +1525,6 @@ const aiRoutes = createAIRoutes(
     get masterCategories() { return typeof masterCategories !== 'undefined' ? masterCategories : []; },
     get masterLocations() { return typeof masterLocations !== 'undefined' ? masterLocations : {}; },
     get tenants() { return typeof tenants !== 'undefined' ? tenants : []; },
-    get articles() { return typeof articles !== 'undefined' ? articles : []; },
     get communities() { return typeof communities !== 'undefined' ? communities : []; },
     get advertising_campaigns() { return typeof advertising_campaigns !== 'undefined' ? advertising_campaigns : []; },
     get billing_transactions() { return typeof billing_transactions !== 'undefined' ? billing_transactions : []; },
@@ -9617,31 +9614,39 @@ api.post('/super/settings/feature-flags', requireSuperAdmin, (req, res) => {
 });
 
 // --- Articles / CMS ---
-api.get('/articles', (req, res) => {
-  res.json(articles);
+api.get('/articles', async (req, res, next) => {
+  try {
+    const docs = await appDocumentRepository.list('articles');
+    res.json(docs);
+  } catch (err) { next(err); }
 });
 
-api.get('/articles/:id', (req, res) => {
-  const art = articles.find(a => a.id === req.params.id || a.slug === req.params.id);
-  if (!art) return res.status(404).json({ detail: 'Artikel tidak ditemukan' });
-  res.json(art);
+api.get('/articles/:id', async (req, res, next) => {
+  try {
+    const docs = await appDocumentRepository.list('articles');
+    const art = docs.find(a => a.id === req.params.id || a.slug === req.params.id);
+    if (!art) return res.status(404).json({ detail: 'Artikel tidak ditemukan' });
+    res.json(art);
+  } catch (err) { next(err); }
 });
 
-api.post('/admin/articles', requireAdmin, (req, res) => {
-  const { title, category, cover_image, excerpt, content, author } = req.body;
-  const newArt = {
-    id: `art_${uuidv4().substring(0, 8)}`,
-    title,
-    slug: (title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-    category: category || 'Umum',
-    cover_image: cover_image || '',
-    excerpt: excerpt || '',
-    content: content || '',
-    author: author || req.user.name,
-    published_at: nowISO(),
-  };
-  articles.push(newArt);
-  res.json(newArt);
+api.post('/admin/articles', requireAdmin, async (req, res, next) => {
+  try {
+    const { title, category, cover_image, excerpt, content, author } = req.body;
+    const newArt = {
+      id: 'art_' + uuidv4().substring(0, 8),
+      title,
+      slug: (title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      category: category || 'Umum',
+      cover_image: cover_image || '',
+      excerpt: excerpt || '',
+      content: content || '',
+      author: author || req.user.name,
+      published_at: nowISO(),
+    };
+    await appDocumentRepository.save('articles', newArt);
+    res.json(newArt);
+  } catch (err) { next(err); }
 });
 
 // Midtrans Payment Gateway Integration & Centralized Transaction Engine
@@ -11613,7 +11618,6 @@ function __collectionArray(name) {
     case 'communities': return communities;
     case 'coupons': return coupons;
     case 'tenants': return tenants;
-    case 'articles': return articles;
     case 'reviews': return reviews;
     case 'announcements': return announcements;
     case 'conversations': return conversations;
@@ -11639,7 +11643,6 @@ const ALL_SYNC_COLLECTIONS = [
   'communities',
   'coupons',
   'tenants',
-  'articles',
   'reviews',
   'announcements',
   'conversations',
