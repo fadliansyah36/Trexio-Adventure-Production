@@ -618,7 +618,6 @@ function loadSubDataFromDisk() {
 async function saveCommunicationsToDisk() {
   persistCollection('conversations');
   persistCollection('messages');
-  persistCollection('announcements');
 }
 
 function loadCommunicationsFromDisk() {
