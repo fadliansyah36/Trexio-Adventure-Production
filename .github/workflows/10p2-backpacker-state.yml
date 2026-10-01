@@ -18,5 +18,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Verify 10P.2
+      - name: Verify 10P.2 Backpacker state
         run: npm run verify:10p2-backpacker-state
+      - name: Verify 10P.2 full server state
+        run: node scripts/verify-10p2-global-business-state.js
+      - name: Syntax check server runtime
+        run: node --check apps/api/server.js && node --check apps/api/modules/runtime/businessState.js
