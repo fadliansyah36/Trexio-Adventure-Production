@@ -1,0 +1,20 @@
+name: Trexio 10P.4 Static Business Data Gate
+
+on:
+  push:
+    branches:
+      - mission/10p-real-data-architecture-hardening
+  pull_request:
+    branches:
+      - mission/10p-real-data-architecture-hardening
+
+jobs:
+  verify-10p4:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify 10P.4 static business data
+        run: node scripts/verify-10p4-static-business-data.js
