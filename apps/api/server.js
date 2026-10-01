@@ -8694,63 +8694,6 @@ api.delete('/super/announcements/:id', requireSuperAdmin, async (req, res, next)
   try { await appDocumentRepository.remove('announcements', req.params.id); res.json({ ok: true, message: 'Pengumuman berhasil dihapus.' }); }
   catch (err) { next(err); }
 });
-// --- Super Admin Broadcasting & Announcement Management ---
-api.get('/super/announcements', requireSuperAdmin, (req, res) => {
-  res.json({ ok: true, announcements });
-});
-
-api.post('/super/announcements', requireSuperAdmin, (req, res) => {
-  const { title, summary, content, category, priority, target_audience, link } = req.body;
-  if (!title || !content) {
-    return res.status(400).json({ error: 'Judul dan isi pengumuman wajib diisi.' });
-  }
-
-  const newAnc = {
-    id: `anc_${uuidv4().substring(0, 8)}`,
-    title: title.trim(),
-    summary: (summary || title).trim(),
-    content: content.trim(),
-    category: category || 'Information',
-    priority: priority || 'NORMAL',
-    target_audience: target_audience || 'ALL',
-    status: 'PUBLISHED',
-    created_at: nowISO(),
-    link: link || '/messages?tab=info'
-  };
-
-  announcements.unshift(newAnc);
-
-  // Broadcast notification to active users
-  const targetUsers = users.filter(u => {
-    if (target_audience === 'BACKPACKER') return true; // all backpackers
-    if (target_audience === 'VENDOR') return u.role === 'vendor';
-    return true; // ALL
-  });
-
-  targetUsers.forEach(u => {
-    createNotification(
-      u.id,
-      `[Pengumuman Super Admin] ${newAnc.title}`,
-      newAnc.summary,
-      'announcement',
-      newAnc.link,
-      'info'
-    );
-  });
-
-  recordAuditLog(req.user.email, 'Broadcast Announcement', `Announcement #${newAnc.id}`, '', `Title: ${newAnc.title}`);
-
-  res.json({ ok: true, announcement: newAnc, recipient_count: targetUsers.length, message: 'Pengumuman resmi berhasil ditayangkan & disiarkan!' });
-});
-
-api.delete('/super/announcements/:id', requireSuperAdmin, (req, res) => {
-  const idx = announcements.findIndex(a => a.id === req.params.id);
-  if (idx !== -1) {
-    announcements.splice(idx, 1);
-  }
-  res.json({ ok: true, message: 'Pengumuman berhasil dihapus.' });
-});
-
 api.get('/super/communications/analytics', requireSuperAdmin, (req, res) => {
   const totalNotifs = notifications.length;
   const readNotifs = notifications.filter(n => n.read).length;
