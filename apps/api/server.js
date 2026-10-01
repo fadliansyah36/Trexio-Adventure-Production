@@ -690,8 +690,6 @@ const notifications = [];
 // Wallets - Hydrated strictly from Supabase Postgres
 const wallets = {};
 const payouts = [];
-// Announcements - Hydrated strictly from Supabase Postgres
-const announcements = [];
 
 function createNotification(user_id, title, message, type = 'info', link = '', category = null) {
   let inferredCategory = category;
@@ -8661,11 +8659,41 @@ api.post('/notifications/read-all', requireAuth, (req, res) => {
 });
 
 // --- Public Announcements & News Endpoints ---
-api.get('/announcements', (req, res) => {
-  const pubAnnouncements = announcements.filter(a => a.status === 'PUBLISHED');
-  res.json({ ok: true, announcements: pubAnnouncements });
+api.get('/announcements', async (req, res, next) => {
+  try {
+    const docs = await appDocumentRepository.list('announcements');
+    res.json({ ok: true, announcements: docs.filter(a => a.status === 'PUBLISHED') });
+  } catch (err) { next(err); }
 });
 
+// --- Super Admin Broadcasting & Announcement Management ---
+api.get('/super/announcements', requireSuperAdmin, async (req, res, next) => {
+  try { res.json({ ok: true, announcements: await appDocumentRepository.list('announcements') }); }
+  catch (err) { next(err); }
+});
+
+api.post('/super/announcements', requireSuperAdmin, async (req, res, next) => {
+  try {
+    const { title, summary, content, category, priority, target_audience, link } = req.body;
+    if (!title || !content) return res.status(400).json({ error: 'Judul dan isi pengumuman wajib diisi.' });
+    const newAnc = {
+      id: 'anc_' + uuidv4().substring(0, 8), title: title.trim(), summary: (summary || title).trim(),
+      content: content.trim(), category: category || 'Information', priority: priority || 'NORMAL',
+      target_audience: target_audience || 'ALL', status: 'PUBLISHED', created_at: nowISO(),
+      link: link || '/messages?tab=info'
+    };
+    await appDocumentRepository.save('announcements', newAnc);
+    const targetUsers = users.filter(u => target_audience === 'VENDOR' ? u.role === 'vendor' : true);
+    targetUsers.forEach(u => createNotification(u.id, `[Pengumuman Super Admin] ${newAnc.title}`, newAnc.summary, 'announcement', newAnc.link, 'info'));
+    recordAuditLog(req.user.email, 'Broadcast Announcement', `Announcement #${newAnc.id}`, '', `Title: ${newAnc.title}`);
+    res.json({ ok: true, announcement: newAnc, recipient_count: targetUsers.length, message: 'Pengumuman resmi berhasil ditayangkan & disiarkan!' });
+  } catch (err) { next(err); }
+});
+
+api.delete('/super/announcements/:id', requireSuperAdmin, async (req, res, next) => {
+  try { await appDocumentRepository.remove('announcements', req.params.id); res.json({ ok: true, message: 'Pengumuman berhasil dihapus.' }); }
+  catch (err) { next(err); }
+});
 // --- Super Admin Broadcasting & Announcement Management ---
 api.get('/super/announcements', requireSuperAdmin, (req, res) => {
   res.json({ ok: true, announcements });
@@ -11619,7 +11647,6 @@ function __collectionArray(name) {
     case 'coupons': return coupons;
     case 'tenants': return tenants;
     case 'reviews': return reviews;
-    case 'announcements': return announcements;
     case 'conversations': return conversations;
     case 'messages': return messages;
     case 'subscription_plans': return subscription_plans;
@@ -11644,7 +11671,6 @@ const ALL_SYNC_COLLECTIONS = [
   'coupons',
   'tenants',
   'reviews',
-  'announcements',
   'conversations',
   'messages',
   'subscription_plans',
