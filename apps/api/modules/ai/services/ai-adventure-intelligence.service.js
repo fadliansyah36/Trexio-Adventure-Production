@@ -5,8 +5,7 @@
  * Guide/Basecamp Verification, Emergency Assistance, and Marketplace Integration.
  */
 
-const fs = require('fs');
-const path = require('path');
+const { loadCollection, loadSingleton, saveDocument, saveSingleton } = require('./aiPostgresPersistence');
 const https = require('https');
 const http = require('http');
 const { v4: uuidv4 } = require('uuid');
@@ -15,13 +14,6 @@ const aiUsageService = require('./ai-usage.service');
 const aiEventService = require('./ai-event.service');
 const aiFeatureFlagsService = require('./ai-feature-flags.service');
 const { AI_FEATURE_FLAGS } = require('../types');
-
-// Data File Paths
-const DATA_DIR = path.join(__dirname, '..', '..', '..', 'data');
-const DB_TRAIL_STATUSES_FILE = path.join(DATA_DIR, 'db_trail_statuses.json');
-const DB_OFFICIAL_ALERTS_FILE = path.join(DATA_DIR, 'db_official_alerts.json');
-const DB_USER_CHECKLISTS_FILE = path.join(DATA_DIR, 'db_user_checklists.json');
-const DB_SAFETY_CONFIG_FILE = path.join(DATA_DIR, 'db_ai_safety_config.json');
 
 // Mountain & Destination Coordinate Registry for Weather API
 const DESTINATION_COORDINATES = {
@@ -56,173 +48,41 @@ class AIAdventureIntelligenceService {
       last_updated: new Date().toISOString(),
     };
 
-    this.initDataStores();
+    this.ready = this.initDataStores();
   }
 
   /**
    * Initializes or loads persisted JSON data stores.
    */
-  initDataStores() {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-
-    // 1. Trail Statuses Store
-    if (fs.existsSync(DB_TRAIL_STATUSES_FILE)) {
-      try {
-        this.trailStatuses = JSON.parse(fs.readFileSync(DB_TRAIL_STATUSES_FILE, 'utf8'));
-      } catch (e) {
-        console.error('[SafetyService] Error parsing trail statuses:', e.message);
-      }
-    } else {
-      this.trailStatuses = [
-        {
-          id: 'status_gede_cibodas',
-          destination_id: 'dest_gede',
-          mountain_name: 'Gunung Gede Pangrango',
-          trail_name: 'Jalur Cibodas',
-          status: 'OPEN', // OPEN, CLOSED, RESTRICTED, UNKNOWN
-          condition_notes: 'Jalur Cibodas buka normal. Wajib membawa jas hujan & pakaian hangat.',
-          source: 'Balai Besar TNGGP Official',
-          source_reference: 'Pengumuman TNGGP No. PG.12/T.11/TU/08/2026',
-          verified_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-          expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
-        },
-        {
-          id: 'status_gede_gunungputri',
-          destination_id: 'dest_gede',
-          mountain_name: 'Gunung Gede Pangrango',
-          trail_name: 'Jalur Gunung Putri',
-          status: 'OPEN',
-          condition_notes: 'Jalur Gunung Putri beroperasi dengan sistem kuota online SIMAKSI.',
-          source: 'Balai Besar TNGGP Official',
-          source_reference: 'Pengumuman TNGGP No. PG.12/T.11/TU/08/2026',
-          verified_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-          expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
-        },
-        {
-          id: 'status_bromo',
-          destination_id: 'dest_bromo',
-          mountain_name: 'Gunung Bromo',
-          trail_name: 'Kawasan Kaldera Bromo',
-          status: 'RESTRICTED',
-          condition_notes: 'Radius 1 KM dari Kawah Bromo DILARANG dikunjungi sesuai imbauan PVMBG. Lautan Pasir & Penanjakan Buka Normal.',
-          source: 'PVMBG & BB TNBTS Official',
-          source_reference: 'Imbauan Waspada PVMBG Level II',
-          verified_at: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
-          expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(),
-        },
-        {
-          id: 'status_rinjani_sembalun',
-          destination_id: 'dest_rinjani',
-          mountain_name: 'Gunung Rinjani',
-          trail_name: 'Jalur Sembalun',
-          status: 'OPEN',
-          condition_notes: 'Jalur Sembalun & Senaru Buka. Kuota e-Rinjani wajib dipesan via platform e-Rinjani.',
-          source: 'Balai TN Rinjani (TNGR)',
-          source_reference: 'TNGR Announcement e-Rinjani 2026',
-          verified_at: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
-          expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
-        },
-        {
-          id: 'status_prau_patakbanteng',
-          destination_id: 'dest_prau',
-          mountain_name: 'Gunung Prau',
-          trail_name: 'Jalur Patak Banteng',
-          status: 'OPEN',
-          condition_notes: 'Jalur Patak Banteng, Kalilembu & Dieng Buka. Registrasi SIMAKSI langsung di basecamp.',
-          source: 'FKP3 (Forum Komunikasi Basecamp Prau)',
-          source_reference: 'SOP Pendakian Prau 2026',
-          verified_at: new Date(Date.now() - 1000 * 60 * 60 * 1).toISOString(),
-          expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
-        },
-      ];
-      this.saveTrailStatuses();
-    }
-
-    // 2. Official Safety Alerts Store
-    if (fs.existsSync(DB_OFFICIAL_ALERTS_FILE)) {
-      try {
-        this.officialAlerts = JSON.parse(fs.readFileSync(DB_OFFICIAL_ALERTS_FILE, 'utf8'));
-      } catch (e) {
-        console.error('[SafetyService] Error parsing official alerts:', e.message);
-      }
-    } else {
-      this.officialAlerts = [
-        {
-          id: 'alert_bmkg_01',
-          title: 'BMKG Weather Alert: Potensi Hujan Lebat di Jalur Pendakian Jawa Tengah',
-          message: 'BMKG merilis peringatan dini cuaca ekstrem. Pendaki Gunung Prau, Sumbing, dan Merbabu diimbau menyiapkan perlengkapan jas hujan air-tight dan tidak berlindung di bawah pohon rawan tumbang.',
-          severity: 'CAUTION', // INFO, CAUTION, WARNING, CRITICAL
-          destination_ids: ['dest_prau'],
-          source: 'BMKG Stasiun Meteorologi',
-          created_at: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-          is_active: true,
-        },
-        {
-          id: 'alert_tnggp_01',
-          title: 'Himbauan Zero Waste & Cek Kesehatan Wajib TNGGP',
-          message: 'Seluruh pendaki Gunung Gede Pangrango WAJIB membawa kembali sampah plastik. Pemeriksaan P3K dan surat sehat berlaku ketat di Pos Cibodas & Gunung Putri.',
-          severity: 'INFO',
-          destination_ids: ['dest_gede'],
-          source: 'Balai Besar TNGGP',
-          created_at: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-          is_active: true,
-        },
-      ];
-      this.saveOfficialAlerts();
-    }
-
-    // 3. User Checklists Store
-    if (fs.existsSync(DB_USER_CHECKLISTS_FILE)) {
-      try {
-        this.userChecklists = JSON.parse(fs.readFileSync(DB_USER_CHECKLISTS_FILE, 'utf8'));
-      } catch (e) {
-        console.error('[SafetyService] Error parsing user checklists:', e.message);
-      }
-    }
-
-    // 4. Safety Config Store
-    if (fs.existsSync(DB_SAFETY_CONFIG_FILE)) {
-      try {
-        this.safetyConfig = { ...this.safetyConfig, ...JSON.parse(fs.readFileSync(DB_SAFETY_CONFIG_FILE, 'utf8')) };
-      } catch (e) {
-        console.error('[SafetyService] Error parsing safety config:', e.message);
-      }
-    }
-  }
-
-  saveTrailStatuses() {
+  async initDataStores() {
     try {
-      fs.writeFileSync(DB_TRAIL_STATUSES_FILE, JSON.stringify(this.trailStatuses, null, 2), 'utf8');
-    } catch (e) {
-      console.error('[SafetyService] Failed to save trail statuses:', e.message);
+      this.trailStatuses = await loadCollection('ai_trail_statuses');
+      this.officialAlerts = await loadCollection('ai_official_alerts');
+      this.userChecklists = await loadCollection('ai_user_checklists');
+      const config = await loadSingleton('ai_safety_config');
+      if (config?.config) this.safetyConfig = { ...this.safetyConfig, ...config.config };
+    } catch (err) {
+      console.error('[SafetyService] Failed to load PostgreSQL state:', err.message);
+      throw err;
     }
   }
 
-  saveOfficialAlerts() {
-    try {
-      fs.writeFileSync(DB_OFFICIAL_ALERTS_FILE, JSON.stringify(this.officialAlerts, null, 2), 'utf8');
-    } catch (e) {
-      console.error('[SafetyService] Failed to save official alerts:', e.message);
-    }
+  async saveTrailStatuses() {
+    await Promise.all(this.trailStatuses.map((entry) => saveDocument('ai_trail_statuses', entry)));
   }
 
-  saveUserChecklists() {
-    try {
-      fs.writeFileSync(DB_USER_CHECKLISTS_FILE, JSON.stringify(this.userChecklists, null, 2), 'utf8');
-    } catch (e) {
-      console.error('[SafetyService] Failed to save user checklists:', e.message);
-    }
+  async saveOfficialAlerts() {
+    await Promise.all(this.officialAlerts.map((entry) => saveDocument('ai_official_alerts', entry)));
   }
 
-  saveSafetyConfig() {
-    try {
-      fs.writeFileSync(DB_SAFETY_CONFIG_FILE, JSON.stringify(this.safetyConfig, null, 2), 'utf8');
-    } catch (e) {
-      console.error('[SafetyService] Failed to save safety config:', e.message);
-    }
+  async saveUserChecklists() {
+    await Promise.all(this.userChecklists.map((entry) => saveDocument('ai_user_checklists', entry)));
   }
+
+  async saveSafetyConfig() {
+    await saveSingleton('ai_safety_config', { config: this.safetyConfig });
+  }
+
 
   // ==========================================
   // REAL WEATHER INTELLIGENCE ENGINE
@@ -653,7 +513,7 @@ class AIAdventureIntelligenceService {
       this.userChecklists.push(payload);
     }
 
-    this.saveUserChecklists();
+    void this.saveUserChecklists();
     return payload;
   }
 
@@ -792,7 +652,7 @@ class AIAdventureIntelligenceService {
       target.verified_at = new Date().toISOString();
     }
 
-    this.saveTrailStatuses();
+    void this.saveTrailStatuses();
     return target;
   }
 
@@ -809,13 +669,13 @@ class AIAdventureIntelligenceService {
     };
 
     this.officialAlerts.unshift(alert);
-    this.saveOfficialAlerts();
+    void this.saveOfficialAlerts();
     return alert;
   }
 
   deleteOfficialAlert(id) {
     this.officialAlerts = this.officialAlerts.filter((a) => a.id !== id);
-    this.saveOfficialAlerts();
+    void this.saveOfficialAlerts();
     return true;
   }
 }
