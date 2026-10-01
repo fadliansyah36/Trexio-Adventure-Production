@@ -10,14 +10,10 @@
  * anti-manipulation checks, and manual curation overrides.
  */
 
-const fs = require('fs');
-const path = require('path');
+const { loadSingleton, saveSingleton } = require('./aiPostgresPersistence');
 const aiRecommendationEngineService = require('./ai-recommendation-engine.service');
 const aiDataService = require('./ai-data.service');
 const aiEventService = require('./ai-event.service');
-
-const DATA_DIR = path.join(__dirname, '..', '..', '..', 'data');
-const RANKING_CONFIG_FILE = path.join(DATA_DIR, 'db_ai_homepage_ranking_config.json');
 
 const DEFAULT_RANKING_CONFIG = {
   section_weights: {
@@ -42,7 +38,7 @@ const DEFAULT_RANKING_CONFIG = {
 class AIHomepageRankingService {
   constructor() {
     this.config = { ...DEFAULT_RANKING_CONFIG };
-    this.loadConfig();
+    this.ready = this.loadFromPostgres();
   }
 
   ensureDataDir() {
@@ -51,40 +47,17 @@ class AIHomepageRankingService {
     }
   }
 
-  loadConfig() {
+  async loadFromPostgres() {
     try {
-      this.ensureDataDir();
-      if (fs.existsSync(RANKING_CONFIG_FILE)) {
-        const raw = fs.readFileSync(RANKING_CONFIG_FILE, 'utf8');
-        const loaded = JSON.parse(raw);
-        if (loaded && typeof loaded === 'object') {
-          this.config = {
-            section_weights: { ...DEFAULT_RANKING_CONFIG.section_weights, ...loaded.section_weights },
-            time_decay_half_life_days: loaded.time_decay_half_life_days || 7,
-            vendor_max_per_section: loaded.vendor_max_per_section || 2,
-            manual_curations: {
-              pinned_product_ids: loaded.manual_curations?.pinned_product_ids || {},
-              excluded_product_ids: loaded.manual_curations?.excluded_product_ids || [],
-            },
-            last_updated: loaded.last_updated || new Date().toISOString(),
-            updated_by: loaded.updated_by || 'system',
-          };
-        }
-      } else {
-        this.saveConfig();
-      }
+      const loaded = await loadSingleton('ai_homepage_ranking_config');
+      if (loaded) this.this.config = { ...this.this.config, ...loaded.config };
     } catch (err) {
-      console.error('[AIHomepageRankingService] Load config error:', err.message);
+      console.error('[AI PostgreSQL persistence] Failed to load ai_homepage_ranking_config:', err.message);
     }
   }
 
-  saveConfig() {
-    try {
-      this.ensureDataDir();
-      fs.writeFileSync(RANKING_CONFIG_FILE, JSON.stringify(this.config, null, 2), 'utf8');
-    } catch (err) {
-      console.error('[AIHomepageRankingService] Save config error:', err.message);
-    }
+  async persistToPostgres() {
+    await saveSingleton('ai_homepage_ranking_config', { config: this.this.config });
   }
 
   getConfig() {
@@ -110,7 +83,7 @@ class AIHomepageRankingService {
 
     this.config.last_updated = new Date().toISOString();
     this.config.updated_by = userEmail;
-    this.saveConfig();
+    void this.persistToPostgres();
 
     return this.getConfig();
   }
