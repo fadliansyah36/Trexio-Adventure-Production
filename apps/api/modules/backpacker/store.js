@@ -209,7 +209,7 @@ function upsertProfile(userId, profileData) {
     };
     db.profiles.push(prof);
   }
-  saveCollection('profiles', FILES.profiles);
+  saveCollection('profiles');
   return prof;
 }
 
@@ -261,7 +261,7 @@ function createTravelIntent(userId, data) {
     updated_at: now
   };
   db.intents.push(newIntent);
-  saveCollection('intents', FILES.intents);
+  saveCollection('intents');
   return newIntent;
 }
 
@@ -278,7 +278,7 @@ function updateTravelIntent(id, userId, data) {
     if (data[key] !== undefined) intent[key] = data[key];
   });
   intent.updated_at = now;
-  saveCollection('intents', FILES.intents);
+  saveCollection('intents');
   return intent;
 }
 
@@ -403,7 +403,7 @@ function requestBuddyConnection(requesterId, targetId, matchPercentage = 80, sou
     };
     db.connections.push(conn);
   }
-  saveCollection('connections', FILES.connections);
+  saveCollection('connections');
   return conn;
 }
 
@@ -446,7 +446,7 @@ function updateBuddyConnectionStatus(connectionId, userId, action) {
   }
 
   conn.updated_at = now;
-  saveCollection('connections', FILES.connections);
+  saveCollection('connections');
   return conn;
 }
 
@@ -576,8 +576,8 @@ function createSharedRide(userId, data) {
     joined_at: now
   });
 
-  saveCollection('rides', FILES.rides);
-  saveCollection('ride_participants', FILES.ride_participants);
+  saveCollection('rides');
+  saveCollection('ride_participants');
   return newRide;
 }
 
@@ -617,8 +617,8 @@ async function joinSharedRide(rideId, userId, seats = 1) {
     };
 
     db.ride_participants.push(newPart);
-    saveCollection('rides', FILES.rides);
-    saveCollection('ride_participants', FILES.ride_participants);
+    saveCollection('rides');
+    saveCollection('ride_participants');
 
     return { ride, participant: newPart };
   } finally {
@@ -664,7 +664,7 @@ function requestJoinSharedRide(rideId, requesterId, seats = 1, note = '') {
   };
 
   db.ride_requests.push(newReq);
-  saveCollection('ride_requests', FILES.ride_requests);
+  saveCollection('ride_requests');
   return { request: newReq, ride };
 }
 
@@ -685,7 +685,7 @@ async function respondToRideRequest(requestId, userId, action) {
     req.status = 'CANCELLED';
     req.updated_at = now;
     req.resolved_by = userId;
-    saveCollection('ride_requests', FILES.ride_requests);
+    saveCollection('ride_requests');
     return { request: req, ride };
   }
 
@@ -747,10 +747,10 @@ async function respondToRideRequest(requestId, userId, action) {
         });
       }
 
-      saveCollection('rides', FILES.rides);
-      saveCollection('ride_participants', FILES.ride_participants);
-      saveCollection('ride_requests', FILES.ride_requests);
-      saveCollection('connections', FILES.connections);
+      saveCollection('rides');
+      saveCollection('ride_participants');
+      saveCollection('ride_requests');
+      saveCollection('connections');
 
       return { request: req, ride, participant: newPart };
     } finally {
@@ -760,7 +760,7 @@ async function respondToRideRequest(requestId, userId, action) {
     req.status = 'REJECTED';
     req.updated_at = now;
     req.resolved_by = userId;
-    saveCollection('ride_requests', FILES.ride_requests);
+    saveCollection('ride_requests');
     return { request: req, ride };
   } else {
     throw new Error(`Aksi '${action}' tidak valid`);
@@ -784,8 +784,8 @@ function cancelSharedRide(rideId, ownerId) {
     }
   });
 
-  saveCollection('rides', FILES.rides);
-  saveCollection('ride_requests', FILES.ride_requests);
+  saveCollection('rides');
+  saveCollection('ride_requests');
   return ride;
 }
 
@@ -977,9 +977,9 @@ function createJourney(userId, data) {
     });
   }
 
-  saveCollection('journeys', FILES.journeys);
-  saveCollection('participants', FILES.participants);
-  saveCollection('stops', FILES.stops);
+  saveCollection('journeys');
+  saveCollection('participants');
+  saveCollection('stops');
 
   return journey;
 }
@@ -1014,7 +1014,7 @@ function updateJourneyStatus(journeyId, userId, newStatus) {
   const now = new Date().toISOString();
   journey.status = newStatus;
   journey.updated_at = now;
-  saveCollection('journeys', FILES.journeys);
+  saveCollection('journeys');
   return journey;
 }
 
@@ -1040,7 +1040,7 @@ function addJourneyStop(journeyId, userId, stopData) {
   };
 
   db.stops.push(newStop);
-  saveCollection('stops', FILES.stops);
+  saveCollection('stops');
   return newStop;
 }
 
@@ -1121,7 +1121,7 @@ function addJourneyExpense(journeyId, userId, expenseData) {
   };
 
   db.expenses.push(newExpense);
-  saveCollection('expenses', FILES.expenses);
+  saveCollection('expenses');
   return newExpense;
 }
 
@@ -1227,7 +1227,7 @@ function reportUser(reporterId, targetId, reason, details = '') {
     created_at: now
   };
   db.reports.push(report);
-  saveCollection('reports', FILES.reports);
+  saveCollection('reports');
   return report;
 }
 
@@ -1252,7 +1252,7 @@ function updateJourneyStopStatus(stopId, userId, newStatus) {
   if (newStatus === 'ARRIVED' && !stop.arrival_time) stop.arrival_time = now;
   if (newStatus === 'COMPLETED' && !stop.departure_time) stop.departure_time = now;
 
-  saveCollection('stops', FILES.stops);
+  saveCollection('stops');
   return stop;
 }
 
@@ -1282,10 +1282,10 @@ function toggleLocationConsent(journeyId, userId, consentBool) {
   // Retention Purge Policy: If consent is revoked, purge cached live location immediately
   if (!consentBool) {
     db.locations = db.locations.filter((l) => !(l.journey_id === journeyId && l.user_id === userId));
-    saveCollection('locations', FILES.locations);
+    saveCollection('locations');
   }
 
-  saveCollection('location_consents', FILES.location_consents);
+  saveCollection('location_consents');
   return item;
 }
 
@@ -1320,7 +1320,7 @@ function updateParticipantLocation(journeyId, userId, coords = {}) {
     db.locations.push(loc);
   }
 
-  saveCollection('locations', FILES.locations);
+  saveCollection('locations');
   return loc;
 }
 
@@ -1389,7 +1389,7 @@ function createAssistanceRequest(userId, intentId, reason = '') {
   };
 
   db.assistance_requests.unshift(req);
-  saveCollection('assistance_requests', FILES.assistance_requests);
+  saveCollection('assistance_requests');
   return req;
 }
 
@@ -1681,7 +1681,7 @@ function suggestMatchByAdmin(requestId, candidateIntentId, adminUserId, adminNot
   };
 
   db.connections.push(conn);
-  saveCollection('connections', FILES.connections);
+  saveCollection('connections');
 
   req.status = 'SUGGESTED';
   req.suggested_candidate_id = candIntent.user_id;
@@ -1689,7 +1689,7 @@ function suggestMatchByAdmin(requestId, candidateIntentId, adminUserId, adminNot
   req.assigned_admin = adminUserId;
   if (adminNote) req.admin_notes.push({ text: adminNote, created_at: now, admin: adminUserId });
   req.updated_at = now;
-  saveCollection('assistance_requests', FILES.assistance_requests);
+  saveCollection('assistance_requests');
 
   return { connection: conn, assistance_request: req };
 }
@@ -1719,7 +1719,7 @@ function respondToSuggestedMatch(userId, connectionId, action) {
       conn.mutual_consent = true;
       conn.mutual_accepted_at = now;
       conn.updated_at = now;
-      saveCollection('connections', FILES.connections);
+      saveCollection('connections');
 
       if (conn.assistance_request_id) {
         const ast = db.assistance_requests.find(a => a.id === conn.assistance_request_id);
@@ -1727,21 +1727,21 @@ function respondToSuggestedMatch(userId, connectionId, action) {
           ast.status = 'CONNECTED';
           ast.resolved_at = now;
           ast.updated_at = now;
-          saveCollection('assistance_requests', FILES.assistance_requests);
+          saveCollection('assistance_requests');
         }
       }
     } else {
       // One party accepted, waiting for partner
       conn.status = isRequester ? 'ACCEPTED_BY_REQUESTER' : 'ACCEPTED_BY_CANDIDATE';
       conn.updated_at = now;
-      saveCollection('connections', FILES.connections);
+      saveCollection('connections');
 
       if (conn.assistance_request_id) {
         const ast = db.assistance_requests.find(a => a.id === conn.assistance_request_id);
         if (ast) {
           ast.status = 'WAITING_PARTNER_RESPONSE';
           ast.updated_at = now;
-          saveCollection('assistance_requests', FILES.assistance_requests);
+          saveCollection('assistance_requests');
         }
       }
     }
@@ -1750,14 +1750,14 @@ function respondToSuggestedMatch(userId, connectionId, action) {
     conn.rejected_by = userId;
     conn.mutual_consent = false;
     conn.updated_at = now;
-    saveCollection('connections', FILES.connections);
+    saveCollection('connections');
 
     if (conn.assistance_request_id) {
       const ast = db.assistance_requests.find(a => a.id === conn.assistance_request_id);
       if (ast) {
         ast.status = 'REJECTED';
         ast.updated_at = now;
-        saveCollection('assistance_requests', FILES.assistance_requests);
+        saveCollection('assistance_requests');
       }
     }
   } else {
@@ -1778,7 +1778,7 @@ function closeAssistanceRequest(requestId, adminUserId, adminNote = '', statusRe
   req.updated_at = now;
   req.resolved_at = now;
 
-  saveCollection('assistance_requests', FILES.assistance_requests);
+  saveCollection('assistance_requests');
   return req;
 }
 
@@ -1875,7 +1875,7 @@ function updateAdminTravelIntent(id, data = {}) {
     intent.admin_notes.push({ text: data.admin_note, updated_at: now });
   }
   intent.updated_at = now;
-  saveCollection('intents', FILES.intents);
+  saveCollection('intents');
   return intent;
 }
 
@@ -1911,7 +1911,7 @@ function updateAdminSharedRide(id, data = {}) {
     ride.admin_notes.push({ text: data.admin_note, updated_at: now });
   }
   ride.updated_at = now;
-  saveCollection('rides', FILES.rides);
+  saveCollection('rides');
   return ride;
 }
 
