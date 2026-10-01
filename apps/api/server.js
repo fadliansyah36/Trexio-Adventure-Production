@@ -192,6 +192,7 @@ const tripRepository = require('./modules/repositories/tripRepository');
 const vendorRepository = require('./modules/repositories/vendorRepository');
 const bookingRepository = require('./modules/repositories/bookingRepository');
 const paymentRepository = require('./modules/repositories/paymentRepository');
+const paymentWebhookRepository = require('./modules/repositories/paymentWebhookRepository');
 
 // System Live Health & Strict Connection Status
 const systemHealth = {
@@ -9945,15 +9946,18 @@ function verifyMidtransNotificationSignature(body, serverKey) {
   const { order_id, status_code, gross_amount, signature_key } = body;
   if (!order_id || !status_code || gross_amount === undefined) return false;
 
-  const grossStr = typeof gross_amount === 'number' ? gross_amount.toFixed(2) : String(gross_amount);
-  const grossInt = Math.round(Number(gross_amount)).toString();
+  // Midtrans defines the signature as SHA512(order_id + status_code + gross_amount + ServerKey).
+  // Keep gross_amount byte-for-byte as received instead of normalizing it.
+  const grossStr = String(gross_amount);
 
-  const hash1 = crypto.createHash('sha512').update(`${order_id}${status_code}${grossStr}${serverKey}`).digest('hex').toLowerCase();
-  const hash2 = crypto.createHash('sha512').update(`${order_id}${status_code}${grossInt}${serverKey}`).digest('hex').toLowerCase();
-  const hash3 = crypto.createHash('sha512').update(`${order_id}${status_code}${grossInt}.00${serverKey}`).digest('hex').toLowerCase();
+  const expected = crypto
+    .createHash('sha512')
+    .update(`${order_id}${status_code}${grossStr}${serverKey}`)
+    .digest('hex')
+    .toLowerCase();
 
   const received = String(signature_key).toLowerCase();
-  return received === hash1 || received === hash2 || received === hash3;
+  return received === expected;
 }
 
 // Public Midtrans Config (Client-safe metadata for Snap SDK)
@@ -10410,11 +10414,22 @@ api.post('/payments/midtrans/notification', async (req, res) => {
     return res.status(403).json({ status: 'error', message: 'Invalid Midtrans signature key' });
   }
 
-  // Idempotency check: prevent duplicate webhook side effects
+  // Durable idempotency: protect against duplicate/replayed notifications
+  // across multiple API instances, not just within one process.
   const eventKey = `${transaction_id || order_id}_${transaction_status}`;
-  const existingLog = webhook_logs.find((w) => w.event_key === eventKey && w.processed);
-  if (existingLog) {
-    return res.status(200).json({ status: 'ok', message: 'Notification already processed (idempotent)' });
+  const claim = await paymentWebhookRepository.claim({
+    event_key: eventKey,
+    order_id,
+    transaction_id,
+    transaction_status,
+    payload: body,
+  });
+
+  if (!claim.claimed) {
+    return res.status(200).json({
+      status: 'ok',
+      message: 'Notification already processed or currently being processed (idempotent)',
+    });
   }
 
   const logEntry = {
@@ -10426,12 +10441,25 @@ api.post('/payments/midtrans/notification', async (req, res) => {
     fraud_status,
     payment_type,
     gross_amount,
-    processed: true,
+    processed: false,
     received_at: nowISO(),
     payload: body,
   };
   webhook_logs.unshift(logEntry);
   saveWebhookLogsToDisk();
+
+  // Midtrans recommends checking status_code, fraud_status and transaction_status
+  // before treating a notification as a successful payment.
+  const successStatus = ['capture', 'settlement'].includes(String(transaction_status).toLowerCase());
+  const normalizedFraud = fraud_status ? String(fraud_status).toLowerCase() : null;
+  if (successStatus && String(status_code) !== '200') {
+    await paymentWebhookRepository.markFailed(eventKey, 'Successful transaction notification must have status_code=200');
+    return res.status(400).json({ status: 'error', message: 'Invalid Midtrans success status code' });
+  }
+  if (successStatus && normalizedFraud && normalizedFraud !== 'accept') {
+    await paymentWebhookRepository.markFailed(eventKey, 'Successful transaction notification has non-accept fraud_status');
+    return res.status(400).json({ status: 'error', message: 'Invalid Midtrans fraud status' });
+  }
 
   // 1. Check Tenant Subscriptions or Vendor Ad Campaigns
   if (order_id && (order_id.startsWith('TRX-SUB-') || order_id.startsWith('TRX-AD-'))) {
@@ -10505,6 +10533,7 @@ api.post('/payments/midtrans/notification', async (req, res) => {
         const expectedAmount = Math.round(Number(booking.total_amount));
         if (webhookAmount !== expectedAmount) {
           console.error(`[Midtrans Fraud Protection] Amount mismatch for order ${order_id}. Received: ${webhookAmount}, Expected: ${expectedAmount}`);
+          await paymentWebhookRepository.markFailed(eventKey, 'gross_amount mismatch');
           return res.status(400).json({ status: 'error', message: 'Transaction gross_amount does not match booking total' });
         }
       }
@@ -10535,10 +10564,18 @@ api.post('/payments/midtrans/notification', async (req, res) => {
         );
       }
 
+      await paymentWebhookRepository.markProcessed(eventKey);
+      const claimedLog = webhook_logs.find((w) => w.event_key === eventKey);
+      if (claimedLog) claimedLog.processed = true;
+      saveWebhookLogsToDisk();
       return res.status(200).json({ status: 'ok', message: 'Midtrans notification processed' });
     });
   }
 
+  await paymentWebhookRepository.markProcessed(eventKey);
+  const claimedLog = webhook_logs.find((w) => w.event_key === eventKey);
+  if (claimedLog) claimedLog.processed = true;
+  saveWebhookLogsToDisk();
   res.status(200).json({ status: 'ok', message: 'Midtrans notification processed' });
 });
 

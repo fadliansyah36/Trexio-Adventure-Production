@@ -1,0 +1,32 @@
+name: Trexio 10D Midtrans Webhook Gate
+
+on:
+  pull_request:
+    paths:
+      - "apps/api/**"
+      - "scripts/verify-10d-midtrans-webhook.js"
+      - "supabase/migrations/**"
+      - ".github/workflows/10d-midtrans-webhook-gate.yml"
+      - "package.json"
+  workflow_dispatch:
+
+concurrency:
+  group: trexio-10d-webhook-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  structural-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run 10D structural/security gate
+        run: node scripts/verify-10d-midtrans-webhook.js
+
+      - name: Publish structural evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: trexio-10d-midtrans-webhook-evidence
+          path: data/payment-webhook-10d.json
+          if-no-files-found: error
