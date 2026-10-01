@@ -5,6 +5,7 @@ const root = path.resolve(__dirname, '..');
 const read = (p) => fs.readFileSync(path.join(root, p), 'utf8');
 const store = read('apps/api/modules/backpacker/store.js');
 const routes = read('apps/api/modules/backpacker/routes.js');
+const server = read('apps/api/server.js');
 const persistence = read('apps/api/modules/persistence/supabasePostgres.js');
 const migrationDir = path.join(root, 'supabase/migrations');
 const migrations = fs.readdirSync(migrationDir).filter((n) => n.includes('tenp2_backpacker_postgres_persistence')).map((n) => fs.readFileSync(path.join(migrationDir,n),'utf8')).join('\n');
@@ -24,6 +25,13 @@ expect(/new AsyncLocalStorage\(\)/.test(store),'store.js does not use request-sc
 expect(/appDocumentRepository/.test(store),'store.js does not use repository boundary');
 expect(/runBackpackerRequestContext/.test(routes),'router does not initialize request context');
 expect(/flushBackpackerRequestContext/.test(routes),'router does not flush writes before response');
+expect(!/const articles = \[\]/.test(server),'server.js still declares in-memory articles');
+expect(!/const announcements = \[\]/.test(server),'server.js still declares in-memory announcements');
+expect(/appDocumentRepository\.list\('articles'\)/.test(server),'articles route does not read repository');
+expect(/appDocumentRepository\.save\('articles'/.test(server),'article create does not write repository');
+expect(/appDocumentRepository\.list\('announcements'\)/.test(server),'announcement routes do not read repository');
+expect(/appDocumentRepository\.save\('announcements'/.test(server),'announcement create does not write repository');
+expect(/appDocumentRepository\.remove\('announcements'/.test(server),'announcement delete does not remove from repository');
 for (const [logical,table] of collections) {
  expect(store.includes(logical + ': \'' + table + '\''),'missing store mapping for '+logical);
  expect(persistence.includes(table + ': \'' + table + '\''),'missing persistence mapping for '+logical);
