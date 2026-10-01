@@ -72,3 +72,7 @@ CREATE TABLE IF NOT EXISTS public.app_platform_disputes (id text PRIMARY KEY,dat
 CREATE INDEX IF NOT EXISTS app_platform_disputes_updated_at_idx ON public.app_platform_disputes(updated_at);
 ALTER TABLE public.app_platform_disputes ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE public.app_platform_disputes FROM anon, authenticated;
+CREATE TABLE IF NOT EXISTS public.app_cs_config (id text PRIMARY KEY,data jsonb NOT NULL,updated_at timestamptz NOT NULL DEFAULT now());
+CREATE INDEX IF NOT EXISTS app_cs_config_updated_at_idx ON public.app_cs_config(updated_at);
+ALTER TABLE public.app_cs_config ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.app_cs_config FROM anon, authenticated;
