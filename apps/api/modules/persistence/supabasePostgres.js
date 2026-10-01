@@ -181,6 +181,20 @@ const APP_DOC_TABLES = {
   master_categories: 'app_master_categories',
   master_locations: 'app_master_locations',
   master_roles: 'app_master_roles',
+  backpacker_profiles: 'backpacker_profiles',
+  backpacker_travel_intents: 'backpacker_travel_intents',
+  backpacker_journeys: 'backpacker_journeys',
+  backpacker_journey_stops: 'backpacker_journey_stops',
+  backpacker_journey_participants: 'backpacker_journey_participants',
+  backpacker_journey_expenses: 'backpacker_journey_expenses',
+  backpacker_shared_rides: 'backpacker_shared_rides',
+  backpacker_shared_ride_participants: 'backpacker_shared_ride_participants',
+  backpacker_shared_ride_requests: 'backpacker_shared_ride_requests',
+  backpacker_connections: 'backpacker_connections',
+  backpacker_reports: 'backpacker_reports',
+  backpacker_location_consents: 'backpacker_location_consents',
+  backpacker_locations: 'backpacker_locations',
+  backpacker_assistance_requests: 'backpacker_assistance_requests',
 };
 
 function docKey(doc) {
