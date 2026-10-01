@@ -4,11 +4,7 @@
  * Allows Super Admin to tune recommendation strategy without code changes.
  */
 
-const fs = require('fs');
-const path = require('path');
-
-const DATA_DIR = path.join(__dirname, '..', '..', '..', 'data');
-const CONFIG_FILE = path.join(DATA_DIR, 'db_ai_recommendation_config.json');
+const { loadSingleton, saveSingleton } = require('./aiPostgresPersistence');
 
 const DEFAULT_CONFIG = {
   weights: {
@@ -38,7 +34,7 @@ const DEFAULT_CONFIG = {
 class AIRecommendationConfigService {
   constructor() {
     this.config = { ...DEFAULT_CONFIG };
-    this.loadFromDisk();
+    this.ready = this.loadFromPostgres();
   }
 
   ensureDataDir() {
