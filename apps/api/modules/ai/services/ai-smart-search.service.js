@@ -57,24 +57,19 @@ class AISmartSearchService {
     this.ready = this.loadFromPostgres();
   }
 
-  ensureDataDir() {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-  }
-
   async loadFromPostgres() {
     try {
       const loaded = await loadSingleton('ai_search_config');
-      if (loaded) this.this.config = { ...this.this.config, ...loaded.config };
+      if (loaded?.config) this.config = { ...this.config, ...loaded.config };
     } catch (err) {
       console.error('[AI PostgreSQL persistence] Failed to load ai_search_config:', err.message);
     }
   }
 
   async persistToPostgres() {
-    await saveSingleton('ai_search_config', { config: this.this.config });
+    await saveSingleton('ai_search_config', { config: this.config });
   }
+
 
   getConfig() {
     return JSON.parse(JSON.stringify(this.config));
@@ -105,7 +100,7 @@ class AISmartSearchService {
     this.config.last_updated = new Date().toISOString();
     this.config.updated_by = userEmail;
     void this.persistToPostgres();
-    return this.getConfig();
+return this.getConfig();
   }
 
   /**
