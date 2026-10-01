@@ -8694,15 +8694,17 @@ api.delete('/super/announcements/:id', requireSuperAdmin, async (req, res, next)
   try { await appDocumentRepository.remove('announcements', req.params.id); res.json({ ok: true, message: 'Pengumuman berhasil dihapus.' }); }
   catch (err) { next(err); }
 });
-api.get('/super/communications/analytics', requireSuperAdmin, (req, res) => {
-  const totalNotifs = notifications.length;
-  const readNotifs = notifications.filter(n => n.read).length;
-  const readRate = totalNotifs > 0 ? Math.round((readNotifs / totalNotifs) * 100) : 100;
-  const totalConvs = conversations.length;
-  const totalMsgs = messages.length;
-  const totalAnnouncements = announcements.length;
+api.get('/super/communications/analytics', requireSuperAdmin, async (req, res, next) => {
+  try {
+    const announcementDocs = await appDocumentRepository.list('announcements');
+    const totalNotifs = notifications.length;
+    const readNotifs = notifications.filter(n => n.read).length;
+    const readRate = totalNotifs > 0 ? Math.round((readNotifs / totalNotifs) * 100) : 100;
+    const totalConvs = conversations.length;
+    const totalMsgs = messages.length;
+    const totalAnnouncements = announcementDocs.length;
 
-  res.json({
+    res.json({
     ok: true,
     analytics: {
       total_notifications: totalNotifs,
@@ -8714,6 +8716,7 @@ api.get('/super/communications/analytics', requireSuperAdmin, (req, res) => {
       cs_bot_replies: csConfig.total_bot_replies || 42
     }
   });
+  } catch (err) { next(err); }
 });
 
 // --- Communications & Partner Chat Summary ---
