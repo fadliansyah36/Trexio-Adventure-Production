@@ -19,6 +19,14 @@ module.exports = function registerAuthRoutes(ctx) {
   } = ctx;
 
 api.post('/auth/register', authLimiter, async (req, res) => {
+  if (process.env.NODE_ENV === 'production' && !supabaseAuth.supabaseAuthEnabled) {
+    return res.status(503).json({
+      detail: 'Layanan registrasi belum terkonfigurasi. Silakan hubungi administrator.',
+      code: 'PROVIDER_CONFIGURATION_REQUIRED',
+      provider: 'supabase_auth',
+    });
+  }
+
   const { name, email, phone, password, confirmPassword, role } = req.body;
   if (!email || !password) {
     return res.status(400).json({ detail: 'Email dan kata sandi wajib diisi.' });
