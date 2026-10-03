@@ -4304,9 +4304,13 @@ const handleCancelBooking = async (req, res) => {
     // Authoritative Provider Re-Verification (Race Condition Guard):
     // Query Midtrans API if order_id is present and server key is available
     const hasValidServerKey = midtransConfig.server_key &&
+      midtransConfig.client_key &&
       !midtransConfig.server_key.includes('demo') &&
       !midtransConfig.server_key.includes('placeholder') &&
-      midtransConfig.server_key.length > 10;
+      !midtransConfig.client_key.includes('demo') &&
+      !midtransConfig.client_key.includes('placeholder') &&
+      midtransConfig.server_key.length > 10 &&
+      midtransConfig.client_key.length > 5;
 
     if (hasValidServerKey && booking.midtrans_order_id) {
       try {
@@ -9809,9 +9813,13 @@ api.post('/payments/midtrans/snap-token/:booking_id', requireAuth, async (req, r
   const redirectBase = `${protocol}://${host}/payment-confirmation/${booking.id}`;
 
   const hasValidServerKey = midtransConfig.server_key &&
-    !midtransConfig.server_key.includes('demo') &&
-    !midtransConfig.server_key.includes('placeholder') &&
-    midtransConfig.server_key.length > 10;
+      midtransConfig.client_key &&
+      !midtransConfig.server_key.includes('demo') &&
+      !midtransConfig.server_key.includes('placeholder') &&
+      !midtransConfig.client_key.includes('demo') &&
+      !midtransConfig.client_key.includes('placeholder') &&
+      midtransConfig.server_key.length > 10 &&
+      midtransConfig.client_key.length > 5;
 
   if (hasValidServerKey) {
     try {
@@ -9920,9 +9928,13 @@ api.get(['/payment/:booking_id', '/payments/midtrans/status/:booking_id'], requi
 
   // Live Query Midtrans Status API if booking is pending and server key is available
   const hasValidServerKey = midtransConfig.server_key &&
-    !midtransConfig.server_key.includes('demo') &&
-    !midtransConfig.server_key.includes('placeholder') &&
-    midtransConfig.server_key.length > 10;
+      midtransConfig.client_key &&
+      !midtransConfig.server_key.includes('demo') &&
+      !midtransConfig.server_key.includes('placeholder') &&
+      !midtransConfig.client_key.includes('demo') &&
+      !midtransConfig.client_key.includes('placeholder') &&
+      midtransConfig.server_key.length > 10 &&
+      midtransConfig.client_key.length > 5;
 
   if (hasValidServerKey && (booking.payment_status === 'pending' || booking.payment_status === 'challenge') && booking.midtrans_order_id) {
     try {
