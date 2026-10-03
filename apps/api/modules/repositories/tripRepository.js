@@ -89,7 +89,7 @@ async function save(trip) {
        cover_image = EXCLUDED.cover_image,
        description = EXCLUDED.description,
        data = EXCLUDED.data,
-       updated_at = NOW()
+       updated_at = NOW()\n     WHERE trips.tenant_id IS NOT DISTINCT FROM EXCLUDED.tenant_id
      RETURNING ${SELECT_COLUMNS}`,
     [
       String(trip.id),
