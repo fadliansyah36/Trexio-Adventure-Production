@@ -77,7 +77,7 @@ api.get('/destinations', (req, res) => {
   res.json(destinations);
 });
 
-  api.get('/trips', async (req, res) => {
+  function getMarketplaceTenantContext(req) {\n    if (!req.user) return {};\n    const roles = typeof getUserRoles === 'function' ? getUserRoles(req.user) : [req.user.role];\n    const isGlobal = roles.includes('super_admin') || roles.includes('admin');\n    if (isGlobal) return {};\n    if (!req.user.tenant_id) {\n      const error = new Error('Authenticated tenant-scoped user has no tenant_id');\n      error.code = 'TENANT_CONTEXT_REQUIRED';\n      throw error;\n    }\n    return { tenantId: String(req.user.tenant_id) };\n  }\n\n  api.get('/trips', async (req, res) => {
     try {
       const { q, category, region, difficulty, min_price, max_price, sort, limit, page, smart } = req.query;
 
@@ -111,7 +111,7 @@ api.get('/destinations', (req, res) => {
         page,
       });
 
-      const items = await Promise.all(result.items.map((trip) => marketplaceService.enrichTripWithVendor(trip)));
+      const tenantContext = getMarketplaceTenantContext(req);\n      const items = await Promise.all(result.items.map((trip) => marketplaceService.enrichTripWithVendor(trip, tenantContext)));
       res.json({ ...result, items });
     } catch (err) {
       console.error('[API /trips Error]', err.message);
@@ -121,8 +121,8 @@ api.get('/destinations', (req, res) => {
 
   api.get('/trips/featured', async (req, res) => {
     try {
-      const featured = await marketplaceService.listFeatured(6);
-      const items = await Promise.all(featured.map((trip) => marketplaceService.enrichTripWithVendor(trip)));
+      const tenantContext = getMarketplaceTenantContext(req);\n      const featured = await marketplaceService.listFeatured(6, tenantContext);
+      const items = await Promise.all(featured.map((trip) => marketplaceService.enrichTripWithVendor(trip, tenantContext)));
       res.json(items);
     } catch (err) {
       console.error('[API /trips/featured Error]', err.message);
@@ -227,9 +227,9 @@ api.get('/destinations', (req, res) => {
 
   api.get('/trips/:trip_id', async (req, res) => {
     try {
-      const trip = await marketplaceService.findTrip(req.params.trip_id);
+      const tenantContext = getMarketplaceTenantContext(req);\n      const trip = await marketplaceService.findTrip(req.params.trip_id, tenantContext);
       if (!trip) return res.status(404).json({ detail: 'Trip atau Produk tidak ditemukan' });
-      res.json(await marketplaceService.enrichTripWithVendor(trip));
+      res.json(await marketplaceService.enrichTripWithVendor(trip, tenantContext));
     } catch (err) {
       console.error('[API /trips/:trip_id Error]', err.message);
       res.status(503).json({ success: false, error: 'Marketplace data service unavailable' });
