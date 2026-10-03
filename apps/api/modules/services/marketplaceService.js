@@ -54,8 +54,8 @@ function applyFilters(trips, filters = {}) {
   return result;
 }
 
-async function listTrips(filters = {}) {
-  const trips = await tripRepository.list();
+async function listTrips(filters = {}, context = {}) {
+  const trips = await tripRepository.list({ tenantId: context.tenantId });
   const filtered = applyFilters(trips, filters);
   const limit = normalizeLimit(filters.limit);
   const page = normalizePage(filters.page);
@@ -69,13 +69,13 @@ async function listTrips(filters = {}) {
   };
 }
 
-async function listFeatured(limit = 6) {
+async function listFeatured(limit = 6, context = {}) {
   const trips = await tripRepository.list();
   return applyFilters(trips).slice(0, normalizeLimit(limit, 6));
 }
 
-async function findTrip(id) {
-  return tripRepository.findById(id);
+async function findTrip(id, context = {}) {
+  return tripRepository.findById(id, { tenantId: context.tenantId });
 }
 
 async function enrichTripWithVendor(trip, context = {}) {
