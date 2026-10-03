@@ -5690,6 +5690,14 @@ api.post('/admin/rental-orders/:oid/status', requireAdmin, (req, res) => {
 
 // --- Vendor & Tenant Partner Registration & Login Routes ---
 api.post('/partner/register-vendor', (req, res) => {
+  if (process.env.NODE_ENV === 'production' && !supabaseAuth.supabaseAuthEnabled) {
+    return res.status(503).json({
+      detail: 'Layanan autentikasi belum terkonfigurasi. Silakan hubungi administrator.',
+      code: 'PROVIDER_CONFIGURATION_REQUIRED',
+      provider: 'supabase_auth',
+    });
+  }
+
   const { name, email, password, confirmPassword, phone, brand_name, tagline, description, types, city, province, nik, bank_name, bank_account_number, bank_account_holder } = req.body;
   if (!email || !password) return res.status(400).json({ detail: 'Email dan password akun wajib diisi' });
   if (typeof password !== 'string' || password.length < 6) return res.status(400).json({ detail: 'Password minimal 6 karakter' });
@@ -5780,6 +5788,14 @@ api.post('/partner/register-vendor', (req, res) => {
 });
 
 api.post('/partner/register-tenant', (req, res) => {
+  if (process.env.NODE_ENV === 'production' && !supabaseAuth.supabaseAuthEnabled) {
+    return res.status(503).json({
+      detail: 'Layanan autentikasi belum terkonfigurasi. Silakan hubungi administrator.',
+      code: 'PROVIDER_CONFIGURATION_REQUIRED',
+      provider: 'supabase_auth',
+    });
+  }
+
   const { name, email, password, confirmPassword, phone, organization_name, slug, plan, brand_color } = req.body;
   if (!email || !password) return res.status(400).json({ detail: 'Email dan password wajib diisi' });
   if (typeof password !== 'string' || password.length < 6) return res.status(400).json({ detail: 'Password minimal 6 karakter' });
@@ -5862,6 +5878,14 @@ api.post('/partner/register-tenant', (req, res) => {
 });
 
 api.post('/partner/login', authLimiter, (req, res) => {
+  if (process.env.NODE_ENV === 'production' && !supabaseAuth.supabaseAuthEnabled) {
+    return res.status(503).json({
+      detail: 'Layanan autentikasi belum terkonfigurasi. Silakan hubungi administrator.',
+      code: 'PROVIDER_CONFIGURATION_REQUIRED',
+      provider: 'supabase_auth',
+    });
+  }
+
   const { email, password, partner_type } = req.body;
   if (!email || !password) return res.status(400).json({ detail: 'Email dan password wajib diisi' });
 
