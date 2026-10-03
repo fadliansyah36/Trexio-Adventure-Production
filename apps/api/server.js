@@ -3570,6 +3570,7 @@ registerMarketplaceRoutes({
   aiSmartSearchService: require('./modules/ai/services/ai-smart-search.service'),
   authLimiter,
   marketplaceService,
+  getUserRoles,
 });
 
 const aiSeoService = require('./modules/ai/services/ai-seo.service');
