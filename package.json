@@ -51,7 +51,8 @@
     "verify:10p5-service-repository": "node scripts/verify-10p5-service-repository.js",
     "verify:10p6-frontend-api": "node scripts/verify-10p6-frontend-api.js",
     "verify:10p7-mock-fake-simulation": "node scripts/verify-10p7-mock-fake-simulation.js",
-    "verify:10p8-provider-configuration": "node scripts/verify-10p8-provider-configuration.js"
+    "verify:10p8-provider-configuration": "node scripts/verify-10p8-provider-configuration.js",
+    "verify:10p9-tenant-rbac-domain-coverage": "node scripts/verify-10p9-tenant-rbac-domain-coverage.js"
   },
   "dependencies": {
     "@google/genai": "^2.15.0",
