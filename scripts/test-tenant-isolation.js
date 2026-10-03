@@ -26,14 +26,14 @@ function decision(user, roles, requestedTenantId) {
 // Tenant A may access A.
 {
   const { target, access } = decision({ id: 'user_a', tenant_id: 'tenant_a' }, ['tenant_admin'], 'tenant_a');
-  assert.strictEqual(target.id, 'tenant_a');
+  assert.strictEqual(target?.id, 'tenant_a');
   assert.strictEqual(access.allowed, true);
 }
 
 // Tenant A must not access B even when B is supplied by client input.
 {
   const { target, access } = decision({ id: 'user_a', tenant_id: 'tenant_a' }, ['tenant_admin'], 'tenant_b');
-  assert.strictEqual(target.id, 'tenant_b');
+  assert.strictEqual(target?.id, 'tenant_b');
   assert.strictEqual(access.allowed, false);
   assert.strictEqual(access.reason, 'cross_tenant_access');
 }
