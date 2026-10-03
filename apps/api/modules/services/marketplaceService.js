@@ -78,11 +78,11 @@ async function findTrip(id) {
   return tripRepository.findById(id);
 }
 
-async function enrichTripWithVendor(trip) {
+async function enrichTripWithVendor(trip, context = {}) {
   if (!trip) return trip;
   if (!trip.vendor_id) return trip;
 
-  const vendor = await vendorRepository.findById(trip.vendor_id, { tenantId: arguments[1]?.tenantId });
+  const vendor = await vendorRepository.findById(trip.vendor_id, { tenantId: context.tenantId });
   if (!vendor) return trip;
 
   return {
