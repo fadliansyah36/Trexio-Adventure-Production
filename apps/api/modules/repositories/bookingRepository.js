@@ -4,7 +4,7 @@ const SELECT_COLUMNS = `
   id, external_id, booking_code, user_id, vendor_id, trip_id, total_amount,
   payment_status, booking_status, payment_method, payment_channel,
   midtrans_order_id, midtrans_token, ticket_token, checked_in, checkin_time,
-  paid_at, data, created_at, updated_at
+  paid_at, data, tenant_id, created_at, updated_at
 `;
 
 function hydrate(row) {
@@ -17,22 +17,22 @@ function hydrate(row) {
     midtrans_order_id: row.midtrans_order_id || data.midtrans_order_id, midtrans_token: row.midtrans_token || data.midtrans_token,
     ticket_token: row.ticket_token || data.ticket_token, checked_in: row.checked_in ?? Boolean(data.checked_in),
     checkin_time: row.checkin_time || data.checkin_time, paid_at: row.paid_at || data.paid_at,
-    created_at: row.created_at || data.created_at, updated_at: row.updated_at || data.updated_at };
+    created_at: row.created_at || data.created_at, updated_at: row.updated_at || data.updated_at, tenant_id: row.tenant_id || data.tenant_id || null };
 }
 
-async function list() { const p = getPool(); if (!p) return []; const r = await p.query(`SELECT ${SELECT_COLUMNS} FROM bookings ORDER BY created_at ASC, id ASC`); return r.rows.map(hydrate); }
-async function findById(id) { if (!id) return null; const p = getPool(); if (!p) return null; const r = await p.query(`SELECT ${SELECT_COLUMNS} FROM bookings WHERE external_id = $1 OR booking_code = $1 LIMIT 1`, [String(id)]); return r.rows[0] ? hydrate(r.rows[0]) : null; }
-async function findByCode(code) { return findById(code); }
+async function list({ tenantId } = {}) { const p = getPool(); if (!p) return []; const r = tenantId ? await p.query(`SELECT ${SELECT_COLUMNS} FROM bookings WHERE tenant_id=$1 ORDER BY created_at ASC,id ASC`,[String(tenantId)]) : await p.query(`SELECT ${SELECT_COLUMNS} FROM bookings ORDER BY created_at ASC,id ASC`); return r.rows.map(hydrate); }
+async function findById(id, { tenantId } = {}) { if (!id) return null; const p = getPool(); if (!p) return null; const r = await p.query(tenantId ? `SELECT ${SELECT_COLUMNS} FROM bookings WHERE tenant_id=$2 AND (external_id=$1 OR booking_code=$1) LIMIT 1` : `SELECT ${SELECT_COLUMNS} FROM bookings WHERE external_id=$1 OR booking_code=$1 LIMIT 1`, tenantId ? [String(id),String(tenantId)] : [String(id)]); return r.rows[0] ? hydrate(r.rows[0]) : null; }
+async function findByCode(code, options) { return findById(code, options); }
 
 async function save(booking) {
   if (!booking || !booking.id) throw new Error('Booking id is required'); const p = getPool(); if (!p) throw new Error('Supabase PostgreSQL pool is unavailable');
   const data = { ...booking };
-  const r = await p.query(`INSERT INTO bookings (external_id, booking_code, user_id, vendor_id, trip_id, total_amount, payment_status, booking_status, payment_method, payment_channel, midtrans_order_id, midtrans_token, ticket_token, checked_in, checkin_time, paid_at, data, created_at, updated_at)
-    VALUES ($1, $2, CASE WHEN $3 ~ '^\\d+$' THEN $3::INT ELSE NULL END, $4, CASE WHEN $5 ~ '^\\d+$' THEN $5::INT ELSE NULL END, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::jsonb, COALESCE($18::timestamptz, NOW()), NOW())
-    ON CONFLICT (external_id) DO UPDATE SET booking_code=EXCLUDED.booking_code, user_id=EXCLUDED.user_id, vendor_id=EXCLUDED.vendor_id, trip_id=EXCLUDED.trip_id, total_amount=EXCLUDED.total_amount, payment_status=EXCLUDED.payment_status, booking_status=EXCLUDED.booking_status, payment_method=EXCLUDED.payment_method, payment_channel=EXCLUDED.payment_channel, midtrans_order_id=EXCLUDED.midtrans_order_id, midtrans_token=EXCLUDED.midtrans_token, ticket_token=EXCLUDED.ticket_token, checked_in=EXCLUDED.checked_in, checkin_time=EXCLUDED.checkin_time, paid_at=EXCLUDED.paid_at, data=EXCLUDED.data, updated_at=NOW() RETURNING ${SELECT_COLUMNS}`,
-    [String(booking.id), String(booking.booking_code || booking.id), String(booking.user_id ?? ''), booking.vendor_id ? String(booking.vendor_id) : null, String(booking.trip_id ?? ''), Number.isFinite(Number(booking.total_amount)) ? Number(booking.total_amount) : 0, booking.payment_status || 'pending', booking.booking_status || 'pending_payment', booking.payment_method || null, booking.payment_channel || null, booking.midtrans_order_id || null, booking.midtrans_token || null, booking.ticket_token || null, Boolean(booking.checked_in), booking.checkin_time || null, booking.paid_at || null, JSON.stringify(data), booking.created_at || null]);
+  const r = await p.query(`INSERT INTO bookings (external_id, booking_code, user_id, vendor_id, trip_id, total_amount, payment_status, booking_status, payment_method, payment_channel, midtrans_order_id, midtrans_token, ticket_token, checked_in, checkin_time, paid_at, data, tenant_id, created_at, updated_at)
+    VALUES ($1, $2, CASE WHEN $3 ~ '^\\d+$' THEN $3::INT ELSE NULL END, $4, CASE WHEN $5 ~ '^\\d+$' THEN $5::INT ELSE NULL END, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::jsonb, $18, COALESCE($19::timestamptz, NOW()), NOW())
+    ON CONFLICT (external_id) DO UPDATE SET booking_code=EXCLUDED.booking_code, user_id=EXCLUDED.user_id, vendor_id=EXCLUDED.vendor_id, trip_id=EXCLUDED.trip_id, total_amount=EXCLUDED.total_amount, payment_status=EXCLUDED.payment_status, booking_status=EXCLUDED.booking_status, payment_method=EXCLUDED.payment_method, payment_channel=EXCLUDED.payment_channel, midtrans_order_id=EXCLUDED.midtrans_order_id, midtrans_token=EXCLUDED.midtrans_token, ticket_token=EXCLUDED.ticket_token, checked_in=EXCLUDED.checked_in, checkin_time=EXCLUDED.checkin_time, paid_at=EXCLUDED.paid_at, data=EXCLUDED.data, tenant_id=EXCLUDED.tenant_id, updated_at=NOW() RETURNING ${SELECT_COLUMNS}`,
+    [String(booking.id), String(booking.booking_code || booking.id), String(booking.user_id ?? ''), booking.vendor_id ? String(booking.vendor_id) : null, String(booking.trip_id ?? ''), Number.isFinite(Number(booking.total_amount)) ? Number(booking.total_amount) : 0, booking.payment_status || 'pending', booking.booking_status || 'pending_payment', booking.payment_method || null, booking.payment_channel || null, booking.midtrans_order_id || null, booking.midtrans_token || null, booking.ticket_token || null, Boolean(booking.checked_in), booking.checkin_time || null, booking.paid_at || null, JSON.stringify(data), booking.tenant_id ? String(booking.tenant_id) : null, booking.created_at || null]);
   return hydrate(r.rows[0]);
 }
-async function remove(id) { if (!id) return false; const p = getPool(); if (!p) return false; const r = await p.query('DELETE FROM bookings WHERE external_id=$1 OR booking_code=$1', [String(id)]); return r.rowCount > 0; }
+async function remove(id, { tenantId } = {}) { if (!id) return false; const p = getPool(); if (!p) return false; const r = tenantId ? await p.query('DELETE FROM bookings WHERE tenant_id=$2 AND (external_id=$1 OR booking_code=$1)',[String(id),String(tenantId)]) : await p.query('DELETE FROM bookings WHERE external_id=$1 OR booking_code=$1',[String(id)]); return r.rowCount > 0; }
 async function replaceAll(bookings) { const p=getPool(); if(!p) throw new Error('Supabase PostgreSQL pool is unavailable'); const list=Array.isArray(bookings)?bookings.filter(b=>b&&b.id):[]; for(const b of list) await save(b); if(list.length) await p.query('DELETE FROM bookings WHERE external_id IS NOT NULL AND NOT (external_id=ANY($1::text[]))',[list.map(b=>String(b.id))]); else await p.query('DELETE FROM bookings'); }
 module.exports = { list, findById, findByCode, save, remove, replaceAll };
