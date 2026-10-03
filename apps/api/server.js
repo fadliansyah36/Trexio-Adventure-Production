@@ -26,6 +26,7 @@ const registerUserRoutes = require('./modules/routes/userRoutes');
 const { registerMarketplaceDiscoveryRoutes } = require('./modules/routes/marketplaceDiscoveryRoutes');
 const marketplaceService = require('./modules/services/marketplaceService');
 const { resolveTenantForRequest, assertTenantAccess } = require('./security/tenantIsolation');
+const providerConfig = require('./config/providerConfig');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -213,7 +214,7 @@ const systemHealth = {
     error: null,
   },
   llm: {
-    configured: Boolean(process.env.GEMINI_API_KEY || process.env.API_KEY),
+    configured: providerConfig.getProviderStatus().gemini.configured,
     provider: 'Google Gemini AI',
     error: null,
   },
@@ -11021,6 +11022,15 @@ app.use(['/api', '/api/v1'], (err, req, res, next) => {
 });
 
 // Frontend is deployed independently from apps/web. The API runtime does not serve SPA assets.
+
+// 10P.8 — Required production providers must be configured before the HTTP runtime starts.
+try {
+  providerConfig.assertProductionConfiguration();
+} catch (err) {
+  console.error(`[FATAL][10P.8] ${err.code || 'PROVIDER_CONFIGURATION_REQUIRED'}: ${err.message}`);
+  process.exitCode = 1;
+  throw err;
+}
 
 // Start server
 const server = app.listen(PORT, '0.0.0.0', async () => {
