@@ -27,7 +27,7 @@ function hydrate(row) {
     total_trips: row.total_trips || 0,
     documents: row.documents || data.documents || {},
     created_at: row.created_at || data.created_at,
-    updated_at: row.updated_at || data.updated_at,
+    updated_at: row.updated_at || data.updated_at,\n    tenant_id: row.tenant_id || data.tenant_id || null,
   };
 }
 
@@ -38,7 +38,7 @@ async function list() {
   return result.rows.map(hydrate);
 }
 
-async function findById(id) {
+async function findById(id, { tenantId } = {}) {
   if (!id) return null;
   const p = getPool();
   if (!p) return null;
@@ -49,7 +49,7 @@ async function findById(id) {
   return result.rows[0] ? hydrate(result.rows[0]) : null;
 }
 
-async function findByUserId(userId) {
+async function findByUserId(userId, { tenantId } = {}) {
   if (!userId) return null;
   const p = getPool();
   if (!p) return null;
@@ -68,9 +68,9 @@ async function save(vendor) {
   const data = { ...vendor };
   const result = await p.query(
     `INSERT INTO vendors (
-       id, user_id, brand_name, slug, status, rating, total_trips, documents, data, updated_at
+       id, user_id, brand_name, slug, status, rating, total_trips, documents, data, tenant_id, updated_at
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9::jsonb, NOW())
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9::jsonb, $10, NOW())
      ON CONFLICT (id) DO UPDATE SET
        user_id = EXCLUDED.user_id,
        brand_name = EXCLUDED.brand_name,
@@ -97,11 +97,11 @@ async function save(vendor) {
   return hydrate(result.rows[0]);
 }
 
-async function remove(id) {
+async function remove(id, { tenantId } = {}) {
   if (!id) return false;
   const p = getPool();
   if (!p) return false;
-  const result = await p.query('DELETE FROM vendors WHERE id = $1', [String(id)]);
+  const result = tenantId\n    ? await p.query('DELETE FROM vendors WHERE id = $1 AND tenant_id = $2', [String(id), String(tenantId)])\n    : await p.query('DELETE FROM vendors WHERE id = $1', [String(id)]);
   return result.rowCount > 0;
 }
 
