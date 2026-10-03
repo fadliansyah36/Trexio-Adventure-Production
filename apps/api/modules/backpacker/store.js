@@ -1,112 +1,128 @@
 /**
  * TREXIO BACKPACKER - DATABASE & STORE ENGINE
- * Manages Backpacker data persistence in /data/db_backpacker_*.json
- * Strictly enforces state machines, concurrency locks, and ownership validation.
+ * PostgreSQL-backed request-scoped business state. No filesystem persistence.
  */
-
-const fs = require('fs');
-const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
-const DATA_DIR = path.join(__dirname, '..', '..', 'data');
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+// PostgreSQL-backed request-scoped data context.
+// No process-global business collections and no filesystem persistence are permitted.
+const { AsyncLocalStorage } = require('async_hooks');
+const appDocumentRepository = require('../repositories/appDocumentRepository');
+const COLLECTIONS = {
+  profiles: 'backpacker_profiles',
+  intents: 'backpacker_travel_intents',
+  journeys: 'backpacker_journeys',
+  stops: 'backpacker_journey_stops',
+  participants: 'backpacker_journey_participants',
+  expenses: 'backpacker_journey_expenses',
+  rides: 'backpacker_shared_rides',
+  ride_participants: 'backpacker_shared_ride_participants',
+  ride_requests: 'backpacker_shared_ride_requests',
+  connections: 'backpacker_connections',
+  reports: 'backpacker_reports',
+  location_consents: 'backpacker_location_consents',
+  locations: 'backpacker_locations',
+  assistance_requests: 'backpacker_assistance_requests'
+};
+
+const backpackerContext = new AsyncLocalStorage();
+
+function currentContext() {
+  const ctx = backpackerContext.getStore();
+  if (!ctx) throw new Error('Backpacker data context is not initialized for this request.');
+  return ctx;
 }
 
-// File Paths
-const FILES = {
-  profiles: path.join(DATA_DIR, 'db_backpacker_profiles.json'),
-  intents: path.join(DATA_DIR, 'db_travel_intents.json'),
-  journeys: path.join(DATA_DIR, 'db_journeys.json'),
-  stops: path.join(DATA_DIR, 'db_journey_stops.json'),
-  participants: path.join(DATA_DIR, 'db_journey_participants.json'),
-  expenses: path.join(DATA_DIR, 'db_journey_expenses.json'),
-  rides: path.join(DATA_DIR, 'db_shared_rides.json'),
-  ride_participants: path.join(DATA_DIR, 'db_shared_ride_participants.json'),
-  ride_requests: path.join(DATA_DIR, 'db_shared_ride_requests.json'),
-  connections: path.join(DATA_DIR, 'db_buddy_connections.json'),
-  reports: path.join(DATA_DIR, 'db_buddy_reports.json'),
-  location_consents: path.join(DATA_DIR, 'db_journey_location_consents.json'),
-  locations: path.join(DATA_DIR, 'db_journey_locations.json'),
-  assistance_requests: path.join(DATA_DIR, 'db_backpacker_assistance.json')
-};
+function collectionKey(document) {
+  return document && (document.id || document.booking_code || document.tx_id || document.order_id || document.code || document.slug || null);
+}
 
-// In-Memory Data Collections
-const db = {
-  profiles: [],
-  intents: [],
-  journeys: [],
-  stops: [],
-  participants: [],
-  expenses: [],
-  rides: [],
-  ride_participants: [],
-  ride_requests: [],
-  connections: [],
-  reports: [],
-  location_consents: [],
-  locations: [],
-  assistance_requests: []
-};
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
 
-// Concurrency Mutex Lock Map for Shared Ride Seats & Atomicity
+async function createBackpackerRequestContext() {
+  const collections = {};
+  const snapshots = {};
+  for (const [name, repositoryCollection] of Object.entries(COLLECTIONS)) {
+    const documents = await appDocumentRepository.list(repositoryCollection);
+    collections[name] = Array.isArray(documents) ? documents : [];
+    snapshots[name] = new Map(collections[name].filter(Boolean).map((doc) => [String(collectionKey(doc)), JSON.stringify(doc)]));
+  }
+  return {
+    collections,
+    snapshots,
+    writeChains: new Map(),
+    pending: new Set()
+  };
+}
+
+async function runBackpackerRequestContext(next) {
+  const ctx = await createBackpackerRequestContext();
+  return backpackerContext.run(ctx, () => next());
+}
+
+// Compatibility accessor: the object itself contains no business state.
+// All collections are request-scoped snapshots hydrated from PostgreSQL.
+const db = new Proxy({}, {
+  get(_target, property) {
+    if (typeof property !== 'string') return undefined;
+    return currentContext().collections[property];
+  },
+  set(_target, property, value) {
+    if (typeof property !== 'string') return false;
+    currentContext().collections[property] = value;
+    return true;
+  }
+});
+
+async function persistCollectionSnapshot(name) {
+  const ctx = currentContext();
+  const repositoryCollection = COLLECTIONS[name];
+  if (!repositoryCollection) throw new Error(`Unknown Backpacker collection: ${name}`);
+  const current = Array.isArray(ctx.collections[name]) ? ctx.collections[name] : [];
+  const before = ctx.snapshots[name] || new Map();
+  const after = new Map(current.filter(Boolean).map((doc) => [String(collectionKey(doc)), doc]));
+
+  for (const [id, doc] of after) {
+    if (!id || JSON.stringify(doc) !== before.get(id)) {
+      await appDocumentRepository.save(repositoryCollection, doc);
+    }
+  }
+  for (const id of before.keys()) {
+    if (!after.has(id)) await appDocumentRepository.remove(repositoryCollection, id);
+  }
+  ctx.snapshots[name] = new Map(Array.from(after.entries()).map(([id, doc]) => [id, JSON.stringify(doc)]));
+}
+
+function saveCollection(key) {
+  const ctx = currentContext();
+  const previous = ctx.writeChains.get(key) || Promise.resolve();
+  const operation = previous.then(() => persistCollectionSnapshot(key));
+  ctx.writeChains.set(key, operation);
+  ctx.pending.add(operation);
+  operation.then(() => ctx.pending.delete(operation), () => ctx.pending.delete(operation));
+  return operation;
+}
+
+async function flushBackpackerRequestContext() {
+  const ctx = currentContext();
+  while (ctx.pending.size) {
+    await Promise.all(Array.from(ctx.pending));
+  }
+}
+
+// Concurrency Mutex Lock Map for ephemeral coordination only; no business data is stored here.
 const locks = new Map();
 
 async function acquireLock(key) {
-  while (locks.get(key)) {
-    await new Promise((r) => setTimeout(r, 20));
-  }
+  while (locks.get(key)) await new Promise((r) => setTimeout(r, 20));
   locks.set(key, true);
 }
 
 function releaseLock(key) {
   locks.delete(key);
 }
-
-// Load data helper
-function loadCollection(key, filepath, defaultSeed = []) {
-  try {
-    if (fs.existsSync(filepath)) {
-      const raw = fs.readFileSync(filepath, 'utf8');
-      db[key] = JSON.parse(raw);
-    } else {
-      db[key] = defaultSeed;
-      saveCollection(key, filepath);
-    }
-  } catch (err) {
-    console.error(`[BACKPACKER DB] Failed to load ${key}:`, err.message);
-    db[key] = defaultSeed;
-  }
-}
-
-// Save data helper
-function saveCollection(key, filepath) {
-  try {
-    fs.writeFileSync(filepath, JSON.stringify(db[key], null, 2), 'utf8');
-  } catch (err) {
-    console.error(`[BACKPACKER DB] Failed to save ${key}:`, err.message);
-  }
-}
-
-// Initialize Store with Empty Data Collections
-function initStore() {
-  loadCollection('profiles', FILES.profiles, []);
-  loadCollection('intents', FILES.intents, []);
-  loadCollection('journeys', FILES.journeys, []);
-  loadCollection('stops', FILES.stops, []);
-  loadCollection('participants', FILES.participants, []);
-  loadCollection('expenses', FILES.expenses, []);
-  loadCollection('rides', FILES.rides, []);
-  loadCollection('ride_participants', FILES.ride_participants, []);
-  loadCollection('ride_requests', FILES.ride_requests, []);
-  loadCollection('connections', FILES.connections, []);
-  loadCollection('reports', FILES.reports, []);
-  loadCollection('location_consents', FILES.location_consents, []);
-  loadCollection('locations', FILES.locations, []);
-  loadCollection('assistance_requests', FILES.assistance_requests, []);
-}
-
-initStore();
 
 // ==========================================
 // STORE API HELPERS & STATE MACHINES
@@ -182,7 +198,7 @@ function upsertProfile(userId, profileData) {
     };
     db.profiles.push(prof);
   }
-  saveCollection('profiles', FILES.profiles);
+  saveCollection('profiles');
   return prof;
 }
 
@@ -234,7 +250,7 @@ function createTravelIntent(userId, data) {
     updated_at: now
   };
   db.intents.push(newIntent);
-  saveCollection('intents', FILES.intents);
+  saveCollection('intents');
   return newIntent;
 }
 
@@ -251,7 +267,7 @@ function updateTravelIntent(id, userId, data) {
     if (data[key] !== undefined) intent[key] = data[key];
   });
   intent.updated_at = now;
-  saveCollection('intents', FILES.intents);
+  saveCollection('intents');
   return intent;
 }
 
@@ -376,7 +392,7 @@ function requestBuddyConnection(requesterId, targetId, matchPercentage = 80, sou
     };
     db.connections.push(conn);
   }
-  saveCollection('connections', FILES.connections);
+  saveCollection('connections');
   return conn;
 }
 
@@ -419,7 +435,7 @@ function updateBuddyConnectionStatus(connectionId, userId, action) {
   }
 
   conn.updated_at = now;
-  saveCollection('connections', FILES.connections);
+  saveCollection('connections');
   return conn;
 }
 
@@ -549,8 +565,8 @@ function createSharedRide(userId, data) {
     joined_at: now
   });
 
-  saveCollection('rides', FILES.rides);
-  saveCollection('ride_participants', FILES.ride_participants);
+  saveCollection('rides');
+  saveCollection('ride_participants');
   return newRide;
 }
 
@@ -590,8 +606,8 @@ async function joinSharedRide(rideId, userId, seats = 1) {
     };
 
     db.ride_participants.push(newPart);
-    saveCollection('rides', FILES.rides);
-    saveCollection('ride_participants', FILES.ride_participants);
+    saveCollection('rides');
+    saveCollection('ride_participants');
 
     return { ride, participant: newPart };
   } finally {
@@ -637,7 +653,7 @@ function requestJoinSharedRide(rideId, requesterId, seats = 1, note = '') {
   };
 
   db.ride_requests.push(newReq);
-  saveCollection('ride_requests', FILES.ride_requests);
+  saveCollection('ride_requests');
   return { request: newReq, ride };
 }
 
@@ -658,7 +674,7 @@ async function respondToRideRequest(requestId, userId, action) {
     req.status = 'CANCELLED';
     req.updated_at = now;
     req.resolved_by = userId;
-    saveCollection('ride_requests', FILES.ride_requests);
+    saveCollection('ride_requests');
     return { request: req, ride };
   }
 
@@ -720,10 +736,10 @@ async function respondToRideRequest(requestId, userId, action) {
         });
       }
 
-      saveCollection('rides', FILES.rides);
-      saveCollection('ride_participants', FILES.ride_participants);
-      saveCollection('ride_requests', FILES.ride_requests);
-      saveCollection('connections', FILES.connections);
+      saveCollection('rides');
+      saveCollection('ride_participants');
+      saveCollection('ride_requests');
+      saveCollection('connections');
 
       return { request: req, ride, participant: newPart };
     } finally {
@@ -733,7 +749,7 @@ async function respondToRideRequest(requestId, userId, action) {
     req.status = 'REJECTED';
     req.updated_at = now;
     req.resolved_by = userId;
-    saveCollection('ride_requests', FILES.ride_requests);
+    saveCollection('ride_requests');
     return { request: req, ride };
   } else {
     throw new Error(`Aksi '${action}' tidak valid`);
@@ -757,8 +773,8 @@ function cancelSharedRide(rideId, ownerId) {
     }
   });
 
-  saveCollection('rides', FILES.rides);
-  saveCollection('ride_requests', FILES.ride_requests);
+  saveCollection('rides');
+  saveCollection('ride_requests');
   return ride;
 }
 
@@ -950,9 +966,9 @@ function createJourney(userId, data) {
     });
   }
 
-  saveCollection('journeys', FILES.journeys);
-  saveCollection('participants', FILES.participants);
-  saveCollection('stops', FILES.stops);
+  saveCollection('journeys');
+  saveCollection('participants');
+  saveCollection('stops');
 
   return journey;
 }
@@ -987,7 +1003,7 @@ function updateJourneyStatus(journeyId, userId, newStatus) {
   const now = new Date().toISOString();
   journey.status = newStatus;
   journey.updated_at = now;
-  saveCollection('journeys', FILES.journeys);
+  saveCollection('journeys');
   return journey;
 }
 
@@ -1013,7 +1029,7 @@ function addJourneyStop(journeyId, userId, stopData) {
   };
 
   db.stops.push(newStop);
-  saveCollection('stops', FILES.stops);
+  saveCollection('stops');
   return newStop;
 }
 
@@ -1094,7 +1110,7 @@ function addJourneyExpense(journeyId, userId, expenseData) {
   };
 
   db.expenses.push(newExpense);
-  saveCollection('expenses', FILES.expenses);
+  saveCollection('expenses');
   return newExpense;
 }
 
@@ -1200,7 +1216,7 @@ function reportUser(reporterId, targetId, reason, details = '') {
     created_at: now
   };
   db.reports.push(report);
-  saveCollection('reports', FILES.reports);
+  saveCollection('reports');
   return report;
 }
 
@@ -1225,7 +1241,7 @@ function updateJourneyStopStatus(stopId, userId, newStatus) {
   if (newStatus === 'ARRIVED' && !stop.arrival_time) stop.arrival_time = now;
   if (newStatus === 'COMPLETED' && !stop.departure_time) stop.departure_time = now;
 
-  saveCollection('stops', FILES.stops);
+  saveCollection('stops');
   return stop;
 }
 
@@ -1255,10 +1271,10 @@ function toggleLocationConsent(journeyId, userId, consentBool) {
   // Retention Purge Policy: If consent is revoked, purge cached live location immediately
   if (!consentBool) {
     db.locations = db.locations.filter((l) => !(l.journey_id === journeyId && l.user_id === userId));
-    saveCollection('locations', FILES.locations);
+    saveCollection('locations');
   }
 
-  saveCollection('location_consents', FILES.location_consents);
+  saveCollection('location_consents');
   return item;
 }
 
@@ -1293,7 +1309,7 @@ function updateParticipantLocation(journeyId, userId, coords = {}) {
     db.locations.push(loc);
   }
 
-  saveCollection('locations', FILES.locations);
+  saveCollection('locations');
   return loc;
 }
 
@@ -1362,7 +1378,7 @@ function createAssistanceRequest(userId, intentId, reason = '') {
   };
 
   db.assistance_requests.unshift(req);
-  saveCollection('assistance_requests', FILES.assistance_requests);
+  saveCollection('assistance_requests');
   return req;
 }
 
@@ -1654,7 +1670,7 @@ function suggestMatchByAdmin(requestId, candidateIntentId, adminUserId, adminNot
   };
 
   db.connections.push(conn);
-  saveCollection('connections', FILES.connections);
+  saveCollection('connections');
 
   req.status = 'SUGGESTED';
   req.suggested_candidate_id = candIntent.user_id;
@@ -1662,7 +1678,7 @@ function suggestMatchByAdmin(requestId, candidateIntentId, adminUserId, adminNot
   req.assigned_admin = adminUserId;
   if (adminNote) req.admin_notes.push({ text: adminNote, created_at: now, admin: adminUserId });
   req.updated_at = now;
-  saveCollection('assistance_requests', FILES.assistance_requests);
+  saveCollection('assistance_requests');
 
   return { connection: conn, assistance_request: req };
 }
@@ -1692,7 +1708,7 @@ function respondToSuggestedMatch(userId, connectionId, action) {
       conn.mutual_consent = true;
       conn.mutual_accepted_at = now;
       conn.updated_at = now;
-      saveCollection('connections', FILES.connections);
+      saveCollection('connections');
 
       if (conn.assistance_request_id) {
         const ast = db.assistance_requests.find(a => a.id === conn.assistance_request_id);
@@ -1700,21 +1716,21 @@ function respondToSuggestedMatch(userId, connectionId, action) {
           ast.status = 'CONNECTED';
           ast.resolved_at = now;
           ast.updated_at = now;
-          saveCollection('assistance_requests', FILES.assistance_requests);
+          saveCollection('assistance_requests');
         }
       }
     } else {
       // One party accepted, waiting for partner
       conn.status = isRequester ? 'ACCEPTED_BY_REQUESTER' : 'ACCEPTED_BY_CANDIDATE';
       conn.updated_at = now;
-      saveCollection('connections', FILES.connections);
+      saveCollection('connections');
 
       if (conn.assistance_request_id) {
         const ast = db.assistance_requests.find(a => a.id === conn.assistance_request_id);
         if (ast) {
           ast.status = 'WAITING_PARTNER_RESPONSE';
           ast.updated_at = now;
-          saveCollection('assistance_requests', FILES.assistance_requests);
+          saveCollection('assistance_requests');
         }
       }
     }
@@ -1723,14 +1739,14 @@ function respondToSuggestedMatch(userId, connectionId, action) {
     conn.rejected_by = userId;
     conn.mutual_consent = false;
     conn.updated_at = now;
-    saveCollection('connections', FILES.connections);
+    saveCollection('connections');
 
     if (conn.assistance_request_id) {
       const ast = db.assistance_requests.find(a => a.id === conn.assistance_request_id);
       if (ast) {
         ast.status = 'REJECTED';
         ast.updated_at = now;
-        saveCollection('assistance_requests', FILES.assistance_requests);
+        saveCollection('assistance_requests');
       }
     }
   } else {
@@ -1751,7 +1767,7 @@ function closeAssistanceRequest(requestId, adminUserId, adminNote = '', statusRe
   req.updated_at = now;
   req.resolved_at = now;
 
-  saveCollection('assistance_requests', FILES.assistance_requests);
+  saveCollection('assistance_requests');
   return req;
 }
 
@@ -1848,7 +1864,7 @@ function updateAdminTravelIntent(id, data = {}) {
     intent.admin_notes.push({ text: data.admin_note, updated_at: now });
   }
   intent.updated_at = now;
-  saveCollection('intents', FILES.intents);
+  saveCollection('intents');
   return intent;
 }
 
@@ -1884,7 +1900,7 @@ function updateAdminSharedRide(id, data = {}) {
     ride.admin_notes.push({ text: data.admin_note, updated_at: now });
   }
   ride.updated_at = now;
-  saveCollection('rides', FILES.rides);
+  saveCollection('rides');
   return ride;
 }
 
@@ -1916,6 +1932,8 @@ function getAdminJourneysAndCostSplits(filter = {}) {
 
 module.exports = {
   db,
+  runBackpackerRequestContext,
+  flushBackpackerRequestContext,
   getProfileByUserId,
   upsertProfile,
   getTravelIntents,

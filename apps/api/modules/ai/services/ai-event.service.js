@@ -3,51 +3,33 @@
  * Captures user marketplace events for personalization and analytics with strict privacy minimization.
  */
 
-const fs = require('fs');
-const path = require('path');
+const { loadCollection, saveDocument } = require('./aiPostgresPersistence');
 const { v4: uuidv4 } = require('uuid');
 const { AI_EVENT_TYPES } = require('../types');
-
-const DATA_DIR = path.join(__dirname, '..', '..', '..', 'data');
-const EVENTS_FILE = path.join(DATA_DIR, 'db_ai_event_logs.json');
 
 class AIEventService {
   constructor() {
     this.events = [];
     this.maxEventsInMemory = 5000;
-    this.loadFromDisk();
+    this.ready = this.loadFromPostgres();
   }
 
-  ensureDataDir() {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-  }
-
-  loadFromDisk() {
+  async loadFromPostgres() {
     try {
-      this.ensureDataDir();
-      if (fs.existsSync(EVENTS_FILE)) {
-        const raw = fs.readFileSync(EVENTS_FILE, 'utf8');
-        const loaded = JSON.parse(raw);
-        if (Array.isArray(loaded)) {
-          this.events = loaded;
-        }
-      }
+      const loaded = await loadCollection('ai_event_logs');
+      this.events = loaded
+        .map((doc) => doc.data || doc)
+        .sort((a, b) => new Date(b.timestamp || b.created_at || 0) - new Date(a.timestamp || a.created_at || 0))
+        .slice(0, this.maxEventsInMemory);
     } catch (err) {
-      console.error('[AIEventService] Failed to load AI event logs from disk:', err.message);
+      console.error('[AI PostgreSQL persistence] Failed to load ai_event_logs:', err.message);
     }
   }
 
-  saveToDisk() {
-    try {
-      this.ensureDataDir();
-      const dataToSave = this.events.slice(0, this.maxEventsInMemory);
-      fs.writeFileSync(EVENTS_FILE, JSON.stringify(dataToSave, null, 2), 'utf8');
-    } catch (err) {
-      console.error('[AIEventService] Failed to save AI event logs to disk:', err.message);
-    }
+  async persistEntry(entry) {
+    await saveDocument('ai_event_logs', entry);
   }
+
 
   /**
    * Records a user activity event.
@@ -91,7 +73,7 @@ class AIEventService {
       this.events.pop();
     }
 
-    this.saveToDisk();
+    void this.persistEntry(eventEntry);
     return eventEntry;
   }
 

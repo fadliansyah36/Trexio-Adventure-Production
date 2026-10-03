@@ -1,0 +1,46 @@
+name: Trexio Real Data Architecture Gate
+
+on:
+  pull_request:
+    paths:
+      - "apps/**"
+      - "frontend/**"
+      - "src/**"
+      - "server.js"
+      - "scripts/verify-real-data-architecture.js"
+      - "scripts/verify-10p2-backpacker-state.js"
+      - "scripts/verify-10p2-server-global-state.js"
+      - "apps/api/modules/backpacker/**"
+      - "apps/api/modules/persistence/**"
+      - "apps/api/modules/repositories/**"
+      - "supabase/migrations/**"
+      - "package.json"
+  workflow_dispatch:
+
+concurrency:
+  group: trexio-real-data-architecture-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  real-data-architecture:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify 10P.2 Backpacker state
+        run: node scripts/verify-10p2-backpacker-state.js
+
+      - name: Verify 10P.2 server global business state
+        run: node scripts/verify-10p2-server-global-state.js
+
+      - name: Verify real-data architecture
+        run: node scripts/verify-real-data-architecture.js
+
+      - name: Publish audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trexio-real-data-architecture-audit
+          path: data/real-data-architecture-audit.json
+          if-no-files-found: warn

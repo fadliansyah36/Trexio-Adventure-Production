@@ -3,12 +3,8 @@
  * Centralized feature controls allowing Super Admin to enable/disable AI capabilities dynamically.
  */
 
-const fs = require('fs');
-const path = require('path');
+const { loadSingleton, saveSingleton } = require('./aiPostgresPersistence');
 const { AI_FEATURE_FLAGS } = require('../types');
-
-const DATA_DIR = path.join(__dirname, '..', '..', '..', 'data');
-const FLAGS_FILE = path.join(DATA_DIR, 'db_ai_feature_flags.json');
 
 class AIFeatureFlagsService {
   constructor() {
@@ -22,40 +18,22 @@ class AIFeatureFlagsService {
       [AI_FEATURE_FLAGS.AI_FRAUD]: true,
       [AI_FEATURE_FLAGS.AI_ANALYTICS]: true,
     };
-    this.loadFromDisk();
+    this.ready = this.loadFromPostgres();
   }
 
-  ensureDataDir() {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-  }
-
-  loadFromDisk() {
+  async loadFromPostgres() {
     try {
-      this.ensureDataDir();
-      if (fs.existsSync(FLAGS_FILE)) {
-        const raw = fs.readFileSync(FLAGS_FILE, 'utf8');
-        const loaded = JSON.parse(raw);
-        if (loaded && typeof loaded === 'object') {
-          this.flags = { ...this.flags, ...loaded };
-        }
-      } else {
-        this.saveToDisk();
-      }
+      const loaded = await loadSingleton('ai_feature_flags');
+      if (loaded?.flags) this.flags = { ...this.flags, ...loaded.flags };
     } catch (err) {
-      console.error('[AIFeatureFlagsService] Failed to load feature flags from disk:', err.message);
+      console.error('[AI PostgreSQL persistence] Failed to load ai_feature_flags:', err.message);
     }
   }
 
-  saveToDisk() {
-    try {
-      this.ensureDataDir();
-      fs.writeFileSync(FLAGS_FILE, JSON.stringify(this.flags, null, 2), 'utf8');
-    } catch (err) {
-      console.error('[AIFeatureFlagsService] Failed to save feature flags to disk:', err.message);
-    }
+  async persistToPostgres() {
+    await saveSingleton('ai_feature_flags', { flags: this.flags });
   }
+
 
   getFlags() {
     return { ...this.flags };
@@ -74,8 +52,8 @@ class AIFeatureFlagsService {
 
   setFlag(flagName, enabled) {
     this.flags[flagName] = Boolean(enabled);
-    this.saveToDisk();
-    return this.getFlags();
+    void this.persistToPostgres();
+return this.getFlags();
   }
 
   updateFlags(updatedFlags) {
@@ -85,8 +63,8 @@ class AIFeatureFlagsService {
           this.flags[key] = Boolean(updatedFlags[key]);
         }
       });
-      this.saveToDisk();
-    }
+    void this.persistToPostgres();
+}
     return this.getFlags();
   }
 }

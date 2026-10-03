@@ -49,7 +49,9 @@ const {
   updateAdminTravelIntent,
   getAdminSharedRides,
   updateAdminSharedRide,
-  getAdminJourneysAndCostSplits
+  getAdminJourneysAndCostSplits,
+  runBackpackerRequestContext,
+  flushBackpackerRequestContext
 } = require('./store');
 
 function createBackpackerRouter(options = {}) {
@@ -137,37 +139,37 @@ function createBackpackerRouter(options = {}) {
         if (linked) return linked;
       }
 
-      const pickupPt = item.location || 'Titik Penjemputan / Basecamp';
-      const dropPt = item.destination || item.location || 'Basecamp Tujuan';
+      const pickupPt = item.location || null;
+      const dropPt = item.destination || item.location || null;
       const specsArr = Array.isArray(item.specs) ? item.specs : [];
 
       return {
         id: item.id,
         product_id: item.id,
         vendor_id: item.vendor_id || null,
-        vendor_name: item.provider || item.organizer || 'TREXIO Partner',
+        vendor_name: item.provider || item.organizer || null,
         title: item.title,
         slug: item.slug || item.id,
-        category: item.category || 'Shuttle & Transportasi',
-        transport_type: item.transportType || item.vehicle_type || (specsArr[0] || 'Angkutan Lokal'),
-        price: Number(item.price || 150000),
+        category: item.category || null,
+        transport_type: item.transportType || item.vehicle_type || specsArr[0] || null,
+        price: item.price ?? null,
         currency: 'IDR',
-        price_unit: item.price_unit || 'trip',
-        location: item.location || 'Indonesia',
+        price_unit: item.price_unit || null,
+        location: item.location || null,
         pickup_point: pickupPt,
         pickup_points: Array.isArray(item.meeting_points) ? item.meeting_points : [pickupPt],
         dropoff_point: dropPt,
         dropoff: dropPt,
-        departure_schedules: item.departure_dates || item.available_dates || ['Setiap Hari'],
-        schedules: item.departure_dates || item.available_dates || ['Setiap Hari'],
-        available_seats: item.stock || item.max_participants || 12,
-        availability: item.stock || item.max_participants || 12,
-        distance: item.distance || '45 km',
-        duration: '1 Hari / Trip',
+        departure_schedules: item.departure_dates || item.available_dates || [],
+        schedules: item.departure_dates || item.available_dates || [],
+        available_seats: item.stock ?? item.max_participants ?? null,
+        availability: item.stock ?? item.max_participants ?? null,
+        distance: item.distance ?? null,
+        duration: item.duration ?? null,
         cover_image: item.image || item.cover_image,
         description: item.description || '',
         specs: specsArr,
-        vendor_badge: item.badge || 'Partner Resmi Trexio'
+        vendor_badge: item.badge || null
       };
     });
 
@@ -181,6 +183,28 @@ function createBackpackerRouter(options = {}) {
     return Array.from(combinedMap.values());
   };
   const router = express.Router();
+
+  // Mission 10P.2: hydrate Backpacker business data from PostgreSQL per request.
+  // The router exposes no process-global business collections; mutations are flushed
+  // to PostgreSQL before JSON/HTML responses are sent.
+  router.use((req, res, next) => {
+    runBackpackerRequestContext(() => {
+      const originalJson = res.json.bind(res);
+      const originalSend = res.send.bind(res);
+      let responseCommitted = false;
+      const commitResponse = (writer, payload) => {
+        if (responseCommitted) return res;
+        responseCommitted = true;
+        flushBackpackerRequestContext()
+          .then(() => writer(payload))
+          .catch(next);
+        return res;
+      };
+      res.json = (payload) => commitResponse(originalJson, payload);
+      res.send = (payload) => commitResponse(originalSend, payload);
+      next();
+    }).catch(next);
+  });
 
   // Helper response wrapper
   const success = (res, data, message = 'Success') => res.json({ status: 'success', message, data });
@@ -830,42 +854,42 @@ function createBackpackerRouter(options = {}) {
       }
 
       const formattedTransports = matchingTransports.map((t) => {
-        const maxCap = t.max_participants || t.available_seats || 12;
-        const booked = t.booked_seats || 0;
-        const availableSeats = Math.max(1, maxCap - booked);
+        const maxCap = Number.isFinite(Number(t.max_participants)) ? Number(t.max_participants) : null;
+        const booked = Number.isFinite(Number(t.booked_seats)) ? Number(t.booked_seats) : 0;
+        const availableSeats = maxCap === null ? null : Math.max(0, maxCap - booked);
 
-        const pickupPt = t.pickup_point || (Array.isArray(t.meeting_points) ? t.meeting_points.join(', ') : t.location || 'Meeting Point Kota');
-        const dropPt = t.dropoff_point || t.destination || t.location || 'Basecamp Tujuan';
+        const pickupPt = t.pickup_point || (Array.isArray(t.meeting_points) ? t.meeting_points.join(', ') : t.location || null);
+        const dropPt = t.dropoff_point || t.destination || t.location || null;
         const schedulesArr = Array.isArray(t.departure_dates) && t.departure_dates.length > 0
           ? t.departure_dates
-          : (Array.isArray(t.schedules) ? t.schedules : ['Setiap Hari']);
+          : (Array.isArray(t.schedules) ? t.schedules : []);
 
         return {
           id: t.id,
           product_id: t.id,
           vendor_id: t.vendor_id || null,
-          vendor_name: t.vendor_name || 'TREXIO Partner',
+          vendor_name: t.vendor_name || null,
           title: t.title,
           slug: t.slug || t.id,
-          category: t.category || 'Shuttle & Transportasi',
-          transport_type: t.transport_type || t.vehicle_type || 'Angkutan Lokal',
-          price: t.price || 150000,
-          currency: 'IDR',
-          price_unit: t.price_unit || 'trip',
+          category: t.category || null,
+          transport_type: t.transport_type || t.vehicle_type || null,
+          price: t.price ?? null,
+          currency: t.currency || 'IDR',
+          price_unit: t.price_unit || null,
           pickup_point: pickupPt,
-          pickup_points: Array.isArray(t.meeting_points) ? t.meeting_points : [pickupPt],
+          pickup_points: Array.isArray(t.meeting_points) ? t.meeting_points : (pickupPt ? [pickupPt] : []),
           dropoff_point: dropPt,
           dropoff: dropPt,
           departure_schedules: schedulesArr,
           schedules: schedulesArr,
           available_seats: availableSeats,
           availability: availableSeats,
-          distance: t.distance || '45 km',
-          duration: t.duration || `${t.duration_days || 1} Hari / Trip`,
-          cover_image: t.cover_image || t.image,
+          distance: t.distance ?? null,
+          duration: t.duration ?? null,
+          cover_image: t.cover_image || t.image || null,
           description: t.description || '',
           specs: t.specs || [],
-          vendor_badge: t.vendor_badge || t.badge || 'Partner Resmi Trexio'
+          vendor_badge: t.vendor_badge || t.badge || null
         };
       });
 
@@ -894,158 +918,44 @@ function createBackpackerRouter(options = {}) {
       // Filter existing transportation & shuttle products from marketplace supply
       const transportProducts = getAllTransportProducts();
 
-      const p1 = transportProducts[0] || {
-        id: 'cat_shut_00',
-        vendor_id: null,
-        price: 150000,
-        title: 'Shuttle VIP Jakarta/Bandung ke Basecamp Cibodas Gede'
-      };
-      const p2 = transportProducts[1] || {
-        id: 'cat_shut_02',
-        vendor_id: null,
-        price: 120000,
-        title: 'Shuttle Executive HiAce Bandara Lombok ↔ Sembalun'
-      };
+      if (transportProducts.length === 0) {
+        return res.status(503).json({
+          success: false,
+          error: 'REAL_SUPPLY_UNAVAILABLE',
+          message: 'Tidak ada supply transportasi real yang tersedia untuk penyusunan rute.'
+        });
+      }
 
-      // Construct route options for all 4 priorities: CHEAPEST, FASTEST, BALANCED, FEWEST_TRANSFERS
-      const routeResults = [
-        {
-          route_id: `route_cheap_${Date.now()}`,
-          name: 'Rute Ekonomis (Cheapest - Shuttle & Angkutan Lokal)',
-          type: 'CHEAPEST',
-          origin: origin || 'Jakarta',
-          destination: destination || 'Sembalun',
-          total_price: 650000,
-          estimated_duration: '18 jam',
-          transfer_count: 2,
-          segments: [
-            {
-              segment_id: 'seg_c1',
-              mode: 'Bus Executive / Shuttle',
-              from: origin || 'Jakarta',
-              to: 'Surabaya / Banyuwangi',
-              duration: '10 jam',
-              price: 350000,
-              product_id: p1.id,
-              vendor_id: p1.vendor_id || null,
-              availability: 8
-            },
-            {
-              segment_id: 'seg_c2',
-              mode: 'Kapal Ferry / Shuttle Pelabuhan',
-              from: 'Banyuwangi',
-              to: 'Lombok (Lembar/Mataram)',
-              duration: '5 jam',
-              price: 180000,
-              product_id: p2.id,
-              vendor_id: p2.vendor_id || null,
-              availability: 12
-            },
-            {
-              segment_id: 'seg_c3',
-              mode: 'Angkutan Lokal / Mini Shuttle',
-              from: 'Mataram',
-              to: destination || 'Sembalun',
-              duration: '3 jam',
-              price: 120000,
-              product_id: null,
-              vendor_id: null,
-              availability: 15
-            }
-          ]
-        },
-        {
-          route_id: `route_fast_${Date.now()}`,
-          name: 'Rute Tercepat (Fastest - Flight + Direct Basecamp Shuttle)',
-          type: 'FASTEST',
-          origin: origin || 'Jakarta',
-          destination: destination || 'Sembalun',
-          total_price: 1450000,
-          estimated_duration: '5 jam',
-          transfer_count: 1,
-          segments: [
-            {
-              segment_id: 'seg_f1',
-              mode: 'Penerbangan Domestik',
-              from: `${origin || 'Jakarta'} (CGK/HLP)`,
-              to: 'Bandara Lombok (LOP)',
-              duration: '2 jam',
-              price: 1100000,
-              product_id: null,
-              vendor_id: null,
-              availability: 20
-            },
-            {
-              segment_id: 'seg_f2',
-              mode: 'Official Basecamp Shuttle',
-              from: 'Bandara Lombok (LOP)',
-              to: `${destination || 'Sembalun'} Basecamp`,
-              duration: '3 jam',
-              price: 350000,
-              product_id: p1.id,
-              vendor_id: p1.vendor_id || null,
-              availability: 6
-            }
-          ]
-        },
-        {
-          route_id: `route_bal_${Date.now()}`,
-          name: 'Rute Seimbang (Balanced - Executive Travel Shuttle)',
-          type: 'BALANCED',
-          origin: origin || 'Jakarta',
-          destination: destination || 'Sembalun',
-          total_price: 950000,
-          estimated_duration: '12 jam',
-          transfer_count: 1,
-          segments: [
-            {
-              segment_id: 'seg_b1',
-              mode: 'Travel / Executive Van',
-              from: origin || 'Jakarta',
-              to: 'Mataram Lombok',
-              duration: '9 jam',
-              price: 700000,
-              product_id: p1.id,
-              vendor_id: p1.vendor_id || null,
-              availability: 5
-            },
-            {
-              segment_id: 'seg_b2',
-              mode: 'Shuttle Transportasi',
-              from: 'Mataram',
-              to: destination || 'Sembalun',
-              duration: '3 jam',
-              price: 250000,
-              product_id: p2.id,
-              vendor_id: p2.vendor_id || null,
-              availability: 10
-            }
-          ]
-        },
-        {
-          route_id: `route_fewest_${Date.now()}`,
-          name: 'Rute Tanpa Transit (Fewest Transfer - Direct Overland Travel)',
-          type: 'FEWEST_TRANSFERS',
-          origin: origin || 'Jakarta',
-          destination: destination || 'Sembalun',
-          total_price: 1050000,
-          estimated_duration: '16 jam',
-          transfer_count: 0,
-          segments: [
-            {
-              segment_id: 'seg_dt1',
-              mode: 'Direct Intercity Overland Bus & Shuttle',
-              from: origin || 'Jakarta',
-              to: `${destination || 'Sembalun'} Basecamp`,
-              duration: '16 jam',
-              price: 1050000,
-              product_id: p1.id,
-              vendor_id: p1.vendor_id || null,
-              availability: 7
-            }
-          ]
-        }
-      ];
+      const routeResults = transportProducts
+        .filter((product) => product && product.id)
+        .map((product, index) => {
+          const price = Number.isFinite(Number(product.price)) ? Number(product.price) : null;
+          const originValue = product.pickup_point || product.location || origin || null;
+          const destinationValue = product.dropoff_point || product.destination || destination || null;
+          return {
+            route_id: 'route_real_' + product.id,
+            name: product.title || ('Rute Transportasi Real ' + (index + 1)),
+            type: preference,
+            origin: originValue,
+            destination: destinationValue,
+            total_price: price,
+            estimated_duration: product.duration || null,
+            transfer_count: 0,
+            segments: [{
+              segment_id: 'segment_real_' + product.id,
+              mode: product.transport_type || product.vehicle_type || product.category || null,
+              from: originValue,
+              to: destinationValue,
+              duration: product.duration || null,
+              price,
+              product_id: product.id,
+              vendor_id: product.vendor_id || null,
+              availability: Number.isFinite(Number(product.available_seats))
+                ? Number(product.available_seats)
+                : null
+            }]
+          };
+        });
 
       return success(res, {
         query: { origin, destination, date, passenger, budget, preference },

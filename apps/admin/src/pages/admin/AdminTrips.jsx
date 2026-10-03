@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import ProductImageUploader from "@/components/vendor/ProductImageUploader";
 import { MARKETPLACE_12_CATEGORIES } from "@/pages/vendor/VendorProducts";
+import marketplaceService from "@/services/marketplaceService";
 import {
   Plus,
   PencilSimple,
@@ -73,8 +74,8 @@ export default function AdminTrips() {
   async function load() {
     try {
       setLoading(true);
-      const { data } = await api.get("/trips", { params: { limit: 200 } });
-      setItems(Array.isArray(data) ? data : []);
+      const data = await marketplaceService.listTrips({ limit: 200 });
+      setItems(data);
     } catch (e) {
       toast.error("Gagal memuat katalog trip");
     } finally {
@@ -113,7 +114,7 @@ export default function AdminTrips() {
   async function togglePublish(t) {
     const nextStatus = !t.published;
     try {
-      await api.put(`/admin/trips/${t.id}`, { ...t, published: nextStatus });
+      await marketplaceService.updateTrip(t.id, { ...t, published: nextStatus });
       toast.success(
         `Trip "${t.title}" berhasil di-${nextStatus ? "publikasikan" : "sembunyikan (Draft)"}`
       );
@@ -179,10 +180,10 @@ export default function AdminTrips() {
 
     try {
       if (editing._new) {
-        await api.post("/admin/trips", body);
+        await marketplaceService.createTrip(body);
         toast.success("Trip baru berhasil dibuat!");
       } else {
-        await api.put(`/admin/trips/${editing.id}`, body);
+        await marketplaceService.updateTrip(editing.id, body);
         toast.success("Perubahan trip berhasil disimpan!");
       }
       setEditing(null);
@@ -195,7 +196,7 @@ export default function AdminTrips() {
   async function remove(t) {
     if (!window.confirm(`Hapus permanen trip "${t.title}"?`)) return;
     try {
-      await api.delete(`/admin/trips/${t.id}`);
+      await marketplaceService.deleteTrip(t.id);
       toast.success("Trip berhasil dihapus");
       load();
     } catch (e) {

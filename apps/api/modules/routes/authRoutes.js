@@ -19,6 +19,14 @@ module.exports = function registerAuthRoutes(ctx) {
   } = ctx;
 
 api.post('/auth/register', authLimiter, async (req, res) => {
+  if (process.env.NODE_ENV === 'production' && !supabaseAuth.supabaseAuthEnabled) {
+    return res.status(503).json({
+      detail: 'Layanan registrasi belum terkonfigurasi. Silakan hubungi administrator.',
+      code: 'PROVIDER_CONFIGURATION_REQUIRED',
+      provider: 'supabase_auth',
+    });
+  }
+
   const { name, email, phone, password, confirmPassword, role } = req.body;
   if (!email || !password) {
     return res.status(400).json({ detail: 'Email dan kata sandi wajib diisi.' });
@@ -159,9 +167,16 @@ api.post('/auth/login', authLimiter, async (req, res) => {
     saveUsersToDisk();
   }
 
-  // [Supabase Auth] Verify credentials against Supabase Auth when the account
-  // is Supabase-managed; otherwise fall back to the local bcrypt hash (covers
-  // the env-seeded admin before its first Supabase sync and any legacy record).
+  // [10P.8] Authentication provider is authoritative in production.
+  // Never fall back to a local bcrypt credential when Supabase Auth is unavailable.
+  if (process.env.NODE_ENV === 'production' && !supabaseAuth.supabaseAuthEnabled) {
+    return res.status(503).json({
+      detail: 'Layanan autentikasi belum terkonfigurasi. Silakan hubungi administrator.',
+      code: 'PROVIDER_CONFIGURATION_REQUIRED',
+      provider: 'supabase_auth',
+    });
+  }
+
   let isValid = false;
   if (supabaseAuth.supabaseAuthEnabled && user.supabase_uid) {
     const v = await supabaseAuth.verifyPassword(user.email, cleanPassword);
@@ -170,7 +185,7 @@ api.post('/auth/login', authLimiter, async (req, res) => {
       console.warn('[Auth Login] Supabase Auth verify failed for', user.email, 'status:', v.status, 'error:', JSON.stringify(v.error));
     }
   }
-  if (!isValid && user.password_hash) {
+  if (!isValid && user.password_hash && process.env.NODE_ENV !== 'production') {
     try {
       isValid = bcrypt.compareSync(cleanPassword, user.password_hash);
       if (isValid && supabaseAuth.supabaseAuthEnabled) {
@@ -184,8 +199,8 @@ api.post('/auth/login', authLimiter, async (req, res) => {
     }
   }
 
-  // If memory had a stale hash, refresh from Supabase Postgres and retry bcrypt comparison
-  if (!isValid && typeof loadUsersFromSupabasePostgres === 'function') {
+  // Development-only compatibility: refresh the local hash when Supabase Auth is not authoritative.
+  if (!isValid && process.env.NODE_ENV !== 'production' && typeof loadUsersFromSupabasePostgres === 'function') {
     try {
       const dbUsers = await loadUsersFromSupabasePostgres();
       const freshUser = dbUsers.find(u => (u.email && u.email.toLowerCase() === cleanEmail) || u.id === cleanEmail);

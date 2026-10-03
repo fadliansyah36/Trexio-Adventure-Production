@@ -1,0 +1,30 @@
+name: Trexio 10P.1 Full Runtime Inventory
+
+on:
+  pull_request:
+    paths:
+      - "apps/**"
+      - "frontend/**"
+      - "src/**"
+      - "server.js"
+      - "scripts/build-10p1-runtime-inventory.js"
+      - "package.json"
+  workflow_dispatch:
+
+jobs:
+  runtime-inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build full runtime inventory
+        run: node scripts/build-10p1-runtime-inventory.js
+
+      - name: Publish 10P.1 inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: trexio-10p1-runtime-inventory
+          path: |
+            data/10p1-runtime-inventory.json
+            data/10p1-runtime-inventory.md
+          if-no-files-found: error

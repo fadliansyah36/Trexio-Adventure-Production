@@ -1,0 +1,23 @@
+name: Trexio 10P.6 Frontend Real API Gate
+
+on:
+  push:
+    branches:
+      - mission/10p-real-data-architecture-hardening
+  workflow_dispatch:
+
+jobs:
+  verify-10p6:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Verify JavaScript syntax
+        run: |
+          node --check apps/api/modules/services/marketplaceService.js
+          node --check apps/api/modules/routes/marketplace.js
+          node --check apps/web/src/services/marketplaceService.js
+          node --check apps/admin/src/services/marketplaceService.js
+          node --check scripts/verify-10p6-frontend-api.js
+      - name: Verify frontend API boundary
+        run: node scripts/verify-10p6-frontend-api.js

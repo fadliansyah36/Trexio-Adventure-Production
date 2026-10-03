@@ -18,48 +18,6 @@ const aiFeatureFlagsService = require('./ai-feature-flags.service');
 class AIRiskEngineService {
   constructor() {
     this.gemini = new GeminiProvider();
-    // In-memory case management cache
-    this.riskCases = [
-      {
-        id: 'case_risk_01',
-        title: 'Deteksi Tingkat Pembatalan Pesanan Tinggi',
-        category: 'BOOKING_FRAUD',
-        severity: 'HIGH',
-        risk_score: 78,
-        entity_type: 'VENDOR',
-        entity_id: 'v_01',
-        entity_name: 'Semeru Trekking Co',
-        status: 'NEW',
-        detected_signals: [
-          'Tingkat pembatalan pesanan > 20% dalam 30 hari',
-          'Penundaan konfirmasi konstan',
-        ],
-        evidence: 'Terdapat 5 pesanan dibatalkan berturut-turut setelah status verifikasi bayar.',
-        recommended_action: 'Periksa kelengkapan jadwal pemandu dan konfirmasi stok ke vendor.',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        review_notes: [],
-      },
-      {
-        id: 'case_risk_02',
-        title: 'Transkrip Transaksi Gagal Berulang Trexio Pay',
-        category: 'PAYMENT_RISK',
-        severity: 'MEDIUM',
-        risk_score: 55,
-        entity_type: 'USER',
-        entity_id: 'user_demo_01',
-        entity_name: 'Demo User',
-        status: 'REVIEWING',
-        detected_signals: [
-          '3x transaksi pembayaran expired / failed dalam 1 jam',
-        ],
-        evidence: 'Penggunaan metode QRIS dengan status expire beruntun.',
-        recommended_action: 'Periksa ketersediaan limit wallet atau kendala pada gateway Midtrans.',
-        created_at: new Date(Date.now() - 3600000).toISOString(),
-        updated_at: new Date(Date.now() - 1800000).toISOString(),
-        review_notes: ['Tim support telah menghubungi pengguna untuk pengecekan jaringan'],
-      },
-    ];
   }
 
   // -------------------------------------------------------------
@@ -412,7 +370,8 @@ class AIRiskEngineService {
     return {
       system_risk_score: overallRiskScore,
       system_risk_level: overallRiskLevel,
-      open_cases_count: this.riskCases.filter((c) => c.status !== 'CLOSED' && c.status !== 'RESOLVED').length,
+      open_cases_count: null,
+      risk_cases_available: false,
       risk_breakdown: {
         high_risk_accounts: highRiskAccountsCount,
         flagged_vendors: highRiskVendorsCount,
@@ -422,110 +381,29 @@ class AIRiskEngineService {
         flagged_community_posts: communityRisk.flagged_posts_count,
         ai_abuse_attempts: aiAbuse.security_blocks_count,
       },
-      latest_cases: this.riskCases.slice(0, 10),
+      latest_cases: [],
     };
   }
 
   // -------------------------------------------------------------
   // 8. CASE MANAGEMENT
   // -------------------------------------------------------------
-  getRiskCases(statusFilter = 'ALL') {
-    if (statusFilter === 'ALL') return this.riskCases;
-    return this.riskCases.filter((c) => c.status === statusFilter);
+  getRiskCases() {
+    throw new Error('REAL_DATA_REQUIRED: risk case persistence is not configured');
   }
 
-  createRiskCase(caseData = {}) {
-    const newCase = {
-      id: `case_risk_${Date.now()}`,
-      title: caseData.title || 'Deteksi Potensi Risiko Platform',
-      category: caseData.category || 'ACCOUNT_FRAUD',
-      severity: caseData.severity || 'MEDIUM',
-      risk_score: caseData.risk_score || 50,
-      entity_type: caseData.entity_type || 'USER',
-      entity_id: caseData.entity_id || 'unassigned',
-      entity_name: caseData.entity_name || 'Entitas Platform',
-      status: 'NEW',
-      detected_signals: caseData.detected_signals || [],
-      evidence: caseData.evidence || 'Terdeteksi melalui pemicu otomatis aturan risiko',
-      recommended_action: caseData.recommended_action || 'Tinjau bukti dan lakukan verifikasi manual',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      review_notes: [],
-    };
-
-    this.riskCases.unshift(newCase);
-    return newCase;
+  createRiskCase() {
+    throw new Error('REAL_DATA_REQUIRED: risk case persistence is not configured');
   }
 
-  updateRiskCaseStatus(caseId, status, reviewNote = '', reviewerName = 'Super Admin') {
-    const targetCase = this.riskCases.find((c) => c.id === caseId);
-    if (!targetCase) {
-      throw new Error(`Kasus risiko dengan ID ${caseId} tidak ditemukan`);
-    }
-
-    targetCase.status = status;
-    targetCase.updated_at = new Date().toISOString();
-
-    if (reviewNote) {
-      targetCase.review_notes.push({
-        reviewer: reviewerName,
-        note: reviewNote,
-        timestamp: new Date().toISOString(),
-      });
-    }
-
-    return targetCase;
+  updateRiskCaseStatus() {
+    throw new Error('REAL_DATA_REQUIRED: risk case persistence is not configured');
   }
 
-  // -------------------------------------------------------------
-  // 9. EXPLAINABLE RISK LLM NARRATIVE
-  // -------------------------------------------------------------
-  async explainCaseRisk(caseId) {
-    const targetCase = this.riskCases.find((c) => c.id === caseId);
-    if (!targetCase) {
-      throw new Error(`Kasus risiko ID ${caseId} tidak ditemukan`);
-    }
-
-    let explanationText = '';
-    const isAiEnabled = aiFeatureFlagsService.isEnabled(AI_FEATURE_FLAGS.AI_ORCHESTRATOR);
-
-    if (isAiEnabled) {
-      try {
-        const prompt = `Anda adalah Risk & Trust Analyst untuk platform TREXIO.
-Jelaskan secara OBJEKTIF, FAKTUAL, FOKUS BUKTI, dan TANPA TUDUHAN SEPIHAK mengenai kasus risiko berikut:
-
-Judul: ${targetCase.title}
-Kategori: ${targetCase.category}
-Tingkat Keparahan: ${targetCase.severity} (Skor Risiko: ${targetCase.risk_score}/100)
-Entitas: ${targetCase.entity_type} - ${targetCase.entity_name}
-Sinyal Terdeteksi: ${targetCase.detected_signals.join(', ')}
-Bukti Data: ${targetCase.evidence}
-
-Tugas:
-1. Berikan Ringkasan Kasus (2-3 kalimat objektif, gunakan frasa 'Pola mencurigakan terdeteksi').
-2. Analisis Potensi Risiko terhadap Platform.
-3. Rekomendasi Langkah Peninjauan Manusia (Human-in-the-Loop).`;
-
-        const result = await this.gemini.generateText('Anda adalah spesialis analisis risiko platform e-commerce.', prompt);
-        if (result && result.text) {
-          explanationText = result.text;
-        }
-      } catch (err) {
-        console.warn('[AIRiskEngine] LLM explanation fallback used:', err.message);
-      }
-    }
-
-    if (!explanationText) {
-      explanationText = `**Ringkasan Kasus**: Pola mencurigakan terdeteksi pada entitas ${targetCase.entity_type} (${targetCase.entity_name}) terkait ${targetCase.category}.
-**Sinyal Terdeteksi**: ${targetCase.detected_signals.join('; ')}.
-**Rekomendasi**: Lakukan verifikasi manual dan periksa riwayat transaksi sebelum mengambil tindakan administratif.`;
-    }
-
-    return {
-      case: targetCase,
-      explanation: explanationText,
-    };
+  async explainCaseRisk() {
+    throw new Error('REAL_DATA_REQUIRED: risk case persistence is not configured');
   }
+
 }
 
 module.exports = new AIRiskEngineService();

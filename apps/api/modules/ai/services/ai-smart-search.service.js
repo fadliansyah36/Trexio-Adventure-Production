@@ -5,8 +5,7 @@
  * Multi-Category Search, AI Trip Discovery, Zero-Result Recovery, and Search Analytics.
  */
 
-const fs = require('fs');
-const path = require('path');
+const { loadSingleton, saveSingleton } = require('./aiPostgresPersistence');
 const aiOrchestratorService = require('./ai-orchestrator.service');
 const aiRecommendationEngineService = require('./ai-recommendation-engine.service');
 const aiDataService = require('./ai-data.service');
@@ -14,9 +13,6 @@ const aiEventService = require('./ai-event.service');
 const aiSecurityService = require('./ai-security.service');
 const aiFeatureFlagsService = require('./ai-feature-flags.service');
 const { AI_FEATURE_FLAGS, AI_EVENT_TYPES } = require('../types');
-
-const DATA_DIR = path.join(__dirname, '..', '..', '..', 'data');
-const SEARCH_CONFIG_FILE = path.join(DATA_DIR, 'db_ai_search_config.json');
 
 const DEFAULT_SEARCH_CONFIG = {
   weights: {
@@ -58,50 +54,22 @@ const KNOWN_MOUNTAIN_DICTIONARY = [
 class AISmartSearchService {
   constructor() {
     this.config = { ...DEFAULT_SEARCH_CONFIG };
-    this.loadConfig();
+    this.ready = this.loadFromPostgres();
   }
 
-  ensureDataDir() {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-  }
-
-  loadConfig() {
+  async loadFromPostgres() {
     try {
-      this.ensureDataDir();
-      if (fs.existsSync(SEARCH_CONFIG_FILE)) {
-        const raw = fs.readFileSync(SEARCH_CONFIG_FILE, 'utf8');
-        const loaded = JSON.parse(raw);
-        if (loaded && typeof loaded === 'object') {
-          this.config = {
-            weights: { ...DEFAULT_SEARCH_CONFIG.weights, ...loaded.weights },
-            enable_semantic_search: loaded.enable_semantic_search ?? true,
-            enable_typo_tolerance: loaded.enable_typo_tolerance ?? true,
-            enable_autocomplete: loaded.enable_autocomplete ?? true,
-            enable_personalization: loaded.enable_personalization ?? true,
-            enable_zero_result_recovery: loaded.enable_zero_result_recovery ?? true,
-            max_results: loaded.max_results || 50,
-            last_updated: loaded.last_updated || new Date().toISOString(),
-            updated_by: loaded.updated_by || 'system',
-          };
-        }
-      } else {
-        this.saveConfig();
-      }
+      const loaded = await loadSingleton('ai_search_config');
+      if (loaded?.config) this.config = { ...this.config, ...loaded.config };
     } catch (err) {
-      console.error('[AISmartSearchService] Load config error:', err.message);
+      console.error('[AI PostgreSQL persistence] Failed to load ai_search_config:', err.message);
     }
   }
 
-  saveConfig() {
-    try {
-      this.ensureDataDir();
-      fs.writeFileSync(SEARCH_CONFIG_FILE, JSON.stringify(this.config, null, 2), 'utf8');
-    } catch (err) {
-      console.error('[AISmartSearchService] Save config error:', err.message);
-    }
+  async persistToPostgres() {
+    await saveSingleton('ai_search_config', { config: this.config });
   }
+
 
   getConfig() {
     return JSON.parse(JSON.stringify(this.config));
@@ -131,8 +99,8 @@ class AISmartSearchService {
     }
     this.config.last_updated = new Date().toISOString();
     this.config.updated_by = userEmail;
-    this.saveConfig();
-    return this.getConfig();
+    void this.persistToPostgres();
+return this.getConfig();
   }
 
   /**

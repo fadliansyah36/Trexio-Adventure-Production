@@ -85,8 +85,8 @@ export default function TripDetail() {
   };
 
   useEffect(() => {
-    api.get(`/trips/${id}`).then((r) => {
-      setTrip(r.data);
+    marketplaceService.getTrip(id).then((data) => {
+      setTrip(data);
       const batches = resolveTripDates(r.data);
       if (batches.length > 0) {
         setSelectedTripDate(batches[0].date);

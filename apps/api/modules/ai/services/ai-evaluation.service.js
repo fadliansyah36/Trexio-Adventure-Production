@@ -4,17 +4,9 @@
  * tool call success, safety compliance, latency, reliability, token cost, and quality gates.
  */
 
-const fs = require('fs');
-const path = require('path');
+const { loadCollection, saveDocument } = require('./aiPostgresPersistence');
 const { v4: uuidv4 } = require('uuid');
 const { GROUNDING_STATUS, QUALITY_GATE, ALERT_SEVERITY, AI_MODELS, MODEL_PRICING } = require('../types');
-
-const DATA_DIR = path.join(__dirname, '..', '..', '..', 'data');
-const GOLDEN_DATASET_FILE = path.join(DATA_DIR, 'db_ai_golden_dataset.json');
-const TRACES_FILE = path.join(DATA_DIR, 'db_ai_traces.json');
-const FEEDBACK_FILE = path.join(DATA_DIR, 'db_ai_user_feedback.json');
-const ALERTS_FILE = path.join(DATA_DIR, 'db_ai_alerts.json');
-const REGRESSION_REPORTS_FILE = path.join(DATA_DIR, 'db_ai_regression_reports.json');
 
 // Sensitive PII & Secret Redaction Patterns
 const SECRET_PATTERNS = [
@@ -36,47 +28,34 @@ class AIEvaluationService {
     this.regressionReports = [];
     this.maxTracesInMemory = 1000;
 
-    this.ensureDataDir();
-    this.loadAllFromDisk();
+    this.ready = this.loadAllFromPostgres();
     this.seedDefaultGoldenDatasetIfNeeded();
   }
 
-  ensureDataDir() {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
+  async loadAllFromPostgres() {
+    try {
+      const [golden, traces, feedback, alerts, reports] = await Promise.all([
+        loadCollection('ai_golden_dataset'),
+        loadCollection('ai_traces'),
+        loadCollection('ai_user_feedback'),
+        loadCollection('ai_alerts'),
+        loadCollection('ai_regression_reports'),
+      ]);
+      this.goldenDataset = golden;
+      this.traces = traces.slice(-this.maxTracesInMemory);
+      this.userFeedback = feedback;
+      this.alerts = alerts;
+      this.regressionReports = reports;
+    } catch (err) {
+      console.error('[AIEvaluationService] Failed loading PostgreSQL state:', err.message);
+      throw err;
     }
   }
 
-  loadAllFromDisk() {
-    try {
-      if (fs.existsSync(GOLDEN_DATASET_FILE)) {
-        this.goldenDataset = JSON.parse(fs.readFileSync(GOLDEN_DATASET_FILE, 'utf8')) || [];
-      }
-      if (fs.existsSync(TRACES_FILE)) {
-        this.traces = JSON.parse(fs.readFileSync(TRACES_FILE, 'utf8')) || [];
-      }
-      if (fs.existsSync(FEEDBACK_FILE)) {
-        this.userFeedback = JSON.parse(fs.readFileSync(FEEDBACK_FILE, 'utf8')) || [];
-      }
-      if (fs.existsSync(ALERTS_FILE)) {
-        this.alerts = JSON.parse(fs.readFileSync(ALERTS_FILE, 'utf8')) || [];
-      }
-      if (fs.existsSync(REGRESSION_REPORTS_FILE)) {
-        this.regressionReports = JSON.parse(fs.readFileSync(REGRESSION_REPORTS_FILE, 'utf8')) || [];
-      }
-    } catch (err) {
-      console.warn('[AIEvaluationService] Failed loading data files:', err.message);
-    }
+  async persistCollection(collection, documents) {
+    await Promise.all(documents.map((document) => saveDocument(collection, document)));
   }
 
-  saveToDisk(file, data) {
-    try {
-      this.ensureDataDir();
-      fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
-    } catch (err) {
-      console.warn(`[AIEvaluationService] Failed saving to ${file}:`, err.message);
-    }
-  }
 
   // =========================================================================
   // 1. DATA REDACTION & PRIVACY ENFORCEMENT
@@ -233,7 +212,7 @@ class AIEvaluationService {
       created_at: new Date().toISOString(),
     }));
 
-    this.saveToDisk(GOLDEN_DATASET_FILE, this.goldenDataset);
+    void this.persistCollection('ai_golden_dataset', this.goldenDataset);
   }
 
   getGoldenDataset() {
@@ -262,7 +241,7 @@ class AIEvaluationService {
       this.goldenDataset.push(updated);
     }
 
-    this.saveToDisk(GOLDEN_DATASET_FILE, this.goldenDataset);
+    void this.persistCollection('ai_golden_dataset', this.goldenDataset);
     return updated;
   }
 
@@ -415,7 +394,7 @@ class AIEvaluationService {
       this.traces.pop();
     }
 
-    this.saveToDisk(TRACES_FILE, this.traces);
+    void this.persistCollection('ai_traces', this.traces);
     this.checkHealthAndAlerts();
 
     return traceEntry;
@@ -450,7 +429,7 @@ class AIEvaluationService {
     };
 
     this.userFeedback.unshift(feedback);
-    this.saveToDisk(FEEDBACK_FILE, this.userFeedback);
+    void this.persistCollection('ai_user_feedback', this.userFeedback);
     return feedback;
   }
 
@@ -541,7 +520,7 @@ class AIEvaluationService {
     if (this.alerts.length > 200) {
       this.alerts = this.alerts.slice(0, 200);
     }
-    this.saveToDisk(ALERTS_FILE, this.alerts);
+    void this.persistCollection('ai_alerts', this.alerts);
   }
 
   getAlerts() {
@@ -634,7 +613,7 @@ class AIEvaluationService {
     };
 
     this.regressionReports.unshift(report);
-    this.saveToDisk(REGRESSION_REPORTS_FILE, this.regressionReports);
+    void this.persistCollection('ai_regression_reports', this.regressionReports);
 
     return report;
   }

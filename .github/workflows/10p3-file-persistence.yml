@@ -1,0 +1,22 @@
+name: Trexio 10P.3 File Persistence Gate
+
+on:
+  push:
+    branches:
+      - mission/10p-real-data-architecture-hardening
+  pull_request:
+    branches:
+      - main
+      - mission/10p-real-data-architecture-hardening
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify 10P.3
+        run: node scripts/verify-10p3-file-persistence.js

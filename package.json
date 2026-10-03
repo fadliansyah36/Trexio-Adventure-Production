@@ -39,7 +39,19 @@
     "verify:production-operational-readiness": "node scripts/verify-production-operational-readiness.js",
     "report:production-readiness": "node scripts/build-final-production-readiness-report.js",
     "test:tenant-isolation": "node scripts/test-tenant-isolation.js",
-    "verify:10c-tenant-isolation": "node scripts/verify-10c-tenant-isolation.js"
+    "verify:10c-tenant-isolation": "node scripts/verify-10c-tenant-isolation.js",
+    "verify:10d-midtrans-webhook": "node scripts/verify-10d-midtrans-webhook.js",
+    "verify:real-data-architecture": "node scripts/verify-real-data-architecture.js",
+    "inventory:10p1": "node scripts/build-10p1-runtime-inventory.js",
+    "verify:10p2-backpacker-state": "node scripts/verify-10p2-backpacker-state.js",
+    "verify:10p2-global-state": "node scripts/verify-10p2-global-business-state.js",
+    "verify:10p2-server-global-state": "node scripts/verify-10p2-server-global-state.js",
+    "verify:10p3-file-persistence": "node scripts/verify-10p3-file-persistence.js",
+    "verify:10p4-static-business-data": "node scripts/verify-10p4-static-business-data.js",
+    "verify:10p5-service-repository": "node scripts/verify-10p5-service-repository.js",
+    "verify:10p6-frontend-api": "node scripts/verify-10p6-frontend-api.js",
+    "verify:10p7-mock-fake-simulation": "node scripts/verify-10p7-mock-fake-simulation.js",
+    "verify:10p8-provider-configuration": "node scripts/verify-10p8-provider-configuration.js"
   },
   "dependencies": {
     "@google/genai": "^2.15.0",
