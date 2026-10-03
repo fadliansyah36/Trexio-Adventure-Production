@@ -53,7 +53,15 @@ for (const role of ['super_admin', 'admin']) {
   assert.strictEqual(access.reason, 'global_role');
 }
 
-// Missing/unknown tenant input falls back to the authenticated user's tenant.
+// A tenant-scoped user with no tenant must fail closed; the default tenant is never implicit.
+{
+  const { target, access } = decision({ id: 'orphan_user', tenant_id: null }, ['tenant_user'], null);
+  assert.strictEqual(target, null);
+  assert.strictEqual(access.allowed, false);
+  assert.strictEqual(access.reason, 'missing_context');
+}
+
+// Missing/unknown tenant input resolves only to the authenticated user's tenant.
 {
   const { target, access } = decision({ id: 'user_a', tenant_id: 'tenant_a' }, ['tenant_user'], 'does-not-exist');
   assert.strictEqual(target.id, 'tenant_a');
