@@ -27,7 +27,7 @@ const marketplaceRoute = source('apps/api/modules/routes/marketplace.js');
 const marketplaceService = source('apps/api/modules/services/marketplaceService.js');
 const server = source('apps/api/server.js');
 const repos = {
-  users: source('apps/api/modules/repositories/userRepository.js'),
+  users: source('apps/api/server.js'),
   vendors: source('apps/api/modules/repositories/vendorRepository.js'),
   trips: source('apps/api/modules/repositories/tripRepository.js'),
   bookings: source('apps/api/modules/repositories/bookingRepository.js'),
@@ -48,7 +48,7 @@ if (isolation.includes('cross_tenant_access') && isolation.includes('global_role
 
 for (const [name, text] of Object.entries(repos)) {
   const required = name === 'users'
-    ? ['tenant_id']
+    ? ['tenant_id', 'users = businessState.proxies.users']
     : ['tenantId'];
   const ok = required.every((token) => text.includes(token));
   if (ok) pass('repository_scope:' + name, 'Repository exposes tenant-aware query/write scope.');
