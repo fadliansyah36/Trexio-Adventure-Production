@@ -82,7 +82,7 @@ async function enrichTripWithVendor(trip) {
   if (!trip) return trip;
   if (!trip.vendor_id) return trip;
 
-  const vendor = await vendorRepository.findById(trip.vendor_id);
+  const vendor = await vendorRepository.findById(trip.vendor_id, { tenantId: arguments[1]?.tenantId });
   if (!vendor) return trip;
 
   return {
