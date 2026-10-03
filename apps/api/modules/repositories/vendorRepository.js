@@ -80,7 +80,7 @@ async function save(vendor) {
        total_trips = EXCLUDED.total_trips,
        documents = EXCLUDED.documents,
        data = EXCLUDED.data,
-       updated_at = NOW()
+       updated_at = NOW()\n     WHERE vendors.tenant_id IS NOT DISTINCT FROM EXCLUDED.tenant_id
      RETURNING ${SELECT_COLUMNS}`,
     [
       String(vendor.id),
