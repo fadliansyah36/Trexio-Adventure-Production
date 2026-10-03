@@ -70,7 +70,7 @@ async function listTrips(filters = {}, context = {}) {
 }
 
 async function listFeatured(limit = 6, context = {}) {
-  const trips = await tripRepository.list();
+  const trips = await tripRepository.list({ tenantId: context.tenantId });
   return applyFilters(trips).slice(0, normalizeLimit(limit, 6));
 }
 
