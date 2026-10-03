@@ -38,7 +38,7 @@ function hydrate(row) {
     cover_image: row.cover_image || data.cover_image || '',
     description: row.description || data.description || '',
     created_at: row.created_at || data.created_at,
-    updated_at: row.updated_at || data.updated_at,
+    updated_at: row.updated_at || data.updated_at,\n    tenant_id: row.tenant_id || data.tenant_id || null,
   };
 }
 
@@ -49,7 +49,7 @@ async function list() {
   return result.rows.map(hydrate);
 }
 
-async function findById(id) {
+async function findById(id, { tenantId } = {}) {
   if (!id) return null;
   const p = getPool();
   if (!p) return null;
@@ -75,7 +75,7 @@ async function save(trip) {
        external_id, title, destination, price, duration_days, available_seats,
        category, vendor_id, slug, status, cover_image, description, data, updated_at
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, NOW())
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, $14, NOW())
      ON CONFLICT (external_id) DO UPDATE SET
        title = EXCLUDED.title,
        destination = EXCLUDED.destination,
@@ -114,11 +114,11 @@ async function save(trip) {
   return hydrate(result.rows[0]);
 }
 
-async function remove(id) {
+async function remove(id, { tenantId } = {}) {
   if (!id) return false;
   const p = getPool();
   if (!p) return false;
-  const result = await p.query('DELETE FROM trips WHERE external_id = $1', [String(id)]);
+  const result = tenantId\n    ? await p.query('DELETE FROM trips WHERE external_id = $1 AND tenant_id = $2', [String(id), String(tenantId)])\n    : await p.query('DELETE FROM trips WHERE external_id = $1', [String(id)]);
   return result.rowCount > 0;
 }
 
