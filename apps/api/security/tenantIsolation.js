@@ -35,7 +35,7 @@ function resolveTenantForRequest({
       ) || null;
   }
 
-  return tenant || defaultTenant || null;
+  // Never synthesize a tenant for a non-global user. An implicit/default tenant\n  // would turn a missing tenant context into cross-tenant access.\n  if (user && !Array.from(GLOBAL_ROLES).some((role) => Array.isArray(user.roles) ? user.roles.includes(role) : user.role === role)) {\n    return tenant || null;\n  }\n\n  return tenant || defaultTenant || null;
 }
 
 function assertTenantAccess({ user, userRoles, targetTenant }) {
