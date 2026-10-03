@@ -134,6 +134,12 @@ assert(
   serverSource.includes('providerConfig.assertProductionConfiguration();'),
   'API startup does not invoke the centralized production provider gate'
 );
+
+const partnerAuthGuardCount = (serverSource.match(/process\\.env\\.NODE_ENV === 'production' && !supabaseAuth\\.supabaseAuthEnabled/g) || []).length;
+assert(
+  partnerAuthGuardCount >= 4,
+  'Production auth guards are incomplete: main auth plus partner registration/login must fail closed'
+);
 assert(
   serverSource.includes('providerConfig.getProviderStatus().gemini.configured'),
   'LLM health is not sourced from the centralized Gemini provider configuration'
